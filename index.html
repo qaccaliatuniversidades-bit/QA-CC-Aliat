@@ -93,6 +93,11 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
 .upload-zone .formats{margin-top:12px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .fmt-pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
 
+/* BACK BUTTON */
+#btn-volver{display:none;position:fixed;bottom:28px;left:28px;z-index:999;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:13px;font-weight:500;padding:9px 18px;border-radius:24px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);transition:background .18s,transform .15s,opacity .2s;opacity:.92}
+#btn-volver:hover{background:var(--surface3,#2a2a3a);transform:translateY(-2px);opacity:1}
+#btn-volver.visible{display:flex;align-items:center;gap:6px}
+
 /* FORM */
 .form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
 .field label{display:block;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
@@ -274,6 +279,19 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
 .period-tabs{display:flex;gap:4px}
 .period-tab{padding:4px 12px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;transition:all .18s}
 .period-tab.active{color:var(--blue);background:rgba(26,95,168,.15)}
+/* Filtros partidos en 2 columnas */
+.filters-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.filters-col{padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.filters-col+.filters-col{border-left:1px solid var(--border2)}
+.filters-col-title{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding-bottom:6px;border-bottom:1px solid var(--border2);margin-bottom:2px}
+.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filter-row-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;min-width:68px}
+.period-tab.llamada{color:var(--muted)}
+.period-tab.llamada.active{color:var(--cyan);background:rgba(34,211,238,.12)}
+.period-tab.turno{color:var(--muted)}
+.period-tab.turno.active{color:var(--green);background:rgba(74,222,128,.12)}
+/* separador visual entre grupos de turno */
+.turno-sep{width:1px;height:16px;background:var(--border2);margin:0 4px;display:inline-block;vertical-align:middle}
 
 /* ══════════════════════════════════
    CONFIG / CALIBRAR STYLES
@@ -481,6 +499,9 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
     <button class="btn-save" onclick="guardarKeys()">Guardar y comenzar →</button>
   </div>
 </div>
+
+<!-- BACK BUTTON -->
+<button id="btn-volver" onclick="volverPaginaAnterior()">← Volver</button>
 
 <!-- HEADER -->
 <header>
@@ -717,31 +738,85 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
 <div class="page" id="page-historial">
 <div class="container">
   <div class="hist-stats" id="hist-stats"></div>
-  <!-- Filtros historial -->
-  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px">
-    <select id="hist-modelo-select" onchange="renderHistorial()"
-      style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 12px;outline:none;cursor:pointer">
-      <option value="__todos__">🔀 Todos los modelos</option>
-      <option value="tradicional">🏫 Tradicional</option>
-      <option value="onaliat">💻 OnAliat</option>
-      <option value="titulacion">🎓 Titulación</option>
-    </select>
-    <select id="hist-agente-select" onchange="renderHistorial()"
-      style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 12px;outline:none;cursor:pointer">
-      <option value="__todos__">👥 Todos los agentes</option>
-    </select>
-    <select id="hist-evaluador-select" onchange="renderHistorial()"
-      style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 12px;outline:none;cursor:pointer">
-      <option value="__todos__">🧑‍💼 Todos los evaluadores</option>
-    </select>
-    <div class="period-tabs">
-      <button class="period-tab active" id="hist-period-all" onclick="setHistPeriod(0,this)">Todo</button>
-      <button class="period-tab" onclick="setHistPeriod(1,this)">Hoy</button>
-      <button class="period-tab" onclick="setHistPeriodSemana(this)">Semana</button>
-      <button class="period-tab" onclick="setHistPeriod(7,this)">7d</button>
-      <button class="period-tab" onclick="setHistPeriod(30,this)">30d</button>
+  <!-- Filtros historial — 2 columnas -->
+  <div class="filters-grid">
+    <!-- Columna izquierda: Fecha de evaluación -->
+    <div class="filters-col">
+      <div class="filters-col-title" style="color:var(--blue)">📋 Fecha de evaluación</div>
+      <div class="filter-row">
+        <select id="hist-modelo-select" onchange="renderHistorial()"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none;cursor:pointer">
+          <option value="__todos__">🔀 Todos los modelos</option>
+          <option value="tradicional">🏫 Tradicional</option>
+          <option value="onaliat">💻 OnAliat</option>
+          <option value="titulacion">🎓 Titulación</option>
+        </select>
+        <select id="hist-agente-select" onchange="renderHistorial()"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none;cursor:pointer">
+          <option value="__todos__">👥 Todos los agentes</option>
+        </select>
+        <select id="hist-evaluador-select" onchange="renderHistorial()"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none;cursor:pointer">
+          <option value="__todos__">🧑‍💼 Todos los evaluadores</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <div class="period-tabs">
+          <button class="period-tab active" id="hist-period-all" onclick="setHistPeriod(0,this)">Todo</button>
+          <button class="period-tab" onclick="setHistPeriod(1,this)">Hoy</button>
+          <button class="period-tab" onclick="setHistPeriodSemana(this)">Semana</button>
+          <button class="period-tab" onclick="setHistPeriod(7,this)">7d</button>
+          <button class="period-tab" onclick="setHistPeriod(30,this)">30d</button>
+          <button class="period-tab" id="hist-tab-custom" onclick="toggleHistFechasCustom(this)">📅 Rango</button>
+        </div>
+      </div>
+      <div id="hist-fechas-custom" style="display:none;align-items:center;gap:6px;flex-wrap:wrap">
+        <input type="date" id="hist-fecha-desde"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:5px 10px;outline:none"
+          onchange="aplicarRangoFechasHist()" />
+        <span style="color:var(--muted);font-size:12px">→</span>
+        <input type="date" id="hist-fecha-hasta"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:5px 10px;outline:none"
+          onchange="aplicarRangoFechasHist()" />
+      </div>
+      <span id="hist-filter-info" style="font-size:11px;color:var(--muted)"></span>
     </div>
-    <span id="hist-filter-info" style="font-size:11px;color:var(--muted);margin-left:4px"></span>
+    <!-- Columna derecha: Fecha de la llamada + Horario -->
+    <div class="filters-col">
+      <div class="filters-col-title" style="color:var(--cyan)">📞 Fecha de la llamada</div>
+      <div class="filter-row">
+        <div class="period-tabs" id="hist-llamada-tabs">
+          <button class="period-tab llamada active" id="hist-llamada-all" onclick="setHistLlamadaPeriod(0,this)">Todo</button>
+          <button class="period-tab llamada" onclick="setHistLlamadaPeriod(1,this)">Hoy</button>
+          <button class="period-tab llamada" onclick="setHistLlamadaPeriodSemana(this)">Semana</button>
+          <button class="period-tab llamada" onclick="setHistLlamadaPeriod(7,this)">7d</button>
+          <button class="period-tab llamada" onclick="setHistLlamadaPeriod(30,this)">30d</button>
+          <button class="period-tab llamada" id="hist-llamada-tab-custom" onclick="toggleHistLlamadaCustom(this)">📅 Rango</button>
+        </div>
+      </div>
+      <div id="hist-llamada-fechas-custom" style="display:none;align-items:center;gap:6px;flex-wrap:wrap">
+        <input type="date" id="hist-llamada-desde"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:5px 10px;outline:none"
+          onchange="aplicarRangoFechasLlamadaHist()" />
+        <span style="color:var(--muted);font-size:12px">→</span>
+        <input type="date" id="hist-llamada-hasta"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:5px 10px;outline:none"
+          onchange="aplicarRangoFechasLlamadaHist()" />
+      </div>
+      <div class="filter-row">
+        <span class="filter-row-label" style="color:var(--green)">🕐 Horario</span>
+        <div class="period-tabs" id="hist-turno-tabs">
+          <button class="period-tab turno active" id="hist-turno-all" onclick="setHistTurno('__todos__',this)">Todos</button>
+          <button class="period-tab turno" onclick="setHistTurno('mat',this)" title="9:00–15:00 · incluye antes de 9h">🌅 Matutino</button>
+          <button class="period-tab turno" onclick="setHistTurno('ves',this)" title="15:00–21:00 · incluye después de 21h">🌙 Vespertino</button>
+          <span class="turno-sep"></span>
+          <button class="period-tab turno" onclick="setHistTurno('mat1',this)" title="9:00–12:00">9–12h</button>
+          <button class="period-tab turno" onclick="setHistTurno('mat2',this)" title="12:00–15:00">12–15h</button>
+          <button class="period-tab turno" onclick="setHistTurno('ves1',this)" title="15:00–18:00">15–18h</button>
+          <button class="period-tab turno" onclick="setHistTurno('ves2',this)" title="18:00–21:00">18–21h</button>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="card">
     <div class="card-head"><span>📋</span><h3>Todas las evaluaciones</h3>
@@ -759,28 +834,40 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
   <div class="rep-header">
     <div><h2>📈 Reporte de Calidad</h2><div class="sub" id="rep-sub">Análisis del período seleccionado</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <select id="rep-modelo-select" onchange="setRepModeloSelect(this.value)"
-        style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 12px;outline:none;cursor:pointer">
-        <option value="__todos__">🔀 Todos los modelos</option>
-        <option value="tradicional">🏫 Tradicional</option>
-        <option value="onaliat">💻 OnAliat</option>
-        <option value="titulacion">🎓 Titulación</option>
-      </select>
-      <select id="rep-agente-select" onchange="setAgente(this.value)"
-        style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 12px;outline:none;cursor:pointer">
-        <option value="__todos__">👥 Todos los agentes</option>
-      </select>
-      <select id="rep-evaluador-select" onchange="setRepEvaluador(this.value)"
-        style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 12px;outline:none;cursor:pointer">
-        <option value="__todos__">🧑‍💼 Todos los evaluadores</option>
-      </select>
-      <div class="period-tabs">
-        <button class="period-tab" onclick="setPeriod(1,this)">Hoy</button>
-        <button class="period-tab" onclick="setPeriodSemana(this)">Semana</button>
-        <button class="period-tab active" onclick="setPeriod(7,this)">7d</button>
-        <button class="period-tab" onclick="setPeriod(30,this)">30d</button>
-        <button class="period-tab" onclick="setPeriod(0,this)">Todo</button>
-        <button class="period-tab" id="tab-custom" onclick="toggleFechasCustom(this)">📅 Rango</button>
+      <button class="btn-sm" onclick="exportarReporteHTML()">⬇ Exportar HTML</button>
+    </div>
+  </div>
+  <!-- Filtros reportes — 2 columnas -->
+  <div class="filters-grid">
+    <!-- Columna izquierda: Fecha de evaluación -->
+    <div class="filters-col">
+      <div class="filters-col-title" style="color:var(--blue)">📋 Fecha de evaluación</div>
+      <div class="filter-row">
+        <select id="rep-modelo-select" onchange="setRepModeloSelect(this.value)"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none;cursor:pointer">
+          <option value="__todos__">🔀 Todos los modelos</option>
+          <option value="tradicional">🏫 Tradicional</option>
+          <option value="onaliat">💻 OnAliat</option>
+          <option value="titulacion">🎓 Titulación</option>
+        </select>
+        <select id="rep-agente-select" onchange="setAgente(this.value)"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none;cursor:pointer">
+          <option value="__todos__">👥 Todos los agentes</option>
+        </select>
+        <select id="rep-evaluador-select" onchange="setRepEvaluador(this.value)"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none;cursor:pointer">
+          <option value="__todos__">🧑‍💼 Todos los evaluadores</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <div class="period-tabs">
+          <button class="period-tab" onclick="setPeriod(1,this)">Hoy</button>
+          <button class="period-tab" onclick="setPeriodSemana(this)">Semana</button>
+          <button class="period-tab active" onclick="setPeriod(7,this)">7d</button>
+          <button class="period-tab" onclick="setPeriod(30,this)">30d</button>
+          <button class="period-tab" onclick="setPeriod(0,this)">Todo</button>
+          <button class="period-tab" id="tab-custom" onclick="toggleFechasCustom(this)">📅 Rango</button>
+        </div>
       </div>
       <div id="rep-fechas-custom" style="display:none;align-items:center;gap:6px;flex-wrap:wrap">
         <input type="date" id="rep-fecha-desde"
@@ -791,7 +878,42 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
           style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:5px 10px;outline:none"
           onchange="aplicarRangoFechas()" />
       </div>
-      <button class="btn-sm" onclick="exportarReporteHTML()">⬇ Exportar HTML</button>
+    </div>
+    <!-- Columna derecha: Fecha de la llamada + Horario -->
+    <div class="filters-col">
+      <div class="filters-col-title" style="color:var(--cyan)">📞 Fecha de la llamada</div>
+      <div class="filter-row">
+        <div class="period-tabs" id="rep-llamada-tabs">
+          <button class="period-tab llamada active" id="rep-llamada-all" onclick="setRepLlamadaPeriod(0,this)">Todo</button>
+          <button class="period-tab llamada" onclick="setRepLlamadaPeriod(1,this)">Hoy</button>
+          <button class="period-tab llamada" onclick="setRepLlamadaPeriodSemana(this)">Semana</button>
+          <button class="period-tab llamada" onclick="setRepLlamadaPeriod(7,this)">7d</button>
+          <button class="period-tab llamada" onclick="setRepLlamadaPeriod(30,this)">30d</button>
+          <button class="period-tab llamada" id="rep-llamada-tab-custom" onclick="toggleRepLlamadaCustom(this)">📅 Rango</button>
+        </div>
+      </div>
+      <div id="rep-llamada-fechas-custom" style="display:none;align-items:center;gap:6px;flex-wrap:wrap">
+        <input type="date" id="rep-llamada-desde"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:5px 10px;outline:none"
+          onchange="aplicarRangoFechasLlamadaRep()" />
+        <span style="color:var(--muted);font-size:12px">→</span>
+        <input type="date" id="rep-llamada-hasta"
+          style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:5px 10px;outline:none"
+          onchange="aplicarRangoFechasLlamadaRep()" />
+      </div>
+      <div class="filter-row">
+        <span class="filter-row-label" style="color:var(--green)">🕐 Horario</span>
+        <div class="period-tabs" id="rep-turno-tabs">
+          <button class="period-tab turno active" id="rep-turno-all" onclick="setRepTurno('__todos__',this)">Todos</button>
+          <button class="period-tab turno" onclick="setRepTurno('mat',this)" title="9:00–15:00 · incluye antes de 9h">🌅 Matutino</button>
+          <button class="period-tab turno" onclick="setRepTurno('ves',this)" title="15:00–21:00 · incluye después de 21h">🌙 Vespertino</button>
+          <span class="turno-sep"></span>
+          <button class="period-tab turno" onclick="setRepTurno('mat1',this)" title="9:00–12:00">9–12h</button>
+          <button class="period-tab turno" onclick="setRepTurno('mat2',this)" title="12:00–15:00">12–15h</button>
+          <button class="period-tab turno" onclick="setRepTurno('ves1',this)" title="15:00–18:00">15–18h</button>
+          <button class="period-tab turno" onclick="setRepTurno('ves2',this)" title="18:00–21:00">18–21h</button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="hist-stats" id="rep-kpis" style="grid-template-columns:repeat(5,1fr)"></div>
@@ -1609,11 +1731,24 @@ let repEvaluador = '__todos__';
 let histPeriod = 0;
 let histFechaDesde = null;
 let histFechaHasta = null;
+// Filtros secundarios historial: fecha llamada + turno
+let histLlamadaPeriod = 0;       // 0=todo, 1=hoy, 7, 30, -1=rango
+let histLlamadaDesde  = null;    // Date | null
+let histLlamadaHasta  = null;
+let histTurno         = '__todos__'; // 'mat1'|'mat2'|'ves1'|'ves2'|'__todos__'
+// Filtros secundarios reportes: fecha llamada + turno
+let repLlamadaPeriod  = 0;
+let repLlamadaDesde   = null;
+let repLlamadaHasta   = null;
+let repTurno          = '__todos__';
 
 function setHistPeriod(days, btn) {
   histPeriod = days; histFechaDesde = null; histFechaHasta = null;
   document.querySelectorAll('#page-historial .period-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  // ocultar picker si estaba abierto
+  const fc = document.getElementById('hist-fechas-custom');
+  if (fc) fc.style.display = 'none';
   renderHistorial();
 }
 function setHistPeriodSemana(btn) {
@@ -1623,7 +1758,185 @@ function setHistPeriodSemana(btn) {
   histFechaDesde = lunes; histFechaHasta = domingo; histPeriod = -1;
   document.querySelectorAll('#page-historial .period-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  const fc = document.getElementById('hist-fechas-custom');
+  if (fc) fc.style.display = 'none';
   renderHistorial();
+}
+function toggleHistFechasCustom(btn) {
+  const fc = document.getElementById('hist-fechas-custom');
+  const visible = fc.style.display === 'flex';
+  document.querySelectorAll('#page-historial .period-tab').forEach(b => b.classList.remove('active'));
+  if (visible) {
+    fc.style.display = 'none';
+    histFechaDesde = null; histFechaHasta = null; histPeriod = 0;
+    document.getElementById('hist-period-all').classList.add('active');
+    renderHistorial();
+  } else {
+    fc.style.display = 'flex';
+    btn.classList.add('active');
+    const hoy = new Date();
+    const hace7 = new Date(Date.now() - 7*86400000);
+    document.getElementById('hist-fecha-desde').value = hace7.toISOString().slice(0,10);
+    document.getElementById('hist-fecha-hasta').value = hoy.toISOString().slice(0,10);
+    aplicarRangoFechasHist();
+  }
+}
+function aplicarRangoFechasHist() {
+  const desdeVal = document.getElementById('hist-fecha-desde').value;
+  const hastaVal = document.getElementById('hist-fecha-hasta').value;
+  if (!desdeVal || !hastaVal) return;
+  histFechaDesde = new Date(desdeVal + 'T00:00:00');
+  histFechaHasta = new Date(hastaVal + 'T00:00:00');
+  if (histFechaDesde > histFechaHasta) {
+    histFechaHasta = histFechaDesde;
+    document.getElementById('hist-fecha-hasta').value = desdeVal;
+  }
+  histPeriod = -1;
+  renderHistorial();
+}
+
+// ── Utilidad: parsea fecha_llamada "DD/MM/YYYY" → Date (medianoche local) ──
+function parseFechaLlamada(str) {
+  if (!str) return null;
+  const [dd, mm, yyyy] = str.split('/');
+  if (!dd || !mm || !yyyy) return null;
+  return new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+}
+
+// ── Utilidad: parsea hora_llamada "HH:MM:SS" → bucket ──
+// mat=turno matutino completo (9-15, incl <9), ves=vespertino completo (15-21, incl >21)
+// mat1=9-12, mat2=12-15, ves1=15-18, ves2=18-21
+function horaABucket(horaStr) {
+  if (!horaStr) return null;
+  const h = parseInt(horaStr.split(':')[0], 10);
+  if (isNaN(h)) return null;
+  if (h < 15) return { bucket: 'mat', sub: h < 12 ? 'mat1' : 'mat2' };
+  return { bucket: 'ves', sub: h < 18 ? 'ves1' : 'ves2' };
+}
+function matchTurno(horaStr, turno) {
+  if (!turno || turno === '__todos__') return true;
+  const b = horaABucket(horaStr);
+  if (!b) return false;
+  if (turno === 'mat') return b.bucket === 'mat';
+  if (turno === 'ves') return b.bucket === 'ves';
+  return b.sub === turno;
+}
+
+const TURNO_LABELS = {
+  mat1: 'Matutino 9–12h', mat2: 'Matutino 12–15h',
+  ves1: 'Vespertino 15–18h', ves2: 'Vespertino 18–21h'
+};
+
+// ── Filtros HISTORIAL: fecha llamada ──
+function setHistLlamadaPeriod(days, btn) {
+  histLlamadaPeriod = days; histLlamadaDesde = null; histLlamadaHasta = null;
+  document.querySelectorAll('#hist-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('hist-llamada-fechas-custom').style.display = 'none';
+  renderHistorial();
+}
+function setHistLlamadaPeriodSemana(btn) {
+  const hoy = new Date(), lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate()-((hoy.getDay()+6)%7)); lunes.setHours(0,0,0,0);
+  const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6); domingo.setHours(23,59,59,999);
+  histLlamadaDesde = lunes; histLlamadaHasta = domingo; histLlamadaPeriod = -1;
+  document.querySelectorAll('#hist-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('hist-llamada-fechas-custom').style.display = 'none';
+  renderHistorial();
+}
+function toggleHistLlamadaCustom(btn) {
+  const fc = document.getElementById('hist-llamada-fechas-custom');
+  const visible = fc.style.display === 'flex';
+  document.querySelectorAll('#hist-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  if (visible) {
+    fc.style.display = 'none';
+    histLlamadaDesde = null; histLlamadaHasta = null; histLlamadaPeriod = 0;
+    document.getElementById('hist-llamada-all').classList.add('active');
+    renderHistorial();
+  } else {
+    fc.style.display = 'flex'; btn.classList.add('active');
+    const hoy = new Date(), hace7 = new Date(Date.now()-7*86400000);
+    document.getElementById('hist-llamada-desde').value = hace7.toISOString().slice(0,10);
+    document.getElementById('hist-llamada-hasta').value = hoy.toISOString().slice(0,10);
+    aplicarRangoFechasLlamadaHist();
+  }
+}
+function aplicarRangoFechasLlamadaHist() {
+  const dv = document.getElementById('hist-llamada-desde').value;
+  const hv = document.getElementById('hist-llamada-hasta').value;
+  if (!dv || !hv) return;
+  histLlamadaDesde = new Date(dv+'T00:00:00');
+  histLlamadaHasta = new Date(hv+'T00:00:00');
+  if (histLlamadaDesde > histLlamadaHasta) {
+    histLlamadaHasta = histLlamadaDesde;
+    document.getElementById('hist-llamada-hasta').value = dv;
+  }
+  histLlamadaPeriod = -1; renderHistorial();
+}
+function setHistTurno(turno, btn) {
+  histTurno = turno;
+  document.querySelectorAll('#hist-turno-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const lbl = document.getElementById('hist-turno-label');
+  if (lbl) lbl.textContent = turno === '__todos__' ? '' : TURNO_LABELS[turno] || '';
+  renderHistorial();
+}
+
+// ── Filtros REPORTES: fecha llamada ──
+function setRepLlamadaPeriod(days, btn) {
+  repLlamadaPeriod = days; repLlamadaDesde = null; repLlamadaHasta = null;
+  document.querySelectorAll('#rep-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('rep-llamada-fechas-custom').style.display = 'none';
+  renderReportes();
+}
+function setRepLlamadaPeriodSemana(btn) {
+  const hoy = new Date(), lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate()-((hoy.getDay()+6)%7)); lunes.setHours(0,0,0,0);
+  const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6); domingo.setHours(23,59,59,999);
+  repLlamadaDesde = lunes; repLlamadaHasta = domingo; repLlamadaPeriod = -1;
+  document.querySelectorAll('#rep-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('rep-llamada-fechas-custom').style.display = 'none';
+  renderReportes();
+}
+function toggleRepLlamadaCustom(btn) {
+  const fc = document.getElementById('rep-llamada-fechas-custom');
+  const visible = fc.style.display === 'flex';
+  document.querySelectorAll('#rep-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  if (visible) {
+    fc.style.display = 'none';
+    repLlamadaDesde = null; repLlamadaHasta = null; repLlamadaPeriod = 0;
+    document.getElementById('rep-llamada-all').classList.add('active');
+    renderReportes();
+  } else {
+    fc.style.display = 'flex'; btn.classList.add('active');
+    const hoy = new Date(), hace7 = new Date(Date.now()-7*86400000);
+    document.getElementById('rep-llamada-desde').value = hace7.toISOString().slice(0,10);
+    document.getElementById('rep-llamada-hasta').value = hoy.toISOString().slice(0,10);
+    aplicarRangoFechasLlamadaRep();
+  }
+}
+function aplicarRangoFechasLlamadaRep() {
+  const dv = document.getElementById('rep-llamada-desde').value;
+  const hv = document.getElementById('rep-llamada-hasta').value;
+  if (!dv || !hv) return;
+  repLlamadaDesde = new Date(dv+'T00:00:00');
+  repLlamadaHasta = new Date(hv+'T00:00:00');
+  if (repLlamadaDesde > repLlamadaHasta) {
+    repLlamadaHasta = repLlamadaDesde;
+    document.getElementById('rep-llamada-hasta').value = dv;
+  }
+  repLlamadaPeriod = -1; renderReportes();
+}
+function setRepTurno(turno, btn) {
+  repTurno = turno;
+  document.querySelectorAll('#rep-turno-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const lbl = document.getElementById('rep-turno-label');
+  if (lbl) lbl.textContent = turno === '__todos__' ? '' : TURNO_LABELS[turno] || '';
+  renderReportes();
 }
 
 // BATCH
@@ -1699,19 +2012,47 @@ function setRepEvaluador(m) {
 // ═══════════════════════════════════════════════
 // NAVEGACIÓN
 // ═══════════════════════════════════════════════
-function showPage(name, btn) {
+// ── Historial de navegación para botón Volver ──
+let _pageHistory = []; // stack de {name, scrollY}
+let _currentPageName = 'evaluar';
+
+function showPage(name, btn, _fromBack) {
+  if (!_fromBack && _currentPageName && _currentPageName !== name) {
+    _pageHistory.push({ name: _currentPageName, scrollY: window.scrollY });
+    if (_pageHistory.length > 20) _pageHistory.shift();
+  }
+  _currentPageName = name;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-pill').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
+  // sync nav pill active state even when called without btn (e.g. verDetalle)
+  const pillMap = { evaluar:0, batch:1, historial:2, reportes:3, config:4, top:5 };
+  if (btn === undefined || btn === null) {
+    const pills = document.querySelectorAll('.nav-pill');
+    if (pillMap[name] !== undefined && pills[pillMap[name]]) pills[pillMap[name]].classList.add('active');
+  }
   if (name === 'historial') {
-    // Ensure currentUserData is available before rendering admin controls
     if (currentUserData) renderHistorial();
     else setTimeout(() => renderHistorial(), 500);
   }
   if (name === 'reportes')  renderReportes();
   if (name === 'config')    renderConfigPage();
   if (name === 'top')       renderTopCalls();
+  // mostrar/ocultar botón volver
+  const btnV = document.getElementById('btn-volver');
+  if (_pageHistory.length > 0) btnV.classList.add('visible');
+  else btnV.classList.remove('visible');
+}
+
+function volverPaginaAnterior() {
+  if (!_pageHistory.length) return;
+  const prev = _pageHistory.pop();
+  showPage(prev.name, null, true);
+  setTimeout(() => window.scrollTo({ top: prev.scrollY, behavior: 'smooth' }), 80);
+  // ocultar botón si ya no hay más historial
+  const btnV = document.getElementById('btn-volver');
+  if (_pageHistory.length === 0) btnV.classList.remove('visible');
 }
 
 // ═══════════════════════════════════════════════
@@ -2855,6 +3196,24 @@ function renderHistorial() {
   if (agenteF    !== '__todos__') data = data.filter(h => h.agente === agenteF);
   if (evaluadorF !== '__todos__') data = data.filter(h => (h.evaluadorNombre||'') === evaluadorF);
 
+  // Filtro por fecha de llamada
+  if (histLlamadaDesde && histLlamadaHasta) {
+    data = data.filter(h => {
+      const fl = parseFechaLlamada(h.fecha_llamada); if (!fl) return false;
+      return fl >= histLlamadaDesde && fl <= histLlamadaHasta;
+    });
+  } else if (histLlamadaPeriod === 1) {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    data = data.filter(h => { const fl = parseFechaLlamada(h.fecha_llamada); return fl && fl >= hoy; });
+  } else if (histLlamadaPeriod > 1) {
+    const cutoff = new Date(Date.now() - histLlamadaPeriod * 86400000); cutoff.setHours(0,0,0,0);
+    data = data.filter(h => { const fl = parseFechaLlamada(h.fecha_llamada); return fl && fl >= cutoff; });
+  }
+  // Filtro por turno/horario
+  if (histTurno !== '__todos__') {
+    data = data.filter(h => matchTurno(h.hora_llamada, histTurno));
+  }
+
   // Update count
   const countEl = document.getElementById('hist-count');
   if (countEl) countEl.textContent = data.length + ' evaluación' + (data.length!==1?'es':'');
@@ -2881,14 +3240,14 @@ function renderHistorial() {
     <div class="stat-card"><div class="stat-val" style="color:${criticas>0?'var(--red)':'var(--green)'}">${criticas}</div><div class="stat-lbl">Llamadas críticas</div></div>
     <div class="stat-card"><div class="stat-val" style="color:var(--cyan)">${Math.round(cierres/data.length*100)}%</div><div class="stat-lbl">Tasa de cierre</div></div>`;
   const esAdmin = qaIsAdmin; // set globally in onAuthChanged, no timing dependency
-  const filas=data.map(h=>{const col=h.score_total>=80?'var(--green)':h.score_total>=60?'var(--yellow)':'var(--red)',ico=h.score_total>=80?'🟢':h.score_total>=60?'🟡':'🔴';const probCol=h.probabilidad_inscripcion>=70?'var(--green)':h.probabilidad_inscripcion>=40?'var(--yellow)':'var(--red)';const delBtn=esAdmin?`<td><button class="btn-del-eval" onclick="event.stopPropagation();eliminarEvaluacion(${h.id})" title="Eliminar evaluación">🗑</button></td>`:'';return`<tr onclick="verDetalle(${h.id})"><td style="color:var(--muted);font-size:12px">${h.fecha_llamada||'—'}</td><td style="color:var(--muted);font-size:12px">${h.fecha||'—'}</td><td style="font-weight:500">${h.es_top?'⭐ ':' '}${h.agente}</td><td style="color:var(--muted)">${(h.modelo||'trad')==='onaliat'?'💻':(h.modelo==='titulacion'?'🎓':'🏫')} ${h.tipo}</td><td><strong style="color:${col}">${ico} ${h.score_total}/100</strong></td><td style="color:${h.probabilidad_inscripcion!=null?probCol:'var(--muted)'};">${h.probabilidad_inscripcion!=null?h.probabilidad_inscripcion+'%':'—'}</td><td style="color:var(--muted);font-family:var(--mono);font-size:12px">${formatDuracion(h.duracion_segundos)}</td><td>${h.logro_objetivo?'✅':'❌'}</td><td style="color:var(--muted);font-size:11px;white-space:nowrap">${h.evaluadorNombre||'—'}</td>${delBtn}</tr>`;}).join('');
+  const filas=data.map(h=>{const col=h.score_total>=80?'var(--green)':h.score_total>=60?'var(--yellow)':'var(--red)',ico=h.score_total>=80?'🟢':h.score_total>=60?'🟡':'🔴';const probCol=h.probabilidad_inscripcion>=70?'var(--green)':h.probabilidad_inscripcion>=40?'var(--yellow)':'var(--red)';const delBtn=esAdmin?`<td><button class="btn-del-eval" onclick="event.stopPropagation();eliminarEvaluacion(${h.id})" title="Eliminar evaluación">🗑</button></td>`:'';return`<tr onclick="verDetalle(${h.id})"><td style="color:var(--muted);font-size:12px">${h.fecha_llamada||'—'}</td><td style="color:var(--muted);font-size:12px;font-family:var(--mono)">${h.hora_llamada||'—'}</td><td style="color:var(--muted);font-size:12px">${h.fecha||'—'}</td><td style="font-weight:500">${h.es_top?'⭐ ':' '}${h.agente}</td><td style="color:var(--muted)">${(h.modelo||'trad')==='onaliat'?'💻':(h.modelo==='titulacion'?'🎓':'🏫')} ${h.tipo}</td><td><strong style="color:${col}">${ico} ${h.score_total}/100</strong></td><td style="color:${h.probabilidad_inscripcion!=null?probCol:'var(--muted)'};">${h.probabilidad_inscripcion!=null?h.probabilidad_inscripcion+'%':'—'}</td><td style="color:var(--muted);font-family:var(--mono);font-size:12px">${formatDuracion(h.duracion_segundos)}</td><td>${h.logro_objetivo?'✅':'❌'}</td><td style="color:var(--muted);font-size:11px;white-space:nowrap">${h.evaluadorNombre||'—'}</td>${delBtn}</tr>`;}).join('');
   const thDel = esAdmin ? '<th></th>' : '';
-  tablaEl.innerHTML=`<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Fecha llamada</th><th>Fecha evaluación</th><th>Agente</th><th>Modelo · Tipo</th><th>Score</th><th>Prob. Inscripción/Pago</th><th>Duración</th><th>Cerró</th><th>Evaluado por</th>${thDel}</tr></thead><tbody>${filas}</tbody></table></div>`;
+  tablaEl.innerHTML=`<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Fecha llamada</th><th>Hora</th><th>Fecha evaluación</th><th>Agente</th><th>Modelo · Tipo</th><th>Score</th><th>Prob. Inscripción/Pago</th><th>Duración</th><th>Cerró</th><th>Evaluado por</th>${thDel}</tr></thead><tbody>${filas}</tbody></table></div>`;
 }
 
 function verDetalle(id) {
   const r=historial.find(h=>h.id===id); if(!r) return;
-  showPage('evaluar',document.querySelectorAll('.nav-pill')[0]);
+  showPage('evaluar', null);
   renderResultado(r,r.transcripcion);
 }
 
@@ -2960,6 +3319,25 @@ function filtrarPorPeriodo() {
   if (repAgente !== '__todos__') data = data.filter(h => h.agente === repAgente);
   if (repModelo !== '__todos__') data = data.filter(h => (h.modelo||'tradicional') === repModelo);
   if (repEvaluador !== '__todos__') data = data.filter(h => (h.evaluadorNombre||'') === repEvaluador);
+
+  // Filtro por fecha de llamada
+  if (repLlamadaDesde && repLlamadaHasta) {
+    data = data.filter(h => {
+      const fl = parseFechaLlamada(h.fecha_llamada); if (!fl) return false;
+      return fl >= repLlamadaDesde && fl <= repLlamadaHasta;
+    });
+  } else if (repLlamadaPeriod === 1) {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    data = data.filter(h => { const fl = parseFechaLlamada(h.fecha_llamada); return fl && fl >= hoy; });
+  } else if (repLlamadaPeriod > 1) {
+    const cutoff = new Date(Date.now() - repLlamadaPeriod * 86400000); cutoff.setHours(0,0,0,0);
+    data = data.filter(h => { const fl = parseFechaLlamada(h.fecha_llamada); return fl && fl >= cutoff; });
+  }
+  // Filtro por turno/horario
+  if (repTurno !== '__todos__') {
+    data = data.filter(h => matchTurno(h.hora_llamada, repTurno));
+  }
+
   return data;
 }
 
