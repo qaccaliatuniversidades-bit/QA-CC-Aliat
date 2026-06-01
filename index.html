@@ -2525,7 +2525,7 @@ function hcRenderListado() {
       <td style="padding:8px 12px;font-family:var(--mono);color:var(--blue)">${nom}</td>
       <td style="padding:8px 12px;font-weight:500">${d.nombre}</td>
       <td style="padding:8px 12px;color:${statusColor(d.status)};font-weight:600;font-size:10px">${d.status||'—'}</td>
-      <td style="padding:8px 12px;color:var(--muted)">${d.fechaIngreso||'—'}</td>
+      <td style="padding:8px 12px;color:var(--muted)">${formatFechaIngreso(d.fechaIngreso)}</td>
       <td style="padding:8px 12px;color:var(--muted)">${d.idProyecto||'—'}</td>
       <td style="padding:8px 12px;color:var(--muted)">${d.turno||'—'}</td>
       <td style="padding:8px 12px;color:var(--muted);font-family:var(--mono);font-size:10px">${d.idPosicion||'—'}</td>
@@ -3846,6 +3846,24 @@ async function cargarCalibracionesAprobadas() {
   } catch(e) { calibracionesAprobadas = []; }
 }
 
+function formatFechaIngreso(val) {
+  if (!val || val === '—' || val === '') return '—';
+  const s = String(val).trim();
+  // Serial numérico de Excel (ej: 45754)
+  if (/^\d{4,5}$/.test(s)) {
+    const d = new Date((parseInt(s) - 25569) * 86400000);
+    if (!isNaN(d)) return d.toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'});
+  }
+  // DD/MM/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(s)) return s.split(' ')[0];
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const [y,m,d] = s.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  return s;
+}
+
 function calcularAntiguedad(fechaIngresoStr, fechaEvalStr) {
   if (!fechaIngresoStr || fechaIngresoStr === '—') return null;
   try {
@@ -4408,9 +4426,29 @@ function renderHistorialDatos() {
   const cierres=data.filter(h=>h.logro_objetivo).length;
   if (statsEl) statsEl.innerHTML=`<div class="stat-card"><div class="stat-val" style="color:${avg>=80?'var(--green)':avg>=60?'var(--yellow)':'var(--red)'}">${avg.toFixed(1)}</div><div class="stat-lbl">Score promedio</div></div><div class="stat-card"><div class="stat-val">${data.length}</div><div class="stat-lbl">Llamadas evaluadas</div></div><div class="stat-card"><div class="stat-val" style="color:${criticas>0?'var(--red)':'var(--green)'}">${criticas}</div><div class="stat-lbl">Llamadas críticas</div></div><div class="stat-card"><div class="stat-val" style="color:var(--cyan)">${Math.round(cierres/data.length*100)}%</div><div class="stat-lbl">Tasa de cierre</div></div>`;
   const esAdmin=qaIsAdmin;
-  const filas=data.map(h=>{const col=h.score_total>=80?'var(--green)':h.score_total>=60?'var(--yellow)':'var(--red)',ico=h.score_total>=80?'🟢':h.score_total>=60?'🟡':'🔴';const probCol=h.probabilidad_inscripcion>=70?'var(--green)':h.probabilidad_inscripcion>=40?'var(--yellow)':'var(--red)';const delBtn=esAdmin?`<td><button class="btn-del-eval" onclick="event.stopPropagation();eliminarEvaluacion(${h.id})" title="Eliminar evaluación">🗑</button></td>`:'';return`<tr onclick="verDetalle(${h.id})"><td style="color:var(--muted);font-size:12px">${h.fecha_llamada||'—'}</td><td style="color:var(--muted);font-size:12px;font-family:var(--mono)">${h.hora_llamada||'—'}</td><td style="color:var(--muted);font-size:12px">${h.fecha||'—'}</td><td style="font-weight:500">${h.es_top?'⭐ ':' '}${h.agente}</td><td style="color:var(--muted)">${(h.modelo||'trad')==='onaliat'?'💻':(h.modelo==='titulacion'?'🎓':'🏫')} ${h.tipo}</td><td><strong style="color:${col}">${ico} ${h.score_total}</strong></td><td style="color:${h.probabilidad_inscripcion!=null?probCol:'var(--muted)'};">${h.probabilidad_inscripcion!=null?h.probabilidad_inscripcion+'%':'—'}</td><td style="color:var(--muted);font-family:var(--mono);font-size:12px">${formatDuracion(h.duracion_segundos)}</td><td>${h.logro_objetivo?'✅':'❌'}</td><td style="color:var(--muted);font-size:11px;white-space:nowrap">${h.evaluadorNombre||'—'}</td>${delBtn}</tr>`;}).join('');
+  const filas=data.map(h=>{
+    const col=h.score_total>=80?'var(--green)':h.score_total>=60?'var(--yellow)':'var(--red)',ico=h.score_total>=80?'🟢':h.score_total>=60?'🟡':'🔴';
+    const probCol=h.probabilidad_inscripcion>=70?'var(--green)':h.probabilidad_inscripcion>=40?'var(--yellow)':'var(--red)';
+    const delBtn=esAdmin?`<td><button class="btn-del-eval" onclick="event.stopPropagation();eliminarEvaluacion(${h.id})" title="Eliminar evaluación">🗑</button></td>`:'';
+    const hcM=buscarAgenteEnHC(h.agente);
+    const supervisor=hcM?.jefeDirecto||'—';
+    return`<tr onclick="verDetalle(${h.id})">
+      <td style="color:var(--muted);font-size:12px">${h.fecha_llamada||'—'}</td>
+      <td style="color:var(--muted);font-size:12px;font-family:var(--mono)">${h.hora_llamada||'—'}</td>
+      <td style="color:var(--muted);font-size:12px">${h.fecha||'—'}</td>
+      <td style="color:var(--muted);font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${supervisor}">${supervisor}</td>
+      <td style="font-weight:500">${h.es_top?'⭐ ':' '}${h.agente}</td>
+      <td style="color:var(--muted)">${(h.modelo||'trad')==='onaliat'?'💻':(h.modelo==='titulacion'?'🎓':'🏫')} ${h.tipo}</td>
+      <td><strong style="color:${col}">${ico} ${h.score_total}</strong></td>
+      <td style="color:${h.probabilidad_inscripcion!=null?probCol:'var(--muted)'};">${h.probabilidad_inscripcion!=null?h.probabilidad_inscripcion+'%':'—'}</td>
+      <td style="color:var(--muted);font-family:var(--mono);font-size:12px">${formatDuracion(h.duracion_segundos)}</td>
+      <td>${h.logro_objetivo?'✅':'❌'}</td>
+      <td style="color:var(--muted);font-size:11px;white-space:nowrap">${h.evaluadorNombre||'—'}</td>
+      ${delBtn}
+    </tr>`;
+  }).join('');
   const thDel=esAdmin?'<th></th>':'';
-  if (tablaEl) tablaEl.innerHTML=`<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Fecha llamada</th><th>Hora</th><th>Fecha evaluación</th><th>Agente</th><th>Modelo · Tipo</th><th>Score</th><th>Prob. Inscripción/Pago</th><th>Duración</th><th>Cerró</th><th>Evaluado por</th>${thDel}</tr></thead><tbody>${filas}</tbody></table></div>`;
+  if (tablaEl) tablaEl.innerHTML=`<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Fecha llamada</th><th>Hora</th><th>Fecha evaluación</th><th>Supervisor</th><th>Agente</th><th>Modelo · Tipo</th><th>Score</th><th>Prob. Inscripción/Pago</th><th>Duración</th><th>Cerró</th><th>Evaluado por</th>${thDel}</tr></thead><tbody>${filas}</tbody></table></div>`;
 }
 
 // Renderiza solo datos de reportes sin recrear el bloque de filtros
@@ -5689,7 +5727,7 @@ function exportarCSV() {
   // Encabezados fijos
   const encabezadosFijos = [
     'Fecha llamada','Hora llamada','Fecha evaluación',
-    'Asesor','Modelo','Programa','Campaña','Archivo',
+    'Supervisor','Asesor','Modelo','Programa','Campaña','Archivo',
     'Score total','Prob. inscripción/pago (%)','Duración (min)',
     'Prospecto (sentimiento)','Logró objetivo','Nivel urgencia',
     'Evaluado por','Fortalezas','Áreas de mejora',
@@ -5704,10 +5742,13 @@ function exportarCSV() {
   const filas = datos.map(h => {
     const dur = h.duracion_segundos ? (h.duracion_segundos/60).toFixed(2) : '';
     const modelo = (h.modelo||'tradicional') === 'onaliat' ? 'OnAliat' : 'Tradicional';
+    const hcM = buscarAgenteEnHC(h.agente);
+    const supervisor = hcM?.jefeDirecto || '';
     const fijos = [
       h.fecha_llamada||'',
       h.hora_llamada||'',
       h.fecha||'',
+      supervisor,
       h.agente||'',
       modelo,
       h.tipo||'',
