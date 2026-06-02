@@ -565,15 +565,15 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
 
 <!-- CORTES MODAL -->
 <div id="cortes-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;align-items:flex-start;justify-content:center;overflow-y:auto;padding:32px 16px">
-  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:26px 28px;width:1100px;max-width:98vw;box-shadow:0 20px 60px rgba(0,0,0,.6)">
-    <!-- Header -->
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:26px 28px;width:1200px;max-width:98vw;box-shadow:0 20px 60px rgba(0,0,0,.6)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
       <h3 style="font-size:16px;font-weight:600">📊 Reporte de corte</h3>
       <button onclick="cerrarCortes()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
     </div>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:18px">Cobertura y desempeño por supervisor, agrupado por turno y corte horario.</p>
-    <!-- Filtros -->
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Cobertura y desempeño por supervisor, agrupado por turno y corte horario.</p>
+
+    <!-- Fila 1: Fecha + Proyecto + Modo + CSV -->
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:6px">
         <span style="font-size:11px;color:var(--muted);font-weight:600">FECHA</span>
         <input type="date" id="corte-fecha-desde" style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:5px 9px;outline:none" onchange="renderReporteCorte()">
@@ -586,16 +586,27 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
           <option value="__todos__">Todos</option>
         </select>
       </div>
+      <!-- Modo: por llamada / por evaluación -->
+      <div style="display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:3px">
+        <button id="corte-modo-llamada" onclick="setCorteMode('llamada')" style="padding:4px 12px;border-radius:6px;background:var(--blue);color:#fff;border:none;font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer">Por llamada</button>
+        <button id="corte-modo-eval" onclick="setCorteMode('eval')" style="padding:4px 12px;border-radius:6px;background:transparent;color:var(--muted);border:none;font-family:var(--font);font-size:11px;cursor:pointer">Por evaluación</button>
+      </div>
       <button onclick="exportarCSVCorte()" style="margin-left:auto;padding:6px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;cursor:pointer;font-weight:600">⬇ Exportar CSV</button>
     </div>
-    <!-- Cortes horarios -->
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px" id="corte-horarios">
-      <button class="corte-btn active" data-corte="9-12"  onclick="toggleCorteBtn(this)">9:00 – 12:00</button>
-      <button class="corte-btn active" data-corte="12-15" onclick="toggleCorteBtn(this)">12:00 – 15:00</button>
-      <button class="corte-btn active" data-corte="15-18" onclick="toggleCorteBtn(this)">15:00 – 18:00</button>
-      <button class="corte-btn active" data-corte="18-21" onclick="toggleCorteBtn(this)">18:00 – 21:00</button>
+
+    <!-- Fila 2: Cortes horarios + rangos personalizados -->
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+      <span style="font-size:11px;color:var(--muted);font-weight:600">CORTES:</span>
+      <div id="corte-horarios" style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="corte-btn active" data-corte="9-12"  onclick="toggleCorteBtnNew(event,this)">9:00–12:00</button>
+        <button class="corte-btn active" data-corte="12-15" onclick="toggleCorteBtnNew(event,this)">12:00–15:00</button>
+        <button class="corte-btn active" data-corte="15-18" onclick="toggleCorteBtnNew(event,this)">15:00–18:00</button>
+        <button class="corte-btn active" data-corte="18-21" onclick="toggleCorteBtnNew(event,this)">18:00–21:00</button>
+      </div>
+      <div id="corte-rangos-custom" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+      <button onclick="agregarRangoCustom()" style="padding:4px 10px;border:1px dashed var(--border2);border-radius:7px;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;cursor:pointer" title="Agregar rango personalizado">+ Rango</button>
     </div>
-    <!-- Contenido -->
+
     <div id="reporte-corte-contenido"></div>
   </div>
 </div>
@@ -1852,48 +1863,45 @@ let _modelosCacheTs = 0;
 const MODELOS_FALLBACK = ['llama-3.3-70b-versatile','llama-3.1-8b-instant','gemma2-9b-it','llama3-70b-8192'];
 
 async function obtenerModelosDisponibles(groqKey) {
-  const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas
-  if (_modelosCache && (Date.now() - _modelosCacheTs) < CACHE_TTL) {
-    return _modelosCache;
-  }
+  // Consultar la API de Groq para obtener modelos activos en tiempo real
+  // así no dependemos de una lista fija que puede quedar desactualizada
+  const CACHE_TTL = 60 * 60 * 1000; // 1 hora
+  if (_modelosCache && (Date.now() - _modelosCacheTs) < CACHE_TTL) return _modelosCache;
   try {
     const resp = await fetch('https://api.groq.com/openai/v1/models', {
       headers: { 'Authorization': 'Bearer ' + groqKey }
     });
     if (!resp.ok) throw new Error('No se pudo obtener modelos');
     const data = await resp.json();
-    // Solo incluir modelos de chat/texto — excluir TTS, whisper, vision, embeddings y cualquier modelo no-LLM
-    const EXCLUIR = ['whisper','tts','speech','vision','embed','orpheus','canopy','playai','distil-whisper'];
-    // Solo modelos que contengan patrones de LLM conocidos
-    const INCLUIR = ['llama','gemma','mixtral','mistral','qwen','deepseek','falcon','phi'];
-    const PREFERIDOS = ['llama-3.3-70b','llama-3.1-70b','llama3-70b','llama-3.1-8b','gemma2','llama-3-70b'];
+    // Solo modelos de texto grandes — excluir whisper, tts, guard, scout, embed y modelos pequeños
+    const EXCLUIR = ['whisper','tts','speech','vision','embed','orpheus','playai','guard','distil',
+                     'scout','8b','7b','3b','1b','gemma2-9b'];
+    // Solo 70b+ y modelos versatile/instruct conocidos
+    const INCLUIR = ['70b','72b','versatile','llama-3.3'];
     const disponibles = data.data
       .filter(m => {
         const id = m.id.toLowerCase();
-        // Excluir si contiene cualquier término no-LLM
         if (EXCLUIR.some(ex => id.includes(ex))) return false;
-        // Solo incluir si contiene un patrón LLM conocido
         return INCLUIR.some(inc => id.includes(inc));
       })
       .map(m => m.id)
-      .sort((a, b) => {
-        const aScore = PREFERIDOS.findIndex(p => a.includes(p));
-        const bScore = PREFERIDOS.findIndex(p => b.includes(p));
-        if (aScore === -1 && bScore === -1) return a.localeCompare(b);
-        if (aScore === -1) return 1;
-        if (bScore === -1) return -1;
+      .sort((a,b) => {
+        // Preferir llama-3.3-70b-versatile primero
+        const aScore = a.includes('3.3') ? 0 : a.includes('70b') ? 1 : 2;
+        const bScore = b.includes('3.3') ? 0 : b.includes('70b') ? 1 : 2;
         return aScore - bScore;
       });
     if (disponibles.length > 0) {
-      _modelosCache = disponibles.slice(0, 5); // usar los 5 mejores
+      _modelosCache = disponibles.slice(0, 3);
       _modelosCacheTs = Date.now();
-      console.log('Modelos Groq disponibles:', _modelosCache);
+      console.log('Modelos Groq activos:', _modelosCache);
       return _modelosCache;
     }
   } catch(e) {
-    console.warn('No se pudo obtener modelos de Groq, usando fallback:', e.message);
+    console.warn('No se pudo obtener modelos de Groq:', e.message);
   }
-  return MODELOS_FALLBACK;
+  // Fallback mínimo — solo el más reciente conocido
+  return ['llama-3.3-70b-versatile'];
 }
 let audioFile  = null;
 let currentAudioURL = null; // Object URL del audio actualmente cargado (para el reproductor)
@@ -3576,28 +3584,14 @@ Puntuación: 100=controló silencios y mute correctamente (o no fue necesario). 
   const MODELOS_GROQ = await obtenerModelosDisponibles(groqKey);
   let lastErr = '';
   for (const m of MODELOS_GROQ) {
-    let maxTok = 4000;
-    let resp, intentos = 0;
-    while (intentos < 3) {
-      resp = await fetch('https://api.groq.com/openai/v1/chat/completions',{
-        method:'POST',
-        headers:{'Authorization':'Bearer '+groqKey,'Content-Type':'application/json'},
-        body: JSON.stringify({model:m,messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:maxTok})
-      });
-      if (resp.ok) break;
-      const errTxt = await resp.text();
-      // Si el error es de max_tokens, reducir y reintentar
-      const limMatch = errTxt.match(/less than or equal to `?(\d+)`?/);
-      if (limMatch) {
-        maxTok = Math.floor(parseInt(limMatch[1]) * 0.9);
-        lastErr = errTxt; intentos++; continue;
-      }
-      lastErr = errTxt; break;
-    }
+    const resp = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+groqKey,'Content-Type':'application/json'},
+      body: JSON.stringify({model:m,messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:4000})
+    });
     if (resp.ok) {
       const d = await resp.json();
       let raw = d.choices[0].message.content.trim().replace(/```json/g,'').replace(/```/g,'').trim();
-      // Truncar JSON incompleto: si termina sin "}" cerrando, intentar reparar
       if (!raw.endsWith('}')) {
         const lastBrace = raw.lastIndexOf('}');
         if (lastBrace > 0) raw = raw.slice(0, lastBrace + 1);
@@ -3607,28 +3601,25 @@ Puntuación: 100=controló silencios y mute correctamente (o no fue necesario). 
         if (!resultado.scores || typeof resultado.scores !== 'object') {
           lastErr = 'JSON sin campo "scores" (modelo: ' + m + ')'; continue;
         }
-
-        let score = 0;
-        // N/A dinámico de la IA: si el criterio está habilitado y la IA devuelve "N/A"
-        // → cuenta como 100 (no era obligatorio, punto positivo).
-        // Si el criterio está deshabilitado en el panel → se excluye del cálculo como siempre.
         const criteriosActivos = criterios.filter(c => !naKeys.has(c.key));
         const totalPeso = criteriosActivos.reduce((s,c) => s + (pesos[c.key]||0), 0) || 100;
         let ptsObtenidos = 0;
         criteriosActivos.forEach(c => {
           const val = resultado.scores[c.key];
           const esDynNA = typeof val === 'string' && val.trim().toUpperCase() === 'N/A';
-          const pct = Math.min(esDynNA ? 100 : (val || 0), 100); // máx 100 por ítem
+          const pct = Math.min(esDynNA ? 100 : (val || 0), 100);
           ptsObtenidos += (pct / 100) * (pesos[c.key]||0);
         });
-        resultado.score_total = Math.min(Math.round(ptsObtenidos), totalPeso); // nunca supera el total
+        resultado.score_total = Math.min(Math.round(ptsObtenidos), totalPeso);
         resultado.criterios_na = Array.from(naKeys);
         resultado.pts_activos = totalPeso;
         return resultado;
       } catch(parseErr) {
         lastErr = 'JSON inválido del modelo ' + m + ': ' + parseErr.message; continue;
       }
-    } else { lastErr = await resp.text(); }
+    } else {
+      lastErr = await resp.text();
+    }
   }
   throw new Error('Evaluación IA falló: ' + lastErr);
 }
@@ -5860,6 +5851,9 @@ function copiarFeedback(id) {
 // ══════════════════════════════════════════
 // REPORTE DE CORTE
 // ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// REPORTE DE CORTE — v2
+// ══════════════════════════════════════════
 const CORTES_DEF = [
   {key:'9-12',  label:'9:00-12:00',  horaMin:9,  horaMax:12},
   {key:'12-15', label:'12:00-15:00', horaMin:12, horaMax:15},
@@ -5876,16 +5870,29 @@ const ETAPAS_PQ = [
   {label:'Etiqueta',     keys:['etq_personalizacion','etq_plantillas','etq_respuesta','etq_conflicto','etq_control']},
 ];
 
+let corteModo = 'llamada'; // 'llamada' | 'eval'
+let corteRangosCustom = []; // [{id, label, fechaDesde, fechaHasta, horaMin, horaMax}]
+let _corteRangoId = 0;
+
+function setCorteMode(modo) {
+  corteModo = modo;
+  document.getElementById('corte-modo-llamada').style.cssText = modo==='llamada'
+    ? 'padding:4px 12px;border-radius:6px;background:var(--blue);color:#fff;border:none;font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer'
+    : 'padding:4px 12px;border-radius:6px;background:transparent;color:var(--muted);border:none;font-family:var(--font);font-size:11px;cursor:pointer';
+  document.getElementById('corte-modo-eval').style.cssText = modo==='eval'
+    ? 'padding:4px 12px;border-radius:6px;background:var(--blue);color:#fff;border:none;font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer'
+    : 'padding:4px 12px;border-radius:6px;background:transparent;color:var(--muted);border:none;font-family:var(--font);font-size:11px;cursor:pointer';
+  renderReporteCorte();
+}
+
 function abrirCortes() {
   if (!qaIsAdmin) return;
   document.getElementById('cortes-overlay').style.display = 'flex';
-  // Fecha hoy por defecto
   const hoy = new Date().toISOString().slice(0,10);
   const fd = document.getElementById('corte-fecha-desde');
   const fh = document.getElementById('corte-fecha-hasta');
   if (fd && !fd.value) fd.value = hoy;
   if (fh && !fh.value) fh.value = hoy;
-  // Poblar proyectos desde HC
   poblarProyectosCorte();
   renderReporteCorte();
 }
@@ -5903,25 +5910,93 @@ function poblarProyectosCorte() {
     proyectos.map(p=>`<option value="${p}"${p===prev?' selected':''}>${p}</option>`).join('');
 }
 
-function toggleCorteBtn(btn) {
-  btn.classList.toggle('active');
+// Toggle con ctrl+click para múltiple selección
+function toggleCorteBtnNew(event, btn) {
+  const btns = [...document.querySelectorAll('#corte-horarios .corte-btn')];
+  if (event.ctrlKey || event.metaKey) {
+    // Ctrl+click: toggle individual
+    btn.classList.toggle('active');
+  } else {
+    // Click simple: activar SOLO este
+    btns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  // Si ninguno activo, activar todos
+  if (!btns.some(b=>b.classList.contains('active'))) btns.forEach(b=>b.classList.add('active'));
   renderReporteCorte();
 }
 
 function getCortesActivos() {
-  return [...document.querySelectorAll('#corte-horarios .corte-btn.active')].map(b=>b.dataset.corte);
+  const fijos = [...document.querySelectorAll('#corte-horarios .corte-btn.active')].map(b=>b.dataset.corte);
+  const customs = corteRangosCustom.filter(r=>r.activo).map(r=>r.id);
+  return [...fijos, ...customs];
 }
 
-function calcularScoreColor(s) {
-  return s >= 80 ? 'cn-g' : s >= 60 ? 'cn-y' : 'cn-r';
+function agregarRangoCustom() {
+  const id = 'custom-' + (++_corteRangoId);
+  corteRangosCustom.push({id, label:'Rango '+_corteRangoId, activo:true,
+    fechaDesde:'', fechaHasta:'', horaMin:0, horaMax:23});
+  renderRangosCustom();
 }
 
-function calcularCoberturaColor(pct) {
-  return pct >= 80 ? 'cn-g' : pct >= 60 ? 'cn-y' : 'cn-r';
+function renderRangosCustom() {
+  const cont = document.getElementById('corte-rangos-custom');
+  if (!cont) return;
+  cont.innerHTML = corteRangosCustom.map(r => `
+    <div style="display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid ${r.activo?'var(--blue)':'var(--border2)'};border-radius:7px;padding:4px 8px">
+      <input type="date" value="${r.fechaDesde}" onchange="actualizarRango('${r.id}','fechaDesde',this.value)"
+        style="background:transparent;border:none;color:var(--text);font-family:var(--font);font-size:11px;outline:none;width:120px">
+      <span style="color:var(--muted);font-size:10px">→</span>
+      <input type="date" value="${r.fechaHasta}" onchange="actualizarRango('${r.id}','fechaHasta',this.value)"
+        style="background:transparent;border:none;color:var(--text);font-family:var(--font);font-size:11px;outline:none;width:120px">
+      <input type="time" value="${String(r.horaMin).padStart(2,'0')+':00'}" onchange="actualizarRango('${r.id}','horaMin',parseInt(this.value))"
+        style="background:transparent;border:none;color:var(--text);font-family:var(--font);font-size:11px;outline:none;width:72px">
+      <span style="color:var(--muted);font-size:10px">–</span>
+      <input type="time" value="${String(r.horaMax).padStart(2,'0')+':00'}" onchange="actualizarRango('${r.id}','horaMax',parseInt(this.value))"
+        style="background:transparent;border:none;color:var(--text);font-family:var(--font);font-size:11px;outline:none;width:72px">
+      <button onclick="toggleRangoCustom('${r.id}')" style="background:none;border:none;color:${r.activo?'var(--blue)':'var(--muted)'};font-size:13px;cursor:pointer" title="${r.activo?'Desactivar':'Activar'}">${r.activo?'●':'○'}</button>
+      <button onclick="eliminarRangoCustom('${r.id}')" style="background:none;border:none;color:var(--red);font-size:13px;cursor:pointer" title="Eliminar">×</button>
+    </div>`).join('');
+}
+
+function actualizarRango(id, campo, valor) {
+  const r = corteRangosCustom.find(x=>x.id===id);
+  if (!r) return;
+  if (campo === 'horaMin' || campo === 'horaMax') r[campo] = parseInt(valor);
+  else r[campo] = valor;
+  renderReporteCorte();
+}
+
+function toggleRangoCustom(id) {
+  const r = corteRangosCustom.find(x=>x.id===id);
+  if (r) { r.activo = !r.activo; renderRangosCustom(); renderReporteCorte(); }
+}
+
+function eliminarRangoCustom(id) {
+  corteRangosCustom = corteRangosCustom.filter(x=>x.id!==id);
+  renderRangosCustom(); renderReporteCorte();
+}
+
+// Devuelve la hora (0-23) según el modo: de la llamada o de la evaluación
+function getHoraCorte(h) {
+  if (corteModo === 'eval') return horaDeEval(h);
+  const hora = h.hora_llamada ? parseInt(h.hora_llamada.split(':')[0]) : -1;
+  return hora;
+}
+
+// Devuelve la fecha string según el modo
+function getFechaCorte(h) {
+  return corteModo === 'eval' ? (h.fecha||'').split(',')[0].trim() : (h.fecha_llamada||'');
+}
+
+// Determina el corte de un agente según su turno (matutino: max 15h, vespertino: 15h+)
+function getCorteKey(h, horaMin, horaMax) {
+  // Solo verifica rango horario — el turno del agente determina qué bloques aplican
+  const hora = getHoraCorte(h);
+  return hora >= horaMin && hora < horaMax;
 }
 
 function calcularPQ(llamadas) {
-  // Calcular score promedio por etapa y devolver las 2 con score más bajo
   const promedios = ETAPAS_PQ.map(etapa => {
     const vals = llamadas.flatMap(h => etapa.keys.map(k => {
       const v = h.scores?.[k];
@@ -5932,119 +6007,135 @@ function calcularPQ(llamadas) {
     return {label: etapa.label, avg};
   });
   promedios.sort((a,b) => a.avg - b.avg);
-  // Tomar las 2 peores si la diferencia es ≤10 puntos, si no solo la peor
   const top = [promedios[0]];
   if (promedios[1] && promedios[1].avg - promedios[0].avg <= 10) top.push(promedios[1]);
   return top.map(e=>e.label).join(' & ');
 }
 
-function calcularFilasSupervisor(corteKey, fdDesde, fdHasta, proyectoFiltro) {
-  const corte = CORTES_DEF.find(c=>c.key===corteKey);
+function calcularPlantillaSup(supervisor, proyectoFiltro) {
+  let n = 0;
+  Object.values(hcData).forEach(d => {
+    if (d.jefeDirecto !== supervisor) return;
+    if ((d.status||'').trim() !== 'Activo operando') return;
+    if (proyectoFiltro && proyectoFiltro !== '__todos__' && d.idProyecto !== proyectoFiltro) return;
+    n++;
+  });
+  return n;
+}
 
-  // Filtrar historial
-  let data = historial;
-  if (fdDesde) data = data.filter(h => {
-    const fl = parseFechaLlamada(h.fecha_llamada);
-    return fl && fl >= fdDesde && fl <= (fdHasta || new Date(8640000000000000));
-  });
-  data = data.filter(h => {
-    const hora = h.hora_llamada ? parseInt(h.hora_llamada.split(':')[0]) : -1;
-    return hora >= corte.horaMin && hora < corte.horaMax;
-  });
-  if (proyectoFiltro && proyectoFiltro !== '__todos__') {
-    data = data.filter(h => {
+// Filtra el historial para un corte (fijo o custom) y un proyecto
+function filtrarParaCorte(corteObj, fdDesde, fdHasta, proyectoFiltro) {
+  return historial.filter(h => {
+    // Fecha
+    const fl = parseFechaLlamada(getFechaCorte(h));
+    if (fdDesde && fl && fl < fdDesde) return false;
+    if (fdHasta && fl && fl > fdHasta) return false;
+    // Si hay fechas en el rango custom, usarlas también
+    if (corteObj.fechaDesde) {
+      const cd = new Date(corteObj.fechaDesde+'T00:00:00');
+      if (fl && fl < cd) return false;
+    }
+    if (corteObj.fechaHasta) {
+      const ch = new Date(corteObj.fechaHasta+'T23:59:59');
+      if (fl && fl > ch) return false;
+    }
+    // Horario
+    if (!getCorteKey(h, corteObj.horaMin, corteObj.horaMax)) return false;
+    // Proyecto
+    if (proyectoFiltro && proyectoFiltro !== '__todos__') {
       const hcM = buscarAgenteEnHC(h.agente);
-      return hcM?.idProyecto === proyectoFiltro;
-    });
-  }
+      if (hcM?.idProyecto !== proyectoFiltro) return false;
+    }
+    return true;
+  });
+}
 
-  // Agrupar por supervisor
+function calcularFilasSupervisor2(corteObj, fdDesde, fdHasta, proyectoFiltro) {
+  const data = filtrarParaCorte(corteObj, fdDesde, fdHasta, proyectoFiltro);
   const grupos = {};
   data.forEach(h => {
     const hcM = buscarAgenteEnHC(h.agente);
     const sup = hcM?.jefeDirecto || '(Sin supervisor)';
     const turno = hcM?.turno || '—';
-    if (!grupos[sup]) grupos[sup] = {supervisor:sup, turno, agentes:new Set(), llamadas:[]};
-    grupos[sup].agentes.add(h.agente);
-    grupos[sup].llamadas.push(h);
+    const campana = h.campana || h.tipo || '—';
+    const key = `${sup}||${turno}`;
+    if (!grupos[key]) grupos[key] = {supervisor:sup, turno, campana, agentes:new Set(), llamadas:[]};
+    grupos[key].agentes.add(h.agente);
+    grupos[key].llamadas.push(h);
   });
 
-  // Plantilla: solo "Activo operando" exacto, del proyecto filtrado si aplica
-  const plantillaPorSup = {};
-  Object.values(hcData).forEach(d => {
-    if (!d.jefeDirecto) return;
-    if ((d.status||'').trim() !== 'Activo operando') return;
-    if (proyectoFiltro && proyectoFiltro !== '__todos__' && d.idProyecto !== proyectoFiltro) return;
-    plantillaPorSup[d.jefeDirecto] = (plantillaPorSup[d.jefeDirecto]||0) + 1;
-  });
-
-  // Fecha de las llamadas (primera fecha encontrada)
-  const fechasMuestra = [...new Set(data.map(h=>h.fecha_llamada).filter(Boolean))];
-  const fechaLabel = fechasMuestra.length === 1 ? fechasMuestra[0]
-    : fechasMuestra.length > 1 ? `${fechasMuestra[0]} – ${fechasMuestra[fechasMuestra.length-1]}` : '—';
+  const fechaLabel = (() => {
+    const fechas = [...new Set(data.map(h=>getFechaCorte(h)).filter(Boolean))].sort();
+    if (!fechas.length) return '—';
+    return fechas.length === 1 ? fechas[0] : `${fechas[0]} – ${fechas[fechas.length-1]}`;
+  })();
 
   return Object.values(grupos).map(g => {
-    const plantilla = plantillaPorSup[g.supervisor] || 0;
+    const plantilla = calcularPlantillaSup(g.supervisor, proyectoFiltro);
     const evaluados = g.agentes.size;
     const cobertura = plantilla > 0 ? Math.round(evaluados/plantilla*100) : null;
-    const scores = g.llamadas.map(h=>h.score_total||0);
-    const scorePromedio = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
     const ll = g.llamadas;
-    const llMenor60  = ll.filter(h=>(h.score_total||0)<60).length;
-    const ll60a80    = ll.filter(h=>(h.score_total||0)>=60&&(h.score_total||0)<80).length;
-    const llMayor80  = ll.filter(h=>(h.score_total||0)>=80).length;
+    const scorePromedio = ll.length ? Math.round(ll.reduce((s,h)=>s+(h.score_total||0),0)/ll.length) : 0;
+    // Umbrales fijos sobre 80: <48 (<60%), 48-64 (60-80%), >64 (>80%)
+    const ll48  = ll.filter(h=>(h.score_total||0)<48).length;
+    const ll48a64 = ll.filter(h=>{const s=h.score_total||0;return s>=48&&s<64;}).length;
+    const ll64  = ll.filter(h=>(h.score_total||0)>=64).length;
     const pq = calcularPQ(ll);
-    return {fecha:fechaLabel, turno:g.turno, corte:corte.label, supervisor:g.supervisor,
-      plantilla, evaluados, cobertura, scorePromedio,
-      llamadas:ll.length, llMenor60, ll60a80, llMayor80, pq};
+    return {fecha:fechaLabel, turno:g.turno, corte:corteObj.label, supervisor:g.supervisor,
+      campana:g.campana, plantilla, evaluados, cobertura, scorePromedio,
+      llamadas:ll.length, ll48, ll48a64, ll64, pq};
   }).sort((a,b)=>a.turno.localeCompare(b.turno)||a.supervisor.localeCompare(b.supervisor));
 }
 
-function filaHtml(f, esGeneral=false) {
-  const trClass = esGeneral ? ' class="gen"' : '';
+function filaHtml2(f, tipo='normal') {
+  // tipo: 'normal' | 'total-corte' | 'total-turno'
+  const isTotalCorte = tipo==='total-corte', isTotalTurno = tipo==='total-turno';
+  const bg = isTotalTurno ? 'style="background:rgba(26,95,168,.15);font-weight:700"'
+    : isTotalCorte ? 'style="background:rgba(26,95,168,.07);font-weight:600"' : '';
   const cobStr = f.cobertura!=null ? f.cobertura+'%' : '—';
-  const cobCls = f.cobertura!=null ? calcularCoberturaColor(f.cobertura) : '';
-  const sCls   = calcularScoreColor(f.scorePromedio);
-  const m60Cls = f.llMenor60 > 0 ? 'cn-r' : '';
-  const m80Cls = f.llMayor80 > 0 ? 'cn-g' : '';
-  return `<tr${trClass}>
-    <td class="left">${f.fecha}</td>
-    <td class="left">${f.turno}</td>
-    <td class="left">${f.corte}</td>
-    <td class="left">${esGeneral?`<strong>${f.supervisor}</strong>`:f.supervisor}</td>
-    <td>${f.plantilla||'—'}</td>
-    <td>${f.evaluados}</td>
-    <td class="${cobCls}">${cobStr}</td>
-    <td class="${sCls}">${f.scorePromedio}</td>
-    <td>${f.llamadas}</td>
-    <td class="${m60Cls}">${f.llMenor60}</td>
-    <td class="${f.ll60a80>0?'cn-y':''}">${f.ll60a80}</td>
-    <td class="${m80Cls}">${f.llMayor80}</td>
+  const cobPct = f.cobertura ?? 0;
+  const cobCls = cobPct>=80?'cn-g':cobPct>=60?'cn-y':'cn-r';
+  const scoreStr = f.scorePromedio ? `${f.scorePromedio}/80` : '—';
+  const scorePct = f.scorePromedio/80*100;
+  const sCls = scorePct>=80?'cn-g':scorePct>=60?'cn-y':'cn-r';
+  const supCell = isTotalTurno
+    ? `<strong>Total Turno ${f.turno}</strong>`
+    : isTotalCorte
+    ? `<strong>Total Corte ${f.corteNum||''}</strong>`
+    : f.supervisor;
+  return `<tr ${bg}>
+    <td class="left">${isTotalTurno||isTotalCorte?'':f.fecha}</td>
+    <td class="left">${isTotalTurno?f.turno:isTotalCorte?'':f.turno}</td>
+    <td class="left">${isTotalTurno?'—':f.corte}</td>
+    <td class="left">${supCell}</td>
+    <td class="left">${isTotalTurno||isTotalCorte?'—':(f.campana||'—')}</td>
+    <td style="text-align:center">${f.plantilla||'—'}</td>
+    <td style="text-align:center">${f.evaluados}</td>
+    <td style="text-align:center;font-weight:600" class="${cobCls}">${cobStr}</td>
+    <td style="text-align:center;font-weight:600" class="${sCls}">${scoreStr}</td>
+    <td style="text-align:center">${f.llamadas}</td>
+    <td style="text-align:center" class="${f.ll48>0?'cn-r':''}">${f.ll48}</td>
+    <td style="text-align:center" class="${f.ll48a64>0?'cn-y':''}">${f.ll48a64}</td>
+    <td style="text-align:center" class="${f.ll64>0?'cn-g':''}">${f.ll64}</td>
     <td class="left">${f.pq}</td>
   </tr>`;
 }
 
-function generarFilaGeneral(filas, turno, corteLabel, fechaLabel) {
+function sumarFilas(filas, turno, corte, tipo, corteNum) {
   if (!filas.length) return null;
   const plantilla = filas.reduce((s,f)=>s+(f.plantilla||0),0);
   const evaluados = filas.reduce((s,f)=>s+f.evaluados,0);
-  const cobertura = plantilla>0 ? Math.round(evaluados/plantilla*100) : null;
+  const cobertura = plantilla>0?Math.round(evaluados/plantilla*100):null;
   const totalLl = filas.reduce((s,f)=>s+f.llamadas,0);
-  const scoreW = totalLl>0 ? Math.round(filas.reduce((s,f)=>s+f.scorePromedio*f.llamadas,0)/totalLl) : 0;
-  const llMenor60 = filas.reduce((s,f)=>s+f.llMenor60,0);
-  const ll60a80   = filas.reduce((s,f)=>s+f.ll60a80,0);
-  const llMayor80 = filas.reduce((s,f)=>s+f.llMayor80,0);
-  // PQ global del turno: las llamadas combinadas
-  const todasLlamadas = filas.flatMap(f=>historial.filter(h=>h.agente&&filas.some(r=>r.supervisor)));
-  const pqLabels = filas.map(f=>f.pq).join(', ');
-  // Usar el PQ más frecuente
+  const scoreW = totalLl>0?Math.round(filas.reduce((s,f)=>s+f.scorePromedio*f.llamadas,0)/totalLl):0;
+  const ll48 = filas.reduce((s,f)=>s+f.ll48,0);
+  const ll48a64 = filas.reduce((s,f)=>s+f.ll48a64,0);
+  const ll64 = filas.reduce((s,f)=>s+f.ll64,0);
   const pqCount = {};
-  filas.forEach(f=>f.pq.split(' & ').forEach(p=>{ pqCount[p]=(pqCount[p]||0)+1; }));
-  const pqSorted = Object.entries(pqCount).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
-  const pq = pqSorted.slice(0,2).join(' & ');
-  return {fecha:fechaLabel, turno:`General ${turno}`, corte:corteLabel, supervisor:'',
-    plantilla, evaluados, cobertura, scorePromedio:scoreW,
-    llamadas:totalLl, llMenor60, ll60a80, llMayor80, pq};
+  filas.forEach(f=>f.pq.split(' & ').forEach(p=>{pqCount[p]=(pqCount[p]||0)+1;}));
+  const pq = Object.entries(pqCount).sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]).join(' & ') || '—';
+  return {fecha:'', turno, corte, supervisor:'', campana:'—', plantilla, evaluados, cobertura,
+    scorePromedio:scoreW, llamadas:totalLl, ll48, ll48a64, ll64, pq, corteNum};
 }
 
 function renderReporteCorte() {
@@ -6055,46 +6146,76 @@ function renderReporteCorte() {
   const proyecto = document.getElementById('corte-proyecto')?.value || '__todos__';
   const fdDesde = desde ? new Date(desde+'T00:00:00') : null;
   const fdHasta  = hasta  ? new Date(hasta+'T23:59:59') : null;
-  const activos = getCortesActivos();
-  if (!activos.length) {
+
+  // Construir lista de cortes activos (fijos + custom)
+  const btnActivos = [...document.querySelectorAll('#corte-horarios .corte-btn.active')].map(b=>b.dataset.corte);
+  const cortesActivos = [
+    ...btnActivos.map(k=>CORTES_DEF.find(c=>c.key===k)).filter(Boolean),
+    ...corteRangosCustom.filter(r=>r.activo),
+  ];
+
+  if (!cortesActivos.length) {
     cont.innerHTML='<div style="padding:14px;font-size:12px;color:var(--muted)">Selecciona al menos un corte horario.</div>';
     return;
   }
 
-  // Juntar todas las filas de todos los cortes activos
-  let todasFilas = [];
-  activos.forEach(k => {
-    const filas = calcularFilasSupervisor(k, fdDesde, fdHasta, proyecto);
-    todasFilas.push(...filas);
+  // Para cada corte, calcular filas de supervisores
+  // Agrupar por turno
+  const turnosData = {}; // {turno: [{corteLabel, filas}]}
+  cortesActivos.forEach((corte, ci) => {
+    const filas = calcularFilasSupervisor2(corte, fdDesde, fdHasta, proyecto);
+    filas.forEach(f => {
+      if (!turnosData[f.turno]) turnosData[f.turno] = [];
+      // Find or create corte entry for this turno
+      let entry = turnosData[f.turno].find(e=>e.corteKey===corte.key||e.corteId===corte.id);
+      if (!entry) {
+        entry = {corteLabel:corte.label, corteKey:corte.key||corte.id, corteNum:ci+1, filas:[]};
+        turnosData[f.turno].push(entry);
+      }
+      entry.filas.push(f);
+    });
   });
 
-  if (!todasFilas.length) {
+  if (!Object.keys(turnosData).length) {
     cont.innerHTML='<div style="padding:14px;font-size:12px;color:var(--muted)">Sin evaluaciones para los filtros seleccionados.</div>';
     return;
   }
 
-  // Agrupar por turno
-  const turnosUnicos = [...new Set(todasFilas.map(f=>f.turno))].sort();
-  const fechaLabel = todasFilas[0]?.fecha || '—';
-  const corteLabel = activos.map(k=>CORTES_DEF.find(c=>c.key===k)?.label).join(', ');
-
-  const THEAD = `<thead><tr>
+  const THEAD = `<thead><tr style="background:rgba(26,95,168,.2)">
     <th class="left">Fecha</th><th class="left">Turno</th><th class="left">Corte</th>
-    <th class="left">Supervisor</th>
-    <th>Plantilla<br>(en operación)</th><th>Asesores<br>evaluados</th>
-    <th>Cobertura</th><th>Calificación<br>líder (promedio)</th>
-    <th>Llamadas<br>evaluadas</th>
-    <th>Llamadas<br>Cal. &lt;60</th><th>Llamadas<br>Cal. 60-80</th><th>Llamadas<br>Cal. &gt;80</th>
+    <th class="left">Supervisor</th><th class="left">Campaña</th>
+    <th style="text-align:center">Plantilla<br>(en op.)</th>
+    <th style="text-align:center">Asesores<br>eval.</th>
+    <th style="text-align:center">Cobertura</th>
+    <th style="text-align:center">Cal. líder<br>(prom.)</th>
+    <th style="text-align:center">Llamadas<br>eval.</th>
+    <th style="text-align:center">Cal.<br>&lt;48/80</th>
+    <th style="text-align:center">Cal.<br>48-64/80</th>
+    <th style="text-align:center">Cal.<br>&gt;64/80</th>
     <th class="left">PQ</th>
   </tr></thead>`;
 
   let html = `<div style="overflow-x:auto"><table class="ct">${THEAD}<tbody>`;
-  turnosUnicos.forEach(turno => {
-    const filasTurno = todasFilas.filter(f=>f.turno===turno);
-    filasTurno.forEach(f => { html += filaHtml(f); });
-    const gen = generarFilaGeneral(filasTurno, turno, corteLabel, fechaLabel);
-    if (gen) html += filaHtml(gen, true);
+
+  const turnosOrden = Object.keys(turnosData).sort();
+  turnosOrden.forEach(turno => {
+    const corteEntries = turnosData[turno];
+    const todasFilasTurno = [];
+    corteEntries.forEach((entry, ei) => {
+      // Filas de supervisores
+      entry.filas.forEach(f => { html += filaHtml2({...f, corte:entry.corteLabel}); });
+      // Total Corte
+      const totalCorte = sumarFilas(entry.filas, turno, entry.corteLabel, 'total-corte', ei+1);
+      if (totalCorte) html += filaHtml2(totalCorte, 'total-corte');
+      todasFilasTurno.push(...entry.filas);
+    });
+    // Total Turno
+    const totalTurno = sumarFilas(todasFilasTurno, turno, '—', 'total-turno', '');
+    if (totalTurno) html += filaHtml2(totalTurno, 'total-turno');
+    // Separador
+    html += `<tr><td colspan="14" style="height:8px;background:transparent;border:none"></td></tr>`;
   });
+
   html += '</tbody></table></div>';
   cont.innerHTML = html;
 }
@@ -6105,59 +6226,45 @@ function exportarCSVCorte() {
   const proyecto = document.getElementById('corte-proyecto')?.value || '__todos__';
   const fdDesde = desde ? new Date(desde+'T00:00:00') : null;
   const fdHasta  = hasta  ? new Date(hasta+'T23:59:59') : null;
-  const activos = getCortesActivos();
-  if (!activos.length) { alert('Selecciona al menos un corte.'); return; }
+  const btnActivos = [...document.querySelectorAll('#corte-horarios .corte-btn.active')].map(b=>b.dataset.corte);
+  const cortesActivos = [
+    ...btnActivos.map(k=>CORTES_DEF.find(c=>c.key===k)).filter(Boolean),
+    ...corteRangosCustom.filter(r=>r.activo),
+  ];
+  if (!cortesActivos.length) { alert('Selecciona al menos un corte.'); return; }
 
-  const ENC = '"Fecha","Turno","Corte","Supervisor","Plantilla (en operación)","Asesores evaluados","Cobertura (%)","Calificación líder (promedio)","Llamadas evaluadas","Llamadas Cal. <60","Llamadas Cal. 60-80","Llamadas Cal. >80","PQ"';
-  const toCSV = f => `"${f.fecha}","${f.turno}","${f.corte}","${f.supervisor}","${f.plantilla||0}","${f.evaluados}","${f.cobertura!=null?f.cobertura+'%':'—'}","${f.scorePromedio}","${f.llamadas}","${f.llMenor60}","${f.ll60a80}","${f.llMayor80}","${f.pq}"`;
+  const ENC = '"Fecha","Turno","Corte","Supervisor","Campaña","Plantilla","Asesores evaluados","Cobertura (%)","Calificación líder","Llamadas evaluadas","Cal. <48/80","Cal. 48-64/80","Cal. >64/80","PQ"';
+  const toCSV = (f,tipo='') => `"${tipo||f.fecha}","${f.turno}","${f.corte}","${tipo?tipo:f.supervisor}","${f.campana||'—'}","${f.plantilla||0}","${f.evaluados}","${f.cobertura!=null?f.cobertura+'%':'—'}","${f.scorePromedio}/80","${f.llamadas}","${f.ll48}","${f.ll48a64}","${f.ll64}","${f.pq}"`;
 
-  const bloques = [];
-  const fechaLabel = new Date().toISOString().slice(0,10);
-  const corteLabel = activos.map(k=>CORTES_DEF.find(c=>c.key===k)?.label).join(', ');
-
-  if (activos.length === 1) {
-    const filas = calcularFilasSupervisor(activos[0], fdDesde, fdHasta, proyecto);
-    const turnosUnicos = [...new Set(filas.map(f=>f.turno))].sort();
-    const rows = [];
-    turnosUnicos.forEach(turno => {
-      const ft = filas.filter(f=>f.turno===turno);
-      ft.forEach(f=>rows.push(toCSV(f)));
-      const gen = generarFilaGeneral(ft, turno, corteLabel, fechaLabel);
-      if (gen) rows.push(toCSV(gen));
+  const rows = [];
+  const turnosData = {};
+  cortesActivos.forEach((corte,ci) => {
+    const filas = calcularFilasSupervisor2(corte, fdDesde, fdHasta, proyecto);
+    filas.forEach(f => {
+      if (!turnosData[f.turno]) turnosData[f.turno] = [];
+      let entry = turnosData[f.turno].find(e=>e.corteKey===(corte.key||corte.id));
+      if (!entry) { entry={corteLabel:corte.label,corteKey:corte.key||corte.id,corteNum:ci+1,filas:[]}; turnosData[f.turno].push(entry); }
+      entry.filas.push(f);
     });
-    bloques.push(`"Corte: ${CORTES_DEF.find(c=>c.key===activos[0])?.label}"\n${ENC}\n${rows.join('\n')}`);
-  } else {
-    // Una tabla por corte
-    activos.forEach(k => {
-      const filas = calcularFilasSupervisor(k, fdDesde, fdHasta, proyecto);
-      const turnosUnicos = [...new Set(filas.map(f=>f.turno))].sort();
-      const rows = [];
-      turnosUnicos.forEach(turno => {
-        const ft = filas.filter(f=>f.turno===turno);
-        ft.forEach(f=>rows.push(toCSV(f)));
-        const gen = generarFilaGeneral(ft, turno, CORTES_DEF.find(c=>c.key===k)?.label, fechaLabel);
-        if (gen) rows.push(toCSV(gen));
-      });
-      bloques.push(`"Corte: ${CORTES_DEF.find(c=>c.key===k)?.label}"\n${ENC}\n${rows.join('\n')}`);
-    });
-    // Tabla general todos los cortes
-    let todasFilas = [];
-    activos.forEach(k => todasFilas.push(...calcularFilasSupervisor(k, fdDesde, fdHasta, proyecto)));
-    const turnosUnicos = [...new Set(todasFilas.map(f=>f.turno))].sort();
-    const rowsGen = [];
-    turnosUnicos.forEach(turno => {
-      const ft = todasFilas.filter(f=>f.turno===turno);
-      ft.forEach(f=>rowsGen.push(toCSV(f)));
-      const gen = generarFilaGeneral(ft, turno, 'Todos los cortes', fechaLabel);
-      if (gen) rowsGen.push(toCSV(gen));
-    });
-    bloques.push(`"GENERAL (todos los cortes seleccionados)"\n${ENC}\n${rowsGen.join('\n')}`);
-  }
+  });
 
-  const csv = '\uFEFF' + bloques.join('\n\n\n');
+  Object.keys(turnosData).sort().forEach(turno => {
+    const todasTurno = [];
+    turnosData[turno].forEach((entry,ei) => {
+      entry.filas.forEach(f=>rows.push(toCSV({...f,corte:entry.corteLabel})));
+      const tc = sumarFilas(entry.filas, turno, entry.corteLabel,'total-corte',ei+1);
+      if (tc) rows.push(toCSV(tc,`Total Corte ${ei+1}`));
+      todasTurno.push(...entry.filas);
+    });
+    const tt = sumarFilas(todasTurno, turno,'—','total-turno','');
+    if (tt) rows.push(toCSV(tt,`Total Turno ${turno}`));
+    rows.push('');
+  });
+
+  const csv = '\uFEFF' + ENC + '\n' + rows.join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
-  a.download = `reporte_corte_${desde||'todo'}_${hasta||fechaLabel}.csv`;
+  a.download = `reporte_corte_${desde||'todo'}_${hasta||'hoy'}.csv`;
   a.click();
 }
 
