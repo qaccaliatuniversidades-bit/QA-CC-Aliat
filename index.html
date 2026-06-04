@@ -3599,6 +3599,15 @@ Evalúa del 0 al 100 cada criterio según la Cédula QA Aliat v4.0 y responde SO
   "fortalezas":"<2 cosas concretas que el asesor hizo bien, cada una indicando entre paréntesis la etapa de la matriz (Apertura|Investigación|Demostración|Manejo de Objeciones|Cierre|Etiqueta). Ejemplo: "Se presentó correctamente con nombre y universidad (Apertura)">",
   "areas_mejora":"<2-3 acciones específicas de mejora, cada una indicando entre paréntesis la etapa de la matriz a la que corresponde. Solo mencionar criterios habilitados. Ejemplo: "Practicar los 5 puntos del manejo de precio (Demostración)">",
   "palabras_riesgo":[],
+  "objeciones_detectadas":[
+    {
+      "tipo":"<tipo de objeción según objecionario, ej: Costo/Economía>",
+      "frase_prospecto":"<cita textual o paráfrasis de lo que dijo el prospecto>",
+      "respuesta_asesor":"<cita textual o paráfrasis de cómo respondió el asesor>",
+      "evaluacion":"<adecuada|vaga|ignorada>"
+    }
+  ],
+  "sin_objeciones":<true si el prospecto no presentó ninguna negativa, duda ni resistencia; false si hubo al menos una>,
   "sentimiento_cliente":"<positivo|neutral|negativo>",
   "logro_objetivo":<true|false>,
   "nivel_urgencia":"<critica si score<60% pts activos | revisar si 60-80% | normal si >80%>",
@@ -3675,10 +3684,12 @@ Puntuación: 100=preguntó o confirmó edad (y aplica bachillerato). 0=no la pre
 DEMOSTRACIÓN — Objetivo: Ofrecer alternativas que cubran necesidades del prospecto resaltando beneficios de Aliat.
 
 demo_beneficios (3.1) — Menciona ≥2 beneficios del programa o modalidad.
-Acción esperada: Mencionar 2 beneficios específicos y concretos del programa o modalidad del prospecto. Solo cuentan beneficios que puedas identificar con certeza como características reales del programa. Si tienes duda de si algo es un beneficio del programa o no lo es, no lo cuentes.
-Ejemplos por área — Preparatoria: grupos reducidos, modelo anti-bullying, ALEKS con IA, acompañamiento académico. Licenciaturas: aulas especializadas (Cámara de Gesell, Aula MAC, Sala de Juicios Orales), laboratorios, enfoque práctico. Ingenierías: laboratorio de Ing. Civil, taller de Ing. Industrial, habilidades técnicas. Salud: 80% práctica / 20% teoría, preparación clínica, vinculación con espacios de práctica. Maestrías: especialización, conclusión en menor tiempo con sobrecarga de materias.
-No cuentan frases genéricas o ambiguas como "es una universidad reconocida", "vas a aprender mucho", "tenemos buenas instalaciones" o "es una carrera muy completa". Si el asesor menciona algo que podría o no ser un beneficio del programa, no lo cuentes.
-Puntuación: 100=identificaste con certeza ≥2 beneficios concretos del programa. 50=solo 1 beneficio concreto identificado con certeza. 0=ningún beneficio concreto identificado con certeza. No uses valores intermedios (0, 50 y 100 son los únicos valores válidos).
+Acción esperada: Identificar el grado académico de interés del prospecto (Bachillerato, Licenciatura o Maestría) y mencionar al menos 2 beneficios concretos y específicos que correspondan a ese grado. Hay beneficios que aplican a cualquier grado (grupos reducidos, modalidades flexibles presencial/ejecutiva/online, RVOE Federal, docentes con experiencia laboral real, Bolsa de Trabajo) y beneficios exclusivos de cada grado:
+- Bachillerato: orientación vocacional activa, pase directo a licenciatura sin examen de admisión, habilidades socioemocionales y digitales, talleres de emprendimiento y networking, campus seguros, ALEKS con IA, acompañamiento académico.
+- Licenciatura: certificaciones intermedias por materia, Biblioteca Digital, Office 365 incluido sin costo, sin inscripción ni reinscripción, becas académicas por promedio, laboratorios y aulas especializadas por carrera (Cámara de Gesell, Sala de Juicios Orales, taller de Ing. Industrial, Aula MAC, laboratorio de Ing. Civil, etc.), enfoque práctico, adelanto de materias para reducir tiempo total.
+- Maestría: resolución de casos reales de negocio, networking estratégico con profesionales activos, plataforma disponible 24/7, profesores líderes activos en sus sectores, actualización digital profunda, visión estratégica y competencias de alta dirección.
+Si el asesor menciona beneficios que no corresponden al grado del prospecto (ej: habla de certificaciones intermedias a alguien de bachillerato), no los cuentes. Si menciona beneficios genéricos no identificables con certeza ("es muy completa", "aprenderás mucho", "tenemos buenas instalaciones"), no los cuentes.
+Puntuación: 100=identificaste con certeza ≥2 beneficios concretos del grado correcto. 50=solo 1 beneficio concreto del grado correcto. 0=ningún beneficio concreto identificado con certeza o todos los mencionados corresponden a otro grado. No uses valores intermedios (0, 50 y 100 son los únicos valores válidos).
 
 demo_economico (3.2) — Costos, promociones o descuentos.
 Acción esperada: Mencionar solo diferenciadores económicos autorizados.
@@ -3729,6 +3740,7 @@ Objeciones reconocidas y cómo manejarlas:
 17. Tengo deudas / Estoy en Buró — responde con que no se consulta buró, pago directo sin financiera.
 18. No sé si terminaré / Miedo a no poder — responde con acompañamiento académico, grupos reducidos, carga modular manejable.
 Esta lista no es exhaustiva — si detectas una objeción no listada, evalúa si el asesor la respondió con un argumento concreto y estructurado que corresponda a esa objeción.
+Detección: Para cada objeción encontrada, registra en objeciones_detectadas: el tipo (según la lista anterior o descripción libre si no está listada), la frase exacta o paráfrasis del prospecto, la respuesta del asesor, y tu evaluación (adecuada/vaga/ignorada). Si no hubo ninguna objeción, deja objeciones_detectadas vacío y pon sin_objeciones:true.
 Puntuación: 100=no hubo objeción en la llamada (prospecto nunca se negó). 100=hubo objeción y el asesor la identificó y respondió con argumento concreto y estructurado, haya tenido éxito o no. 50=hubo objeción y el asesor respondió pero de forma vaga o sin argumento estructurado. 0=hubo objeción y el asesor la ignoró, no respondió, o respondió con un argumento que no corresponde a la objeción presentada (ejemplo: objeción de tiempo respondida con argumento de costos). Solo estos valores son válidos, no uses intermedios.
 
 obj_referidos (4.2) — Solicitud de referidos con beneficio económico.
@@ -3948,7 +3960,36 @@ function renderResultado(r, transcripcionCompleta) {
         </div>` : '';
       return `<div class="bar-row"><div class="bar-row-top"><span style="font-size:11px;display:flex;align-items:center;gap:0;flex-wrap:nowrap">${c.num?`<span style="color:var(--dim);font-family:var(--mono);font-size:10px;flex-shrink:0">${c.num}</span>&nbsp;`:''}${c.label}&nbsp;<span style="color:var(--dim);flex-shrink:0">${pesos[c.key]||0} pts</span>${feedbackBtn}</span><span style="font-weight:600;color:${col};font-size:12px;flex-shrink:0;margin-left:8px">${sc2}</span></div><div class="bar-track"><div class="bar-fill ${bc}" style="width:${sc2}%"></div></div>${feedbackPanel}</div>`;
     }).join('');
-    barrasHtml += `<div class="etapa-group"><div class="etapa-group-header"><span>${meta.emoji}</span><span class="etapa-group-label">${meta.label}</span><span class="etapa-group-avg" style="color:${colAvg}">${activosEtapa.length===0?'—':avgEtapa}</span></div>${barras}</div>`;
+    let extraHtml = '';
+    // Si es la etapa de objeciones, agregar desglose de objeciones detectadas
+    if (etapa === 'objeciones' && !naSet.has('obj_objeciones')) {
+      const objs = r.objeciones_detectadas || [];
+      const sinObj = r.sin_objeciones === true;
+      if (sinObj || objs.length === 0) {
+        extraHtml = `<div style="margin:6px 0 10px;padding:8px 12px;background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.2);border-radius:8px;font-size:12px;color:var(--green)">✅ Sin objeciones detectadas en esta llamada</div>`;
+      } else {
+        const pills = objs.map(o => {
+          const ic = o.evaluacion==='adecuada' ? '✅' : o.evaluacion==='vaga' ? '⚠️' : '❌';
+          const col = o.evaluacion==='adecuada' ? 'rgba(74,222,128,.12)' : o.evaluacion==='vaga' ? 'rgba(251,191,36,.12)' : 'rgba(248,113,113,.12)';
+          const bord = o.evaluacion==='adecuada' ? 'rgba(74,222,128,.3)' : o.evaluacion==='vaga' ? 'rgba(251,191,36,.3)' : 'rgba(248,113,113,.3)';
+          const textCol = o.evaluacion==='adecuada' ? 'var(--green)' : o.evaluacion==='vaga' ? 'var(--yellow)' : 'var(--red)';
+          return `<div style="background:${col};border:1px solid ${bord};border-radius:8px;padding:8px 12px;margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <span style="font-size:12px">${ic}</span>
+              <span style="font-size:11px;font-weight:700;color:${textCol}">${o.tipo||'Objeción'}</span>
+              <span style="margin-left:auto;font-size:10px;font-weight:600;color:${textCol};text-transform:uppercase;letter-spacing:.05em">${o.evaluacion||''}</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:2px"><span style="color:var(--dim);font-weight:600">Prospecto:</span> ${o.frase_prospecto||'—'}</div>
+            <div style="font-size:11px;color:var(--muted)"><span style="color:var(--dim);font-weight:600">Asesor:</span> ${o.respuesta_asesor||'—'}</div>
+          </div>`;
+        }).join('');
+        extraHtml = `<div style="margin:6px 0 10px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:6px">Objeciones detectadas (${objs.length})</div>
+          ${pills}
+        </div>`;
+      }
+    }
+    barrasHtml += `<div class="etapa-group"><div class="etapa-group-header"><span>${meta.emoji}</span><span class="etapa-group-label">${meta.label}</span><span class="etapa-group-avg" style="color:${colAvg}">${activosEtapa.length===0?'—':avgEtapa}</span></div>${barras}${extraHtml}</div>`;
   });
 
   const riesgos=r.palabras_riesgo&&r.palabras_riesgo.length?r.palabras_riesgo.map(p=>`<span class="rpill">${p}</span>`).join(''):`<span style="color:var(--muted);font-size:12px">✅ No se detectaron frases de riesgo</span>`;
