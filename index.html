@@ -834,14 +834,16 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         </div>
         <div class="field"><label>Campaña</label><input id="b-campana" type="text" placeholder="Ej: Ciclo Ago-Dic 2025" /></div>
         <div class="field"><label>Intervalo entre llamadas</label>
-          <select id="b-delay">
-            <option value="20000">20 seg (recomendado)</option>
+          <select id="b-delay" onchange="actualizarDelayInfo(this.value)">
+            <option value="12000">12 seg (recomendado)</option>
+            <option value="15000">15 seg</option>
+            <option value="20000">20 seg (conservador)</option>
           </select>
         </div>
       </div>
       <div class="batch-delay-info">
         <div class="delay-dot"></div>
-        20 segundos entre llamadas para respetar los límites de la API. Con rotación de 5 keys: ~900 llamadas/hora.
+        <span id="batch-delay-info-txt">12 segundos entre llamadas. Con rotación de 5 keys: ~1,500 llamadas/hora.</span>
       </div>
     </div>
   </div>
@@ -6993,6 +6995,17 @@ function renderReporteCorte() {
 
   html += '</tbody></table></div>';
   cont.innerHTML = html;
+}
+
+function actualizarDelayInfo(val) {
+  const info = document.getElementById('batch-delay-info-txt');
+  if (!info) return;
+  const map = {
+    '12000': '12 segundos entre llamadas. Con rotación de 5 keys: ~1,500 llamadas/hora.',
+    '15000': '15 segundos entre llamadas. Con rotación de 5 keys: ~1,200 llamadas/hora.',
+    '20000': '20 segundos entre llamadas (conservador). Con rotación de 5 keys: ~900 llamadas/hora.'
+  };
+  info.textContent = map[val] || '';
 }
 
 function exportarCSVCorte() {
