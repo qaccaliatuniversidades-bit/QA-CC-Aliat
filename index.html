@@ -279,6 +279,11 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
 .crit-score{font-size:20px;font-weight:700;flex-shrink:0;color:var(--red)}
 .ai-plan-box{background:linear-gradient(135deg,rgba(26,95,168,.08),rgba(167,139,250,.06));border:1px solid rgba(99,140,255,.2);border-radius:12px;padding:20px 22px;font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap}
 .ai-plan-box.loading{color:var(--muted);font-style:italic}
+.semanas-dropdown{position:absolute;z-index:200;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:8px;min-width:160px;max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4);margin-top:4px}
+.semanas-dropdown label{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text);white-space:nowrap}
+.semanas-dropdown label:hover{background:var(--surface3)}
+.semanas-dropdown label input{accent-color:var(--blue);cursor:pointer}
+.semanas-dropdown-footer{display:flex;gap:6px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
 .btn-gen-plan{padding:8px 18px;border-radius:8px;border:1px solid rgba(99,140,255,.3);background:rgba(26,95,168,.10);color:var(--blue);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px}
 .btn-gen-plan:hover{background:rgba(26,95,168,.20)}
 .btn-gen-plan:disabled{opacity:.4;cursor:not-allowed}
@@ -696,7 +701,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
   <nav class="nav-pills">
     <button class="nav-pill active" onclick="showPage('evaluar',this)">📞 Evaluar llamada</button>
     <button class="nav-pill" onclick="showPage('batch',this)">📦 Carga masiva</button>
-    <button class="nav-pill" onclick="showPage('historial',this)">📊 Historial</button>
+    <button class="nav-pill" id="nav-historial" onclick="showPage('historial',this)">📊 Historial</button>
     <button class="nav-pill" onclick="showPage('reportes',this)">📈 Reportes</button>
     <button class="nav-pill" id="nav-calibrar" onclick="showPage('config',this)">⚙️ Calibrar</button>
     <button class="nav-pill" onclick="showPage('top',this)">🏆 Top Calls</button>
@@ -931,11 +936,13 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
       <div class="filters-col-title" style="color:var(--blue)">📋 Fecha de evaluación</div>
       <div class="filter-row">
         <div class="period-tabs">
-          <button class="period-tab active" id="hist-period-all" onclick="setHistPeriod(0,this)">Todo</button>
-          <button class="period-tab" onclick="setHistPeriod(1,this)">Hoy</button>
-          <button class="period-tab" onclick="setHistPeriodSemana(this)">Semana</button>
-          <button class="period-tab" onclick="setHistPeriod(7,this)">7d</button>
-          <button class="period-tab" onclick="setHistPeriod(30,this)">30d</button>
+          <button class="period-tab hist-eval-period-0 active" id="hist-period-all" onclick="setHistPeriod(0,this)">Todo</button>
+          <button class="period-tab hist-eval-period-1" onclick="setHistPeriod(1,this)">Hoy</button>
+          <button class="period-tab eval-semana-btn" onclick="setHistPeriodSemana(this)">Semana</button>
+          <button class="period-tab" onclick="toggleSemanasDropdown('hist-eval-semanas','eval',this)" id="hist-eval-semanas-btn">Semana del año ▾</button>
+          <div id="hist-eval-semanas" class="semanas-dropdown" style="display:none"></div>
+          <button class="period-tab hist-eval-period-7" onclick="setHistPeriod(7,this)">7d</button>
+          <button class="period-tab hist-eval-period-30" onclick="setHistPeriod(30,this)">30d</button>
           <button class="period-tab" id="hist-tab-custom" onclick="toggleHistFechasCustom(this)">📅 Rango</button>
         </div>
       </div>
@@ -970,7 +977,9 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <div class="period-tabs" id="hist-llamada-tabs">
           <button class="period-tab llamada active" id="hist-llamada-all" onclick="setHistLlamadaPeriod(0,this)">Todo</button>
           <button class="period-tab llamada" onclick="setHistLlamadaPeriod(1,this)">Hoy</button>
-          <button class="period-tab llamada" onclick="setHistLlamadaPeriodSemana(this)">Semana</button>
+          <button class="period-tab llamada llamada-semana-btn" onclick="setHistLlamadaPeriodSemana(this)">Semana</button>
+          <button class="period-tab llamada" onclick="toggleSemanasDropdown('hist-llamada-semanas','llamada',this)" id="hist-llamada-semanas-btn">Semana del año ▾</button>
+          <div id="hist-llamada-semanas" class="semanas-dropdown" style="display:none"></div>
           <button class="period-tab llamada" onclick="setHistLlamadaPeriod(7,this)">7d</button>
           <button class="period-tab llamada" onclick="setHistLlamadaPeriod(30,this)">30d</button>
           <button class="period-tab llamada" id="hist-llamada-tab-custom" onclick="toggleHistLlamadaCustom(this)">📅 Rango</button>
@@ -1017,6 +1026,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
     <div><h2>📈 Reporte de Calidad</h2><div class="sub" id="rep-sub">Análisis del período seleccionado</div></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn-sm" onclick="exportarReporteHTML()">⬇ Exportar HTML</button>
+      <button class="btn-sm" onclick="exportarCSV()">⬇ Exportar CSV</button>
     </div>
   </div>
   <!-- Filtros compartidos — se inyectan desde renderFiltrosCompartidos() -->
@@ -1027,11 +1037,13 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
       <div class="filters-col-title" style="color:var(--blue)">📋 Fecha de evaluación</div>
       <div class="filter-row">
         <div class="period-tabs">
-          <button class="period-tab" onclick="setPeriod(1,this)">Hoy</button>
-          <button class="period-tab" onclick="setPeriodSemana(this)">Semana</button>
-          <button class="period-tab active" onclick="setPeriod(7,this)">7d</button>
+          <button class="period-tab rep-eval-period-1" onclick="setPeriod(1,this)">Hoy</button>
+          <button class="period-tab eval-semana-btn" onclick="setPeriodSemana(this)">Semana</button>
+          <button class="period-tab" onclick="toggleSemanasDropdown('rep-eval-semanas','eval',this)" id="rep-eval-semanas-btn">Semana del año ▾</button>
+          <div id="rep-eval-semanas" class="semanas-dropdown" style="display:none"></div>
+          <button class="period-tab rep-eval-period-7" onclick="setPeriod(7,this)">7d</button>
           <button class="period-tab" onclick="setPeriod(30,this)">30d</button>
-          <button class="period-tab" onclick="setPeriod(0,this)">Todo</button>
+          <button class="period-tab rep-eval-period-0 active" onclick="setPeriod(0,this)">Todo</button>
           <button class="period-tab" id="tab-custom" onclick="toggleFechasCustom(this)">📅 Rango</button>
         </div>
       </div>
@@ -1065,7 +1077,9 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <div class="period-tabs" id="rep-llamada-tabs">
           <button class="period-tab llamada active" id="rep-llamada-all" onclick="setRepLlamadaPeriod(0,this)">Todo</button>
           <button class="period-tab llamada" onclick="setRepLlamadaPeriod(1,this)">Hoy</button>
-          <button class="period-tab llamada" onclick="setRepLlamadaPeriodSemana(this)">Semana</button>
+          <button class="period-tab llamada llamada-semana-btn" onclick="setRepLlamadaPeriodSemana(this)">Semana</button>
+          <button class="period-tab llamada" onclick="toggleSemanasDropdown('rep-llamada-semanas','llamada',this)" id="rep-llamada-semanas-btn">Semana del año ▾</button>
+          <div id="rep-llamada-semanas" class="semanas-dropdown" style="display:none"></div>
           <button class="period-tab llamada" onclick="setRepLlamadaPeriod(7,this)">7d</button>
           <button class="period-tab llamada" onclick="setRepLlamadaPeriod(30,this)">30d</button>
           <button class="period-tab llamada" id="rep-llamada-tab-custom" onclick="toggleRepLlamadaCustom(this)">📅 Rango</button>
@@ -1150,7 +1164,14 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <span id="plan-btn-ico">✨</span> Generar plan
       </button>
     </div>
-    <div class="card-body"><div class="ai-plan-box loading" id="rep-plan-box">Presiona "Generar plan" para que la IA analice el período y proponga acciones concretas de mejora para cada agente y el equipo completo.</div></div>
+    <div class="card-body"><div class="ai-plan-box loading" id="rep-plan-box">Presiona "Generar plan" para que la IA analice el período y proponga acciones concretas de mejora para cada agente y el equipo completo.</div>
+      <div id="rep-chat-box" style="display:none;margin-top:16px;border-top:1px solid var(--border2);padding-top:14px">
+        <div id="rep-chat-messages" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;max-height:280px;overflow-y:auto"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="rep-chat-input" type="text" placeholder="Pregunta algo sobre estos datos..." onkeydown="if(event.key==='Enter')preguntarPlanIA()" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font);font-size:12px;padding:8px 12px;outline:none"/>
+          <button onclick="preguntarPlanIA()" style="padding:8px 16px;background:rgba(26,95,168,.15);border:1px solid rgba(99,140,255,.3);border-radius:8px;color:var(--blue);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">✦ Preguntar</button>
+        </div>
+      </div></div>
   </div>
 </div>
 </div>
@@ -1562,11 +1583,11 @@ function aplicarRestriccionModelos() {
     });
   });
 
-  // Ocultar pestaña Calibrar para usuarios no-admin
+  // Ocultar pestañas Calibrar e Historial para usuarios no-admin
   const navCalibrar = document.getElementById('nav-calibrar');
-  if (navCalibrar) {
-    navCalibrar.style.display = currentUserData?.rol === 'admin' ? '' : 'none';
-  }
+  if (navCalibrar) navCalibrar.style.display = currentUserData?.rol === 'admin' ? '' : 'none';
+  const navHistorial = document.getElementById('nav-historial');
+  if (navHistorial) navHistorial.style.display = currentUserData?.rol === 'admin' ? '' : 'none';
   // Pestañas de Calibrar — solo modelos permitidos
   const mapCfg = { tradicional:'cfg-mod-trad', onaliat:'cfg-mod-on', titulacion:'cfg-mod-tit' };
   let primerPermitidoCfg = null;
@@ -2053,7 +2074,7 @@ async function fetchGroqConRotacion(url, opciones) {
 let audioFile  = null;
 let currentAudioURL = null; // Object URL del audio actualmente cargado (para el reproductor)
 let historial  = [];
-let repPeriod  = 7;
+let repPeriod  = 0;
 let repAgente  = '__todos__';
 let repModelo  = '__todos__';
 let repEvaluador = '__todos__';
@@ -2448,20 +2469,35 @@ function limpiarTodosFiltros() {
     if (m) m.value = '__todos__';
     if (e) e.value = '__todos__';
   });
-  // Reset periodos de fecha
+  // Reset periodos de fecha — ambas pestañas
   histPeriod = 0; histFechaDesde = null; histFechaHasta = null;
   histLlamadaPeriod = 0; histLlamadaDesde = null; histLlamadaHasta = null;
   histTurno = '__todos__'; histEvalTurno = '__todos__';
-  repEvalTurno = '__todos__';
-  document.querySelectorAll('#page-historial .period-tab').forEach(b => b.classList.remove('active'));
+  repPeriod = 0; repFechaDesde = null; repFechaHasta = null;
+  repLlamadaPeriod = 0; repLlamadaDesde = null; repLlamadaHasta = null;
+  repTurno = '__todos__'; repEvalTurno = '__todos__';
+  semanasEvalSel = new Set(); semanasLlamadaSel = new Set();
+  // Reset todos los period-tab buttons en ambas páginas
+  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('hist-period-all')?.classList.add('active');
   document.getElementById('hist-llamada-all')?.classList.add('active');
   document.getElementById('hist-turno-all')?.classList.add('active');
   document.getElementById('hist-eval-turno-all')?.classList.add('active');
+  document.getElementById('rep-period-all')?.classList.add('active');
+  document.getElementById('rep-llamada-all')?.classList.add('active');
+  document.getElementById('rep-turno-all')?.classList.add('active');
   document.getElementById('rep-eval-turno-all')?.classList.add('active');
-  document.getElementById('hist-fechas-custom').style.display = 'none';
-  document.getElementById('hist-llamada-fechas-custom').style.display = 'none';
+  // Reset semana del año labels
+  ['hist-eval-semanas-btn','rep-eval-semanas-btn','hist-llamada-semanas-btn','rep-llamada-semanas-btn'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) { b.textContent = 'Semana del año ▾'; b.classList.remove('active'); }
+  });
+  // Ocultar custom pickers
+  ['hist-fechas-custom','hist-llamada-fechas-custom','rep-fechas-custom','rep-llamada-fechas-custom'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
   aplicarFiltrosCompartidos();
+  renderReportes();
 }
 
 // Formatea score como "65/80" usando pts_activos si está disponible, si no muestra solo el número
@@ -2510,17 +2546,21 @@ let repTurno          = '__todos__'; // turno de la LLAMADA en reportes
 let repEvalTurno      = '__todos__'; // turno de la EVALUACIÓN en reportes
 
 function setHistEvalTurno(turno, btn) {
-  histEvalTurno = turno;
-  document.querySelectorAll('#hist-eval-turno-tabs .period-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderHistorial();
+  histEvalTurno = turno; repEvalTurno = turno;
+  document.querySelectorAll('#hist-eval-turno-tabs .period-tab, #rep-eval-turno-tabs .period-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#hist-eval-turno-tabs .period-tab, #rep-eval-turno-tabs .period-tab').forEach(b=>{
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(`'${turno}'`))b.classList.add('active');
+  });
+  renderHistorial(); renderReportes();
 }
 
 function setRepEvalTurno(turno, btn) {
-  repEvalTurno = turno;
-  document.querySelectorAll('#rep-eval-turno-tabs .period-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderReportes();
+  repEvalTurno = turno; histEvalTurno = turno;
+  document.querySelectorAll('#hist-eval-turno-tabs .period-tab, #rep-eval-turno-tabs .period-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#hist-eval-turno-tabs .period-tab, #rep-eval-turno-tabs .period-tab').forEach(b=>{
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(`'${turno}'`))b.classList.add('active');
+  });
+  renderHistorial(); renderReportes();
 }
 
 // Extrae la hora (0-23) del campo h.fecha (ej: "1/6/2026, 5:28:42 p.m." → 17)
@@ -2539,24 +2579,26 @@ function horaDeEval(h) {
 }
 
 function setHistPeriod(days, btn) {
-  histPeriod = days; histFechaDesde = null; histFechaHasta = null;
-  document.querySelectorAll('#page-historial .period-tab').forEach(b=>b.classList.remove('active'));
+  syncEvalPeriod(null, null, days);
+  syncUIEval(`.rep-eval-period-${days},.hist-eval-period-${days}`);
   btn.classList.add('active');
-  // ocultar picker si estaba abierto
-  const fc = document.getElementById('hist-fechas-custom');
-  if (fc) fc.style.display = 'none';
-  renderHistorial();
+  renderHistorial(); renderReportes();
 }
 function setHistPeriodSemana(btn) {
-  const hoy = new Date(), lunes = new Date(hoy);
-  lunes.setDate(hoy.getDate()-((hoy.getDay()+6)%7)); lunes.setHours(0,0,0,0);
-  const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6); domingo.setHours(23,59,59,999);
-  histFechaDesde = lunes; histFechaHasta = domingo; histPeriod = -1;
-  document.querySelectorAll('#page-historial .period-tab').forEach(b=>b.classList.remove('active'));
+  const {lunes,domingo} = getLunesDomingo();
+  syncEvalPeriod(lunes, domingo, -1);
+  syncUIEval('.eval-semana-btn');
   btn.classList.add('active');
-  const fc = document.getElementById('hist-fechas-custom');
-  if (fc) fc.style.display = 'none';
-  renderHistorial();
+  renderHistorial(); renderReportes();
+}
+function setHistPeriodSemanaN(btn) {
+  const {lunes,domingo} = getLunesDomingo();
+  const label = semanaLabel(lunes);
+  syncEvalPeriod(lunes, domingo, -1);
+  document.querySelectorAll('.eval-semana-n-btn').forEach(b=>{b.classList.add('active');b.textContent=label;});
+  btn.classList.add('active'); btn.textContent=label;
+  ['hist-fechas-custom','rep-fechas-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  renderHistorial(); renderReportes();
 }
 function toggleHistFechasCustom(btn) {
   const fc = document.getElementById('hist-fechas-custom');
@@ -2581,14 +2623,11 @@ function aplicarRangoFechasHist() {
   const desdeVal = document.getElementById('hist-fecha-desde').value;
   const hastaVal = document.getElementById('hist-fecha-hasta').value;
   if (!desdeVal || !hastaVal) return;
-  histFechaDesde = new Date(desdeVal + 'T00:00:00');
-  histFechaHasta = new Date(hastaVal + 'T00:00:00');
-  if (histFechaDesde > histFechaHasta) {
-    histFechaHasta = histFechaDesde;
-    document.getElementById('hist-fecha-hasta').value = desdeVal;
-  }
-  histPeriod = -1;
-  renderHistorial();
+  const desde = new Date(desdeVal + 'T00:00:00');
+  let hasta = new Date(hastaVal + 'T00:00:00');
+  if (desde > hasta) { hasta = desde; document.getElementById('hist-fecha-hasta').value = desdeVal; }
+  syncEvalPeriod(desde, hasta, -1);
+  renderHistorial(); renderReportes();
 }
 
 // ── Utilidad: parsea fecha_llamada "DD/MM/YYYY" → Date (medianoche local) ──
@@ -2625,21 +2664,21 @@ const TURNO_LABELS = {
 
 // ── Filtros HISTORIAL: fecha llamada ──
 function setHistLlamadaPeriod(days, btn) {
-  histLlamadaPeriod = days; histLlamadaDesde = null; histLlamadaHasta = null;
-  document.querySelectorAll('#hist-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('hist-llamada-fechas-custom').style.display = 'none';
-  renderHistorial();
+  syncLlamadaPeriod(null, null, days);
+  document.querySelectorAll('#hist-llamada-tabs .period-tab, #rep-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll(`#hist-llamada-tabs .period-tab, #rep-llamada-tabs .period-tab`).forEach(b => {
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(`(${days},`)) b.classList.add('active');
+  });
+  ['hist-llamada-fechas-custom','rep-llamada-fechas-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  renderHistorial(); renderReportes();
 }
 function setHistLlamadaPeriodSemana(btn) {
-  const hoy = new Date(), lunes = new Date(hoy);
-  lunes.setDate(hoy.getDate()-((hoy.getDay()+6)%7)); lunes.setHours(0,0,0,0);
-  const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6); domingo.setHours(23,59,59,999);
-  histLlamadaDesde = lunes; histLlamadaHasta = domingo; histLlamadaPeriod = -1;
-  document.querySelectorAll('#hist-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('hist-llamada-fechas-custom').style.display = 'none';
-  renderHistorial();
+  const {lunes,domingo} = getLunesDomingo();
+  syncLlamadaPeriod(lunes, domingo, -1);
+  document.querySelectorAll('#hist-llamada-tabs .period-tab, #rep-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.llamada-semana-btn').forEach(b => b.classList.add('active'));
+  ['hist-llamada-fechas-custom','rep-llamada-fechas-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  renderHistorial(); renderReportes();
 }
 function toggleHistLlamadaCustom(btn) {
   const fc = document.getElementById('hist-llamada-fechas-custom');
@@ -2662,40 +2701,52 @@ function aplicarRangoFechasLlamadaHist() {
   const dv = document.getElementById('hist-llamada-desde').value;
   const hv = document.getElementById('hist-llamada-hasta').value;
   if (!dv || !hv) return;
-  histLlamadaDesde = new Date(dv+'T00:00:00');
-  histLlamadaHasta = new Date(hv+'T00:00:00');
-  if (histLlamadaDesde > histLlamadaHasta) {
-    histLlamadaHasta = histLlamadaDesde;
-    document.getElementById('hist-llamada-hasta').value = dv;
-  }
-  histLlamadaPeriod = -1; renderHistorial();
+  const desde = new Date(dv+'T00:00:00');
+  let hasta = new Date(hv+'T00:00:00');
+  if (desde > hasta) { hasta = desde; document.getElementById('hist-llamada-hasta').value = dv; }
+  syncLlamadaPeriod(desde, hasta, -1);
+  renderHistorial(); renderReportes();
 }
 function setHistTurno(turno, btn) {
-  histTurno = turno;
-  document.querySelectorAll('#hist-turno-tabs .period-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const lbl = document.getElementById('hist-turno-label');
-  if (lbl) lbl.textContent = turno === '__todos__' ? '' : TURNO_LABELS[turno] || '';
-  renderHistorial();
+  histTurno = turno; repTurno = turno;
+  document.querySelectorAll('.period-tab.turno').forEach(b => b.classList.remove('active'));
+  // Activate matching button in both pages
+  document.querySelectorAll('#hist-turno-tabs .period-tab, #rep-turno-tabs .period-tab').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${turno}'`)) b.classList.add('active');
+  });
+  ['hist-turno-label','rep-turno-label'].forEach(id => {
+    const lbl = document.getElementById(id);
+    if (lbl) lbl.textContent = turno === '__todos__' ? '' : TURNO_LABELS[turno] || '';
+  });
+  renderHistorial(); renderReportes();
 }
 
 // ── Filtros REPORTES: fecha llamada ──
 function setRepLlamadaPeriod(days, btn) {
-  repLlamadaPeriod = days; repLlamadaDesde = null; repLlamadaHasta = null;
-  document.querySelectorAll('#rep-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('rep-llamada-fechas-custom').style.display = 'none';
-  renderReportes();
+  syncLlamadaPeriod(null, null, days);
+  document.querySelectorAll('#hist-llamada-tabs .period-tab, #rep-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll(`#hist-llamada-tabs .period-tab, #rep-llamada-tabs .period-tab`).forEach(b => {
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(`(${days},`)) b.classList.add('active');
+  });
+  ['hist-llamada-fechas-custom','rep-llamada-fechas-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  renderHistorial(); renderReportes();
+}
+function setRepLlamadaPeriodSemanaN(btn) {
+  const {lunes,domingo} = getLunesDomingo();
+  const label = semanaLabel(lunes);
+  syncLlamadaPeriod(lunes, domingo, -1);
+  document.querySelectorAll('.llamada-semana-n-btn').forEach(b=>{b.classList.add('active');b.textContent=label;});
+  btn.classList.add('active'); btn.textContent=label;
+  ['hist-llamada-fechas-custom','rep-llamada-fechas-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  renderHistorial(); renderReportes();
 }
 function setRepLlamadaPeriodSemana(btn) {
-  const hoy = new Date(), lunes = new Date(hoy);
-  lunes.setDate(hoy.getDate()-((hoy.getDay()+6)%7)); lunes.setHours(0,0,0,0);
-  const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6); domingo.setHours(23,59,59,999);
-  repLlamadaDesde = lunes; repLlamadaHasta = domingo; repLlamadaPeriod = -1;
-  document.querySelectorAll('#rep-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('rep-llamada-fechas-custom').style.display = 'none';
-  renderReportes();
+  const {lunes,domingo} = getLunesDomingo();
+  syncLlamadaPeriod(lunes, domingo, -1);
+  document.querySelectorAll('#hist-llamada-tabs .period-tab, #rep-llamada-tabs .period-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.llamada-semana-btn').forEach(b => b.classList.add('active'));
+  ['hist-llamada-fechas-custom','rep-llamada-fechas-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  renderHistorial(); renderReportes();
 }
 function toggleRepLlamadaCustom(btn) {
   const fc = document.getElementById('rep-llamada-fechas-custom');
@@ -2718,21 +2769,23 @@ function aplicarRangoFechasLlamadaRep() {
   const dv = document.getElementById('rep-llamada-desde').value;
   const hv = document.getElementById('rep-llamada-hasta').value;
   if (!dv || !hv) return;
-  repLlamadaDesde = new Date(dv+'T00:00:00');
-  repLlamadaHasta = new Date(hv+'T00:00:00');
-  if (repLlamadaDesde > repLlamadaHasta) {
-    repLlamadaHasta = repLlamadaDesde;
-    document.getElementById('rep-llamada-hasta').value = dv;
-  }
-  repLlamadaPeriod = -1; renderReportes();
+  const desde = new Date(dv+'T00:00:00');
+  let hasta = new Date(hv+'T00:00:00');
+  if (desde > hasta) { hasta = desde; document.getElementById('rep-llamada-hasta').value = dv; }
+  syncLlamadaPeriod(desde, hasta, -1);
+  renderHistorial(); renderReportes();
 }
 function setRepTurno(turno, btn) {
-  repTurno = turno;
-  document.querySelectorAll('#rep-turno-tabs .period-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const lbl = document.getElementById('rep-turno-label');
-  if (lbl) lbl.textContent = turno === '__todos__' ? '' : TURNO_LABELS[turno] || '';
-  renderReportes();
+  repTurno = turno; histTurno = turno;
+  document.querySelectorAll('.period-tab.turno').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#hist-turno-tabs .period-tab, #rep-turno-tabs .period-tab').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${turno}'`)) b.classList.add('active');
+  });
+  ['hist-turno-label','rep-turno-label'].forEach(id => {
+    const lbl = document.getElementById(id);
+    if (lbl) lbl.textContent = turno === '__todos__' ? '' : TURNO_LABELS[turno] || '';
+  });
+  renderHistorial(); renderReportes();
 }
 
 // ══════════════════════════════════════════
@@ -3408,6 +3461,7 @@ async function evaluarTranscripcion(transcripcion, agente, tipo, campana, groqKe
   const fraOblig = (cfg.frases_obligatorias||[]).filter(f=>f.trim());
   const fraProhib = (cfg.frases_prohibidas||[]).filter(f=>f.trim());
   const naKeys = new Set((cfg.na_criterios||[]).map(String));
+  const criteriosActivos = getCriterios(modelo).filter(c => !naKeys.has(c.key));
   const secOblig = fraOblig.length ? `\nFRASES QUE EL ASESOR DEBE DECIR (penalizar si no las menciona):\n${fraOblig.map(f=>'- '+f).join('\n')}` : '';
   const secProhib = fraProhib.length ? `\nFRASES PROHIBIDAS (penalizar severamente si las usa):\n${fraProhib.map(f=>'- '+f).join('\n')}` : '';
   const criteriosNALabels = getCriterios(modelo).filter(c => naKeys.has(c.key)).map(c => c.label);
@@ -3447,14 +3501,15 @@ Evalúa del 0 al 100 según la Cédula QA Cobranza Titulación v1.0 y responde S
   "scores":{
 ${scoresTitKeys}
   },
-  "fortalezas":"<2 cosas concretas que el asesor hizo bien, cada una indicando entre paréntesis la etapa de la matriz (Apertura|Investigación|Demostración|Manejo de Objeciones|Cierre|Etiqueta). Ejemplo: "Se presentó correctamente con nombre y universidad (Apertura)">",
-  "areas_mejora":"<2-3 acciones específicas de mejora, cada una indicando entre paréntesis la etapa de la matriz a la que corresponde. Solo mencionar criterios habilitados. Ejemplo: "Practicar los 5 puntos del manejo de precio (Demostración)">",
+  "detalle_criterios":[{"key":"<key del criterio con score < 100>","hizo":"<en max 15 palabras qué sí hizo el asesor en este criterio, o vacío si nada>","no_hizo":"<en max 20 palabras qué le faltó hacer específicamente, citando los elementos del criterio que omitió>"}],
+  "fortalezas":"<2 cosas concretas que el asesor hizo bien SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa (Apertura|Investigación|Demostración|Manejo de Objeciones|Cierre|Etiqueta). NUNCA menciones criterios deshabilitados. Ejemplo: "Se presentó correctamente con nombre y universidad (Apertura)">",
+  "areas_mejora":"<2-3 acciones específicas de mejora SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa. NUNCA menciones criterios deshabilitados aunque el asesor haya fallado en ellos. Ejemplo: "Practicar los 5 puntos del manejo de precio (Demostración)">",
   "palabras_riesgo":[],
   "sentimiento_cliente":"<positivo|neutral|negativo>",
   "logro_objetivo":<true|false>,
   "nivel_urgencia":"<critica si score<60% pts activos | revisar si 60-80% | normal si >80%>",
-  "feedback_agente":"<2-3 oraciones directas al asesor>",
-  "resumen_supervisor":"<2-3 oraciones para el supervisor>",
+  "feedback_agente":"<2-3 oraciones directas al asesor. NUNCA menciones criterios deshabilitados>",
+  "resumen_supervisor":"<2-3 oraciones para el supervisor. NUNCA menciones criterios deshabilitados>",
   "probabilidad_inscripcion":<0-100>,
   "razon_probabilidad":"<explicación breve — probabilidad de que el prospecto pague el paquete de titulación>"
 }
@@ -3488,7 +3543,7 @@ tit_obj_desconfianza (4.3): 100=ofreció evidencia + acotó plazo de reflexión.
 CIERRE DE VENTA — Objetivo: Obtener compromiso de pago en la misma llamada.
 tit_cre_cierre (5.1): 100=ejecutó técnica de cierre explícita y obtuvo compromiso. 75=intentó cierre sin compromiso final. 50=insinuó cierre sin ejecutarlo. 0=no intentó cerrar. Frases: "¿Empezamos hoy? Solo necesito tu correo para el contrato." / "¿Prefieres una sola exhibición o mensualidades?" / "¿Puedes hacer el pago hoy o mañana a más tardar?"
 tit_cre_confirmacion (5.2): 100=recabó todos los datos (nombre, matrícula, correo, teléfono, método de pago) + informó próximos pasos con fechas. 75=recabó datos sin explicar siguientes pasos. 0=no formalizó. Frases: "Te envío el contrato a este correo, ¿me lo confirmas?" / "El cargo se realiza hoy; en 24h recibirás confirmación y el nombre de tu asesor."
-tit_cre_crm (5.3): Tipificar según resultado real: Venta cerrada / Pendiente de pago / Rellamada con fecha / Sin interés. No tipificar como venta sin compromiso concreto. 100=evidencia de tipificación correcta. 0=sin evidencia. Nota: marcar N/A si la evaluación es de solo audio.
+${naKeys.has('tit_cre_crm')?'':'tit_cre_crm (5.3): Tipificar según resultado real: Venta cerrada / Pendiente de pago / Rellamada con fecha / Sin interés. No tipificar como venta sin compromiso concreto. 100=evidencia de tipificación correcta. 0=sin evidencia. Nota: marcar N/A si la evaluación es de solo audio.\n'}
 
 ETIQUETA — Objetivo: Evaluar la forma en que el asesor conduce la conversación de cobranza.
 tit_etq_personalizacion (6.1): 100=nombre ≥3 veces + retomó dato del sondeo al argumentar. 75=nombre ≥3 veces sin retomar sondeo. 50=1-2 veces. 0=ninguna personalización. Frases: "Como me comentaste que necesitas el título para tu trabajo, Luis, este paquete te resuelve exactamente eso."
@@ -3545,9 +3600,13 @@ DEFINICIÓN DE logro_objetivo (Titulación): true SOLO si el egresado confirmó 
   const objetivoTexto = esTrad
     ? 'generar una CITA para que el prospecto visite el campus y el líder de admisiones cierre la inscripción presencialmente'
     : 'lograr la MATRÍCULA o inscripción del prospecto en la misma llamada, sin necesidad de visita a campus';
-  const cierreGuia = esTrad
-    ? 'CIERRE — cre_cita (5.1): El asesor debe proponer cita en ≤3 días con fecha, hora y campus específicos, Y el prospecto debe confirmar explícitamente que va a asistir. No es suficiente que el asesor proponga la cita — el prospecto debe aceptarla verbalmente. 100=propuso cita con fecha+hora+campus Y el prospecto confirmó asistencia. 50=propuso cita pero el prospecto no confirmó explícitamente. 0=no propuso cita. cre_seguimiento: Definió fecha y hora de seguimiento. cre_crm: Mencionó tipificar, registrar o actualizar el CRM (si no hay evidencia en audio, score 0 o marca N/A).'
-    : 'CIERRE — cre_matricula (5.1): El asesor debe proponer matrícula inmediata o proceso de inscripción ≤24h con pasos claros, Y el prospecto debe confirmar explícitamente su intención de matricularse. No es suficiente que el asesor proponga el proceso — el prospecto debe aceptarlo verbalmente. 100=propuso matrícula/inscripción con pasos claros Y el prospecto confirmó. 50=propuso proceso pero el prospecto no confirmó. 0=no propuso matrícula. cre_seguimiento: Definió fecha y hora de seguimiento. cre_crm: Mencionó tipificar, registrar o actualizar el CRM (si no hay evidencia en audio, score 0 o marca N/A).';
+  // Construir guía de cierre dinámicamente excluyendo criterios inhabilitados
+  const _cierreBase = esTrad
+    ? 'CIERRE — cre_cita (5.1): El asesor debe proponer cita en ≤3 días con fecha, hora y campus específicos, Y el prospecto debe confirmar explícitamente que va a asistir. No es suficiente que el asesor proponga la cita — el prospecto debe aceptarla verbalmente. 100=propuso cita con fecha+hora+campus Y el prospecto confirmó asistencia. 50=propuso cita pero el prospecto no confirmó explícitamente. 0=no propuso cita.'
+    : 'CIERRE — cre_matricula (5.1): El asesor debe proponer matrícula inmediata o proceso de inscripción ≤24h con pasos claros, Y el prospecto debe confirmar explícitamente su intención de matricularse. No es suficiente que el asesor proponga el proceso — el prospecto debe aceptarlo verbalmente. 100=propuso matrícula/inscripción con pasos claros Y el prospecto confirmó. 50=propuso proceso pero el prospecto no confirmó. 0=no propuso matrícula.';
+  const _cierreSeguimiento = naKeys.has('cre_seguimiento') ? '' : ' cre_seguimiento: Definió fecha y hora de seguimiento.';
+  const _cierreCRM = naKeys.has('cre_crm') ? '' : ' cre_crm: Mencionó tipificar, registrar o actualizar el CRM (si no hay evidencia en audio, score 0 o marca N/A).';
+  const cierreGuia = _cierreBase + _cierreSeguimiento + _cierreCRM;
   const cierreKey = esTrad ? '"cre_cita":<0-100>,' : '"cre_matricula":<0-100>,';
   const modalidadCtx = esTrad
     ? 'modalidad presencial o mixta en campus físico'
@@ -3573,31 +3632,11 @@ ${transcripcion.slice(0,15000)}
 Evalúa del 0 al 100 cada criterio según la Cédula QA Aliat v4.0 y responde SOLO con este JSON:
 {
   "scores":{
-    "ap_presentacion":<0-100>,
-    "ap_datos":<0-100>,
-    "ap_parentesco":<0-100>,
-    "ap_nombre":<0-100>,
-    "inv_estudios":<0-100>,
-    "inv_sondeo":<0-100>,
-    "inv_edad":<0-100 o "N/A" si el prospecto busca licenciatura u otro nivel superior>,
-    "demo_beneficios":<0-100>,
-    "demo_economico":<0-100>,
-    "demo_ventaja":<0-100>,
-    "demo_precio":<0-100>,
-    "demo_empleabilidad":<0-100>,
-    "obj_objeciones":<0-100>,
-    "obj_referidos":<0-100>,
+    ${criteriosActivos.map(c => c.key === 'inv_edad' ? '"inv_edad":<0-100 o "N/A" si el prospecto busca licenciatura u otro nivel superior>' : `"${c.key}":<0-100>`).join(',\n    ')},
     ${cierreKey}
-    "cre_seguimiento":<0-100>,
-    "cre_crm":<0-100>,
-    "etq_personalizacion":<0-100>,
-    "etq_plantillas":<0-100>,
-    "etq_respuesta":<0-100>,
-    "etq_conflicto":<0-100>,
-    "etq_control":<0-100>
   },
-  "fortalezas":"<2 cosas concretas que el asesor hizo bien, cada una indicando entre paréntesis la etapa de la matriz (Apertura|Investigación|Demostración|Manejo de Objeciones|Cierre|Etiqueta). Ejemplo: "Se presentó correctamente con nombre y universidad (Apertura)">",
-  "areas_mejora":"<2-3 acciones específicas de mejora, cada una indicando entre paréntesis la etapa de la matriz a la que corresponde. Solo mencionar criterios habilitados. Ejemplo: "Practicar los 5 puntos del manejo de precio (Demostración)">",
+  "fortalezas":"<2 cosas concretas que el asesor hizo bien SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa (Apertura|Investigación|Demostración|Manejo de Objeciones|Cierre|Etiqueta). NUNCA menciones criterios deshabilitados. Ejemplo: "Se presentó correctamente con nombre y universidad (Apertura)">",
+  "areas_mejora":"<2-3 acciones específicas de mejora SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa. NUNCA menciones criterios deshabilitados aunque el asesor haya fallado en ellos. Ejemplo: "Practicar los 5 puntos del manejo de precio (Demostración)">",
   "palabras_riesgo":[],
   "objeciones_detectadas":[
     {
@@ -3611,8 +3650,8 @@ Evalúa del 0 al 100 cada criterio según la Cédula QA Aliat v4.0 y responde SO
   "sentimiento_cliente":"<positivo|neutral|negativo>",
   "logro_objetivo":<true|false>,
   "nivel_urgencia":"<critica si score<60% pts activos | revisar si 60-80% | normal si >80%>",
-  "feedback_agente":"<2-3 oraciones directas al asesor, tono constructivo>",
-  "resumen_supervisor":"<2-3 oraciones para el supervisor>",
+  "feedback_agente":"<2-3 oraciones directas al asesor, tono constructivo. NUNCA menciones criterios deshabilitados>",
+  "resumen_supervisor":"<2-3 oraciones para el supervisor. NUNCA menciones criterios deshabilitados>",
   "probabilidad_inscripcion":<0-100>,
   "razon_probabilidad":"<explicación breve en una oración de por qué se estima esa probabilidad>"
 }
@@ -3654,15 +3693,9 @@ Acción esperada: Confirmar explícitamente el interés del prospecto.
 Frases ejemplo: "¿Te interesa Psicología en el campus de...?" / "¿Buscas licenciatura o bachillerato?" / "¿Qué campus o modalidad es de tu interés?"
 Puntuación: 100=confirmó programa Y modalidad/campus. 50=confirmó solo uno. 0=no preguntó nada.
 
-ap_parentesco (1.3) — Identifica si es tutor o familiar.
-Acción esperada: Preguntar relación y registrar.
-Frases ejemplo: "¿Con quién tengo el gusto y qué parentesco tienes?" / "¿Eres tutor o familiar del aspirante?" / "¿La información es para ti o para algún familiar?"
-Puntuación: 100=preguntó explícitamente parentesco o relación. 0=no preguntó.
+${naKeys.has('ap_parentesco')?'':'ap_parentesco (1.3) — Identifica si es tutor o familiar.\nAcción esperada: Preguntar relación y registrar.\nFrases ejemplo: "¿Con quién tengo el gusto y qué parentesco tienes?" / "¿Eres tutor o familiar del aspirante?" / "¿La información es para ti o para algún familiar?"\nPuntuación: 100=preguntó explícitamente parentesco o relación. 0=no preguntó.\n'}
 
-ap_nombre (1.4) — Identificación correcta del prospecto.
-Acción esperada: Corroborar nombre completo antes de avanzar.
-Frases ejemplo: "¿Me confirmas tu nombre completo?" / "¿Nombre completo del aspirante?"
-Puntuación: 100=solicitó o confirmó nombre completo (nombre Y apellido). 50=solo usó nombre de pila sin confirmar. 0=nunca pidió ni confirmó el nombre.
+${naKeys.has('ap_nombre')?'':'ap_nombre (1.4) — Identificación correcta del prospecto.\nAcción esperada: Corroborar nombre completo antes de avanzar.\nFrases ejemplo: "¿Me confirmas tu nombre completo?" / "¿Nombre completo del aspirante?"\nPuntuación: 100=solicitó o confirmó nombre completo (nombre Y apellido). 50=solo usó nombre de pila sin confirmar. 0=nunca pidió ni confirmó el nombre.\n'}
 
 INVESTIGACIÓN — Objetivo: Identificar necesidades y motivaciones del prospecto.
 
@@ -3757,21 +3790,13 @@ Acción esperada: Personalizar mínimo 3 veces.
 Frases ejemplo: uso del nombre del prospecto / retoma lo que comentó / adapta discurso al perfil del prospecto.
 Puntuación: 100=usó nombre ≥3 veces O personalizó ≥3 veces con contexto del prospecto. 50=1-2 veces. 0=ninguna.
 
-etq_plantillas (6.2) — Uso adecuado de plantillas de WhatsApp.
-Acción esperada: Adaptar la plantilla al caso, no copiar sin personalizar.
-Puntuación: 100=adaptó plantilla a carrera/modalidad/caso. 50=usó plantilla rígida sin personalizar. 0=no siguió ninguna estructura o no aplica.
+${naKeys.has('etq_plantillas')?'':'etq_plantillas (6.2) — Uso adecuado de plantillas de WhatsApp.\nAcción esperada: Adaptar la plantilla al caso, no copiar sin personalizar.\nPuntuación: 100=adaptó plantilla a carrera/modalidad/caso. 50=usó plantilla rígida sin personalizar. 0=no siguió ninguna estructura o no aplica.\n'}
 
-etq_respuesta (6.3) — Rapidez en el primer mensaje de WA.
-Acción esperada: Primer mensaje y consecutivos en menos de 1 minuto.
-Puntuación: 100=respuesta inmediata o evidencia de atención oportuna. 0=tardanza evidente o sin evidencia de respuesta rápida.
+${naKeys.has('etq_respuesta')?'':'etq_respuesta (6.3) — Rapidez en el primer mensaje de WA.\nAcción esperada: Primer mensaje y consecutivos en menos de 1 minuto.\nPuntuación: 100=respuesta inmediata o evidencia de atención oportuna. 0=tardanza evidente o sin evidencia de respuesta rápida.\n'}
 
-etq_conflicto (6.4) — Manejo emocional y control de la conversación.
-Acción esperada: Evitar confrontación, responder con empatía.
-Puntuación: 100=mantuvo tono cordial y empático incluso ante tensión. 50=alguna frialdad pero sin confrontación. 0=se mostró agresivo, cortante, impaciente o irrespetuoso.
+${naKeys.has('etq_conflicto')?'':'etq_conflicto (6.4) — Manejo emocional y control de la conversación.\nAcción esperada: Evitar confrontación, responder con empatía.\nPuntuación: 100=mantuvo tono cordial y empático incluso ante tensión. 50=alguna frialdad pero sin confrontación. 0=se mostró agresivo, cortante, impaciente o irrespetuoso.\n'}
 
-etq_control (6.5) — Mute, tiempos de espera y respuestas.
-Acción esperada: Controlar silencios, usar correctamente el mute.
-Puntuación: 100=controló silencios y mute correctamente (o no fue necesario). 50=algún silencio incómodo pero manejable. 0=silencios prolongados sin gestionar, ruidos de fondo, mute inadecuado.`;
+${naKeys.has('etq_control')?'':'etq_control (6.5) — Mute, tiempos de espera y respuestas.\nAcción esperada: Controlar silencios, usar correctamente el mute.\nPuntuación: 100=controló silencios y mute correctamente (o no fue necesario). 50=algún silencio incómodo pero manejable. 0=silencios prolongados sin gestionar, ruidos de fondo, mute inadecuado.'}`;
 
   const MODELOS_GROQ = await obtenerModelosDisponibles(groqKey);
   let lastErr = '';
@@ -4718,6 +4743,7 @@ function aplicarFiltrosHC(data) {
 // Renderiza solo datos del historial sin recrear el bloque de filtros
 function renderHistorialDatos() {
   actualizarSelectorAgentes();
+  inicializarSemanaBtns();
   const statsEl=document.getElementById('hist-stats'), tablaEl=document.getElementById('hist-tabla');
   const modeloF=sharedFiltros.modelo, evaluadorF=sharedFiltros.evaluador;
   let data=historial;
@@ -4962,31 +4988,69 @@ function filtrarPorPeriodo() {
   return data;
 }
 
+// ── Utilidad: número de semana ISO (lunes=inicio) y año ──
+function getISOWeek(date) {
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() + 4 - (d.getDay()||7));
+  const yearStart = new Date(d.getFullYear(),0,1);
+  const week = Math.ceil((((d-yearStart)/86400000)+1)/7);
+  return { week, year: d.getFullYear() };
+}
+function getLunesDomingo(date) {
+  const hoy = date || new Date();
+  const lunes = new Date(hoy);
+  lunes.setDate(hoy.getDate()-((hoy.getDay()+6)%7)); lunes.setHours(0,0,0,0);
+  const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6); domingo.setHours(23,59,59,999);
+  return { lunes, domingo };
+}
+function semanaLabel(date) {
+  const { week, year } = getISOWeek(date || new Date());
+  return `S${week}-${String(year).slice(2)}`;
+}
+
+// ── Sincronización bidireccional de períodos entre Historial y Reportes ──
+function syncEvalPeriod(desde, hasta, period) {
+  histPeriod = period; histFechaDesde = desde; histFechaHasta = hasta;
+  repPeriod = period; repFechaDesde = desde; repFechaHasta = hasta;
+}
+function syncLlamadaPeriod(desde, hasta, period) {
+  histLlamadaPeriod = period; histLlamadaDesde = desde; histLlamadaHasta = hasta;
+  repLlamadaPeriod = period; repLlamadaDesde = desde; repLlamadaHasta = hasta;
+}
+function syncUIEval(extraClass) {
+  document.querySelectorAll('.period-tab:not(.llamada)').forEach(b=>b.classList.remove('active'));
+  if(extraClass) document.querySelectorAll(extraClass).forEach(b=>b.classList.add('active'));
+  ['hist-fechas-custom','rep-fechas-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+}
+function syncUILlamada(extraClass) {
+  document.querySelectorAll('.period-tab.llamada').forEach(b=>b.classList.remove('active'));
+  if(extraClass) document.querySelectorAll(extraClass).forEach(b=>b.classList.add('active'));
+  ['hist-llamada-fechas-custom','rep-llamada-fechas-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+}
+
 function setPeriod(days, btn) {
-  repPeriod = days;
-  repFechaDesde = null; repFechaHasta = null;
-  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+  syncEvalPeriod(null, null, days);
+  syncUIEval(`.rep-eval-period-${days},.hist-eval-period-${days}`);
   btn.classList.add('active');
-  const fc = document.getElementById('rep-fechas-custom');
-  if (fc) fc.style.display = 'none';
-  renderReportes();
+  renderHistorial(); renderReportes();
 }
 
 function setPeriodSemana(btn) {
-  // Lunes a domingo de la semana actual
-  const hoy = new Date();
-  const lunes = new Date(hoy);
-  lunes.setDate(hoy.getDate() - ((hoy.getDay()+6)%7));
-  lunes.setHours(0,0,0,0);
-  const domingo = new Date(lunes);
-  domingo.setDate(lunes.getDate() + 6);
-  domingo.setHours(23,59,59,999);
-  repFechaDesde = lunes; repFechaHasta = domingo;
-  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+  const {lunes,domingo} = getLunesDomingo();
+  syncEvalPeriod(lunes, domingo, -1);
+  syncUIEval('.eval-semana-btn');
   btn.classList.add('active');
-  const fc = document.getElementById('rep-fechas-custom');
-  if (fc) fc.style.display = 'none';
-  renderReportes();
+  renderHistorial(); renderReportes();
+}
+function setPeriodSemanaN(btn) {
+  const {lunes,domingo} = getLunesDomingo();
+  const label = semanaLabel(lunes);
+  syncEvalPeriod(lunes, domingo, -1);
+  document.querySelectorAll('.eval-semana-n-btn').forEach(b=>{b.classList.add('active');b.textContent=label;});
+  btn.classList.add('active'); btn.textContent=label;
+  ['hist-fechas-custom','rep-fechas-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  renderHistorial(); renderReportes();
 }
 
 function toggleFechasCustom(btn) {
@@ -5014,11 +5078,148 @@ function aplicarRangoFechas() {
   const desdeVal = document.getElementById('rep-fecha-desde').value;
   const hastaVal = document.getElementById('rep-fecha-hasta').value;
   if (!desdeVal || !hastaVal) return;
-  repFechaDesde = new Date(desdeVal + 'T00:00:00');
-  repFechaHasta = new Date(hastaVal + 'T00:00:00');
-  if (repFechaDesde > repFechaHasta) { repFechaHasta = repFechaDesde; document.getElementById('rep-fecha-hasta').value = desdeVal; }
-  renderReportes();
+  const desde = new Date(desdeVal + 'T00:00:00');
+  let hasta = new Date(hastaVal + 'T00:00:00');
+  if (desde > hasta) { hasta = desde; document.getElementById('rep-fecha-hasta').value = desdeVal; }
+  syncEvalPeriod(desde, hasta, -1);
+  renderHistorial(); renderReportes();
 }
+// ── Semana del año: dropdown multi-select ──
+let semanasEvalSel = new Set();   // semanas seleccionadas para fecha evaluación
+let semanasLlamadaSel = new Set(); // semanas seleccionadas para fecha llamada
+
+function getSemanasDisponibles(tipo) {
+  // tipo: 'eval' | 'llamada'
+  const semSet = {};
+  historial.forEach(h => {
+    let fecha = null;
+    if (tipo === 'eval') {
+      fecha = h.id ? new Date(h.id) : null;
+    } else {
+      fecha = parseFechaLlamada(h.fecha_llamada);
+    }
+    if (!fecha) return;
+    const { week, year } = getISOWeek(fecha);
+    const key = `${year}-${String(week).padStart(2,'0')}`;
+    const label = `S${week}-${String(year).slice(2)}`;
+    if (!semSet[key]) {
+      // Calcular lunes de esa semana
+      const lunes = new Date(fecha);
+      lunes.setDate(fecha.getDate()-((fecha.getDay()+6)%7)); lunes.setHours(0,0,0,0);
+      const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6); domingo.setHours(23,59,59,999);
+      semSet[key] = { key, label, lunes, domingo };
+    }
+  });
+  return Object.values(semSet).sort((a,b)=>b.key.localeCompare(a.key));
+}
+
+function toggleSemanasDropdown(dropId, tipo, btn) {
+  // Cerrar otros dropdowns
+  document.querySelectorAll('.semanas-dropdown').forEach(d => {
+    if (d.id !== dropId) d.style.display = 'none';
+  });
+  const drop = document.getElementById(dropId);
+  if (!drop) return;
+  if (drop.style.display !== 'none') { drop.style.display = 'none'; return; }
+
+  const semanas = getSemanasDisponibles(tipo);
+  const selSet = tipo === 'eval' ? semanasEvalSel : semanasLlamadaSel;
+
+  drop.innerHTML = `
+    <label style="font-weight:700;color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;display:block">Seleccionar semanas</label>
+    ${semanas.map(s => `<label><input type="checkbox" value="${s.key}" ${selSet.has(s.key)?'checked':''}> ${s.label}</label>`).join('')}
+    <div class="semanas-dropdown-footer">
+      <button onclick="aplicarSemanasDropdown('${dropId}','${tipo}')" style="flex:1;padding:5px;background:var(--blue);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:700;cursor:pointer">Aplicar</button>
+      <button onclick="limpiarSemanasDropdown('${dropId}','${tipo}')" style="padding:5px 8px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:11px;cursor:pointer">Limpiar</button>
+    </div>`;
+  drop.style.display = 'block';
+
+  // Cerrar al click fuera
+  setTimeout(() => {
+    document.addEventListener('click', function cerrar(e) {
+      if (!drop.contains(e.target) && e.target !== btn) {
+        drop.style.display = 'none';
+        document.removeEventListener('click', cerrar);
+      }
+    });
+  }, 10);
+}
+
+function aplicarSemanasDropdown(dropId, tipo) {
+  const drop = document.getElementById(dropId);
+  const checks = drop.querySelectorAll('input[type=checkbox]:checked');
+  const semanas = getSemanasDisponibles(tipo);
+  const selKeys = [...checks].map(c => c.value);
+  const selSet = new Set(selKeys);
+
+  if (tipo === 'eval') {
+    semanasEvalSel = selSet;
+    if (selKeys.length === 0) {
+      // Limpiar filtro
+      histPeriod = 0; histFechaDesde = null; histFechaHasta = null;
+      repPeriod = 0; repFechaDesde = null; repFechaHasta = null;
+    } else if (selKeys.length === 1) {
+      const s = semanas.find(x => x.key === selKeys[0]);
+      histFechaDesde = repFechaDesde = s.lunes;
+      histFechaHasta = repFechaHasta = s.domingo;
+      histPeriod = repPeriod = -1;
+    } else {
+      // Múltiples: calcular rango total lunes mínimo → domingo máximo
+      const sel = semanas.filter(x => selSet.has(x.key));
+      const minLunes = sel.reduce((m,s) => s.lunes < m ? s.lunes : m, sel[0].lunes);
+      const maxDom   = sel.reduce((m,s) => s.domingo > m ? s.domingo : m, sel[0].domingo);
+      histFechaDesde = repFechaDesde = minLunes;
+      histFechaHasta = repFechaHasta = maxDom;
+      histPeriod = repPeriod = -1;
+    }
+    // Actualizar label del botón
+    const labelTxt = selKeys.length === 0 ? 'Semana del año ▾' : selKeys.length === 1 ? semanas.find(x=>x.key===selKeys[0])?.label+' ▾' : `${selKeys.length} semanas ▾`;
+    ['hist-eval-semanas-btn','rep-eval-semanas-btn'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) { b.textContent = labelTxt; if(selKeys.length>0) b.classList.add('active'); else b.classList.remove('active'); }
+    });
+  } else {
+    semanasLlamadaSel = selSet;
+    if (selKeys.length === 0) {
+      histLlamadaPeriod = 0; histLlamadaDesde = null; histLlamadaHasta = null;
+      repLlamadaPeriod = 0; repLlamadaDesde = null; repLlamadaHasta = null;
+    } else if (selKeys.length === 1) {
+      const s = semanas.find(x => x.key === selKeys[0]);
+      histLlamadaDesde = repLlamadaDesde = s.lunes;
+      histLlamadaHasta = repLlamadaHasta = s.domingo;
+      histLlamadaPeriod = repLlamadaPeriod = -1;
+    } else {
+      const sel = semanas.filter(x => selSet.has(x.key));
+      const minLunes = sel.reduce((m,s) => s.lunes < m ? s.lunes : m, sel[0].lunes);
+      const maxDom   = sel.reduce((m,s) => s.domingo > m ? s.domingo : m, sel[0].domingo);
+      histLlamadaDesde = repLlamadaDesde = minLunes;
+      histLlamadaHasta = repLlamadaHasta = maxDom;
+      histLlamadaPeriod = repLlamadaPeriod = -1;
+    }
+    const labelTxt = selKeys.length === 0 ? 'Semana del año ▾' : selKeys.length === 1 ? semanas.find(x=>x.key===selKeys[0])?.label+' ▾' : `${selKeys.length} semanas ▾`;
+    ['hist-llamada-semanas-btn','rep-llamada-semanas-btn'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) { b.textContent = labelTxt; if(selKeys.length>0) b.classList.add('active'); else b.classList.remove('active'); }
+    });
+  }
+
+  drop.style.display = 'none';
+  renderHistorial(); renderReportes();
+}
+
+function limpiarSemanasDropdown(dropId, tipo) {
+  const drop = document.getElementById(dropId);
+  drop.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
+  if (tipo === 'eval') semanasEvalSel = new Set();
+  else semanasLlamadaSel = new Set();
+  aplicarSemanasDropdown(dropId, tipo);
+}
+
+function inicializarSemanaBtns() {
+  const label = semanaLabel(new Date());
+  document.querySelectorAll('.eval-semana-n-btn, .llamada-semana-n-btn').forEach(b => b.textContent = label);
+}
+
 function actualizarSelectorAgentes() {
   const evaluadores = [...new Set(historial.map(h => h.evaluadorNombre).filter(Boolean))].sort();
   ['rep-evaluador-select','hist-evaluador-select'].forEach(id => {
@@ -5604,11 +5805,12 @@ async function generarPlanIA() {
 
   const agentMap={};
   data.forEach(h=>{
-    if(!agentMap[h.agente]) agentMap[h.agente]={scores:[],logros:0,llamadas:0,modelo:h.modelo||'tradicional',pts:[],scoresCriterio:{}};
+    if(!agentMap[h.agente]) agentMap[h.agente]={scores:[],logros:0,llamadas:0,modelo:h.modelo||'tradicional',pts:[],scoresCriterio:{},llamadas_raw:[]};
     agentMap[h.agente].scores.push(h.score_total||0);
     agentMap[h.agente].pts.push(h.pts_activos||80);
     if(h.logro_objetivo) agentMap[h.agente].logros++;
     agentMap[h.agente].llamadas++;
+    agentMap[h.agente].llamadas_raw.push(h);
     const naSetH = new Set(Array.isArray(h.criterios_na) ? h.criterios_na.map(String) : []);
     Object.entries(h.scores||{}).forEach(([k,v]) => {
       if(naSetH.has(k)) return;
@@ -5632,10 +5834,32 @@ async function generarPlanIA() {
     const debiles1 = etapaPrio ? criteriosDebiles(d.scoresCriterio, etapaPrio.label) : '';
     const debiles2 = etapa2 ? criteriosDebiles(d.scoresCriterio, etapa2.label) : '';
     const etapasStr = etapasAsesor.slice(0,3).map(e=>`${e.label}:${e.avg}`).join(', ');
+    // Acumular patrones de detalle_criterios (hizo/no_hizo) por criterio
+    const patronesCriterio = {};
+    d.llamadas_raw && d.llamadas_raw.forEach(h => {
+      (h.detalle_criterios||[]).forEach(dc => {
+        if(!patronesCriterio[dc.key]) patronesCriterio[dc.key]={noHizo:[],total:0};
+        patronesCriterio[dc.key].total++;
+        if(dc.no_hizo) patronesCriterio[dc.key].noHizo.push(dc.no_hizo);
+      });
+    });
+    const totalLlamadas = d.llamadas;
+    const patronesStr = Object.entries(patronesCriterio)
+      .filter(([k,v]) => !naKeys.has(k) && v.noHizo.length >= Math.ceil(totalLlamadas*0.4))
+      .map(([k,v]) => {
+        const criterio = criteriosTodos.find(c=>c.key===k);
+        const label = criterio?.label||k;
+        // Encontrar el no_hizo más frecuente
+        const freq={};
+        v.noHizo.forEach(t=>{freq[t]=(freq[t]||0)+1;});
+        const topNoHizo = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+        return `    • ${label}: falla en ${v.noHizo.length}/${totalLlamadas} llamadas — ${topNoHizo}`;
+      }).join('\n');
     return `- ${n} [${modLabel}]: score ${avg} pts, ${ctx.labelCierre} ${cierre}%` +
       `\n  Etapas por prioridad: ${etapasStr}` +
       (etapaPrio && debiles1 ? `\n  Criterios débiles en ${etapaPrio.label}: ${debiles1}` : '') +
-      (etapa2 && debiles2 ? `\n  Criterios débiles en ${etapa2.label}: ${debiles2}` : '');
+      (etapa2 && debiles2 ? `\n  Criterios débiles en ${etapa2.label}: ${debiles2}` : '') +
+      (patronesStr ? `\n  Patrones recurrentes:\n${patronesStr}` : '');
   }).join('\n');
 
   const avgGlobal=Math.round(data.reduce((s,h)=>s+(h.score_total||0),0)/data.length);
@@ -5696,8 +5920,16 @@ async function generarPlanIA() {
     : `DIAGNÓSTICO RÁPIDO\nDescribe los problemas del equipo mencionando TODAS las etapas con sus scores: ${todasEtapasStr}. Comenta brevemente el estado de cada una, de mayor a menor problema.`;
 
   const secRecomIndividual = esPlanIndividual
-    ? `PLAN DE ACCIÓN DETALLADO — ${nombreAsesor}\nUsa los datos de "Criterios débiles" del resumen. Para cada etapa prioritaria: indica la etapa, lista cada criterio débil con su score y una acción concreta específica para ese criterio. Sé directo y específico, no genérico.`
-    : `RECOMENDACIÓN INDIVIDUAL POR ASESOR\nPara cada asesor: nombre, su etapa prioritaria real (según "Etapas por prioridad" de sus datos), los criterios débiles específicos que debe trabajar y una acción concreta para cada uno.`;
+    ? `PLAN DE ACCIÓN DETALLADO — ${nombreAsesor}
+Para cada prioridad del TOP usa los "Patrones recurrentes" del resumen. Formato por prioridad:
+[Etapa] ([score]/100)
+❌ [qué no hizo]: patrón en X/Y llamadas — [detalle concreto de lo que omitió]
+✅ [qué sí hizo bien, si aplica]
+Acción: [acción específica con ejemplo concreto de frase o técnica]
+NUNCA menciones criterios deshabilitados.`
+    : `RECOMENDACIÓN INDIVIDUAL POR ASESOR
+Una línea por asesor con: nombre, etapa prioritaria, patrón recurrente más crítico (de "Patrones recurrentes" si existe) y acción directa. Ejemplo: "— Martínez Iván: sin fecha/hora en cita (13/15 llamadas). Acción: doble alternativa obligatoria."
+NUNCA menciones criterios deshabilitados.`;
 
   const prompt=`Eres ${ctx.rol}.
 El objetivo ${esPlanIndividual?`de ${nombreAsesor}`:'del equipo'} es ${ctx.objetivo}.
@@ -5725,9 +5957,6 @@ ${top3Esqueleto}
 
 ${secRecomIndividual}
 
-MÉTRICA OBJETIVO PRÓXIMA SEMANA
-${ctx.labelCierre} objetivo % con justificación breve.
-
 Tono profesional y directo. Sin markdown, solo texto plano.`;
 
   const MODELOS = await obtenerModelosDisponibles(groqKey);
@@ -5743,7 +5972,78 @@ Tono profesional y directo. Sin markdown, solo texto plano.`;
     }catch(e){}
   }
   box.className='ai-plan-box'; box.textContent=resultado||'No se pudo generar el plan. Verifica tu API key.';
+  // Guardar contexto para el chat y mostrar input
+  window._planChatContext = { planActual: resultado, datos: data, resumenAgentes, etapasResumen };
+  window._planChatHistory = [];
+  const chatBox = document.getElementById('rep-chat-box');
+  const chatMsgs = document.getElementById('rep-chat-messages');
+  if(chatBox && resultado){ chatBox.style.display='block'; chatMsgs.innerHTML=''; }
   btn.disabled=false; btn.innerHTML='<span>✨</span> Regenerar plan';
+}
+
+async function preguntarPlanIA() {
+  const input = document.getElementById('rep-chat-input');
+  const msgs = document.getElementById('rep-chat-messages');
+  const pregunta = input?.value?.trim();
+  if (!pregunta || !window._planChatContext) return;
+  input.value = '';
+
+  const groqKey = localStorage.getItem('qa_groq_key');
+  if (!groqKey) { alert('Configura tu API key primero.'); return; }
+
+  // Mostrar mensaje del usuario
+  const addMsg = (txt, esUsuario) => {
+    const d = document.createElement('div');
+    d.style.cssText = `padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.5;max-width:90%;${esUsuario?'align-self:flex-end;background:rgba(99,140,255,.15);color:var(--text);border:1px solid rgba(99,140,255,.2)':'align-self:flex-start;background:var(--surface2);color:var(--text);border:1px solid var(--border2)'}`;
+    d.textContent = txt;
+    msgs.appendChild(d);
+    msgs.scrollTop = msgs.scrollHeight;
+    return d;
+  };
+
+  addMsg(pregunta, true);
+  const loadingEl = addMsg('Analizando...', false);
+
+  // Construir prompt con contexto compacto
+  const ctx = window._planChatContext;
+  const systemCtx = `Eres un analista de calidad para callcenter de admisiones educativas. 
+Tienes acceso a estos datos del período:
+
+PLAN DE MEJORA GENERADO:
+${ctx.planActual}
+
+RENDIMIENTO POR ETAPA: ${ctx.etapasResumen}
+
+RESUMEN POR ASESOR:
+${ctx.resumenAgentes}
+
+Responde de forma concisa y directa. Sin markdown. Máximo 150 palabras.`;
+
+  // Historial de conversación
+  window._planChatHistory.push({ role: 'user', content: pregunta });
+
+  const MODELOS = await obtenerModelosDisponibles(groqKey);
+  let respuesta = '';
+  for (const m of MODELOS) {
+    try {
+      const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: m,
+          messages: [
+            { role: 'user', content: systemCtx + '\n\n---\n' + window._planChatHistory.map(h=>`${h.role==='user'?'Pregunta':'Respuesta'}: ${h.content}`).join('\n') }
+          ],
+          temperature: 0.3,
+          max_tokens: 400
+        })
+      });
+      if (resp.ok) { const d = await resp.json(); respuesta = d.choices[0].message.content.trim(); break; }
+    } catch(e) {}
+  }
+
+  loadingEl.textContent = respuesta || 'No se pudo obtener respuesta.';
+  window._planChatHistory.push({ role: 'assistant', content: respuesta });
 }
 
 function exportarReporteHTML() {
