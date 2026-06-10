@@ -2027,14 +2027,19 @@ async function rotarGroqKey() {
 }
 
 // Wrapper inteligente para fetch a Groq — rota automáticamente en caso de 429
+// Timestamp de última sincronización Firestore para no hacerlo en cada llamada del batch
+let _groqSyncTs = 0;
+
 async function fetchGroqConRotacion(url, opciones) {
   // Si groqKeys está vacío, intentar cargar de Firestore ahora
   if (groqKeys.length === 0 && db) {
     await cargarGroqKeys();
   }
 
-  // Sincronizar índice desde Firestore por si otro usuario ya rotó
-  if (db && groqKeys.length > 1) {
+  // Sincronizar índice desde Firestore solo cada 30s (no en cada llamada del batch)
+  const ahora = Date.now();
+  if (db && groqKeys.length > 1 && (ahora - _groqSyncTs) > 30000) {
+    _groqSyncTs = ahora;
     try {
       const doc = await db.collection('config').doc('_groq_').get();
       if (doc.exists) {
@@ -2047,30 +2052,44 @@ async function fetchGroqConRotacion(url, opciones) {
     } catch(e) {}
   }
 
+  // Errores que justifican rotar key y reintentar
+  const debeRotar = (status, txt) =>
+    status === 429 ||
+    status === 413 ||  // payload demasiado grande — puede ser límite de la key
+    status === 400 ||  // bad request transitorio
+    txt.includes('rate_limit') || txt.includes('Rate limit') ||
+    txt.includes('Request too large') || txt.includes('overloaded');
+
   let intentosRotacion = 0;
-  const maxRotaciones = groqKeys.length || 1;
+  const maxRotaciones = Math.max(groqKeys.length, 1);
   while (intentosRotacion < maxRotaciones) {
     const keyActiva = getGroqKeyActiva();
     const headers = { ...opciones.headers, 'Authorization': 'Bearer ' + keyActiva };
-    const resp = await fetch(url, { ...opciones, headers });
-    if (resp.ok) return resp;
-    // Leer el error UNA sola vez
-    const errTxt = await resp.text();
-    // Si es rate limit (429), rotar y reintentar
-    if (resp.status === 429 || errTxt.includes('rate_limit') || errTxt.includes('Rate limit')) {
-      console.warn(`Rate limit en key ${groqKeyIndex} de ${groqKeys.length}, rotando...`);
-      const nuevaKey = await rotarGroqKey();
-      if (!nuevaKey || intentosRotacion >= maxRotaciones - 1) {
-        // Devolver respuesta de error ya leída como objeto fake
-        return { ok: false, status: 429, text: async () => errTxt, json: async () => ({error:{message:errTxt}}) };
+    try {
+      const resp = await fetch(url, { ...opciones, headers });
+      if (resp.ok) return resp;
+      const errTxt = await resp.text();
+      if (debeRotar(resp.status, errTxt)) {
+        console.warn(`Error ${resp.status} en key ${groqKeyIndex}/${groqKeys.length}, rotando...`);
+        const nuevaKey = await rotarGroqKey();
+        if (!nuevaKey || intentosRotacion >= maxRotaciones - 1) {
+          return { ok: false, status: resp.status, text: async () => errTxt, json: async () => ({error:{message:errTxt}}) };
+        }
+        // Espera progresiva: 3s en primer intento, 6s en segundo, 10s en tercero
+        const espera = [3000, 6000, 10000][intentosRotacion] || 10000;
+        await new Promise(r => setTimeout(r, espera));
+        intentosRotacion++;
+        continue;
       }
-      // Esperar 3 segundos antes de intentar con la siguiente key
-      await new Promise(r => setTimeout(r, 3000));
+      // Error no recuperable (401 auth, 404, etc.) — no rotar
+      return { ok: false, status: resp.status, text: async () => errTxt, json: async () => ({error:{message:errTxt}}) };
+    } catch(netErr) {
+      // Error de red — reintentar con misma key después de 2s
+      console.warn('Error de red en Groq, reintentando...', netErr.message);
+      await new Promise(r => setTimeout(r, 2000));
       intentosRotacion++;
       continue;
     }
-    // Otro error — devolver objeto fake con el texto ya leído
-    return { ok: false, status: resp.status, text: async () => errTxt, json: async () => ({error:{message:errTxt}}) };
   }
   return { ok: false, status: 429, text: async () => 'Todas las API keys han alcanzado su límite.', json: async () => ({error:{message:'All keys rate limited'}}) };
 }
@@ -3048,6 +3067,22 @@ let batchStop     = false;
 let batchDone     = 0;
 let batchErrors   = 0;
 let batchStartTs  = 0;
+let _wakeLock     = null;
+
+async function solicitarWakeLock() {
+  if (!('wakeLock' in navigator)) return; // No soportado en este navegador
+  try {
+    _wakeLock = await navigator.wakeLock.request('screen');
+    _wakeLock.addEventListener('release', () => {
+      // El sistema lo liberó (ej: bloqueo de pantalla) — reintentar si el batch sigue corriendo
+      if (batchRunning) solicitarWakeLock();
+    });
+  } catch(e) { console.warn('Wake Lock no disponible:', e.message); }
+}
+
+function liberarWakeLock() {
+  if (_wakeLock) { _wakeLock.release(); _wakeLock = null; }
+}
 
 // ═══════════════════════════════════════════════
 // INIT
@@ -4547,6 +4582,7 @@ async function iniciarBatch() {
   batchRunning = true; batchStop = false;
   batchDone = batchErrors = 0;
   batchStartTs = Date.now();
+  solicitarWakeLock(); // Evitar que el navegador suspenda la pestaña durante el batch
 
   const btnSt = document.getElementById('btn-batch-start');
   btnSt.disabled = true;
@@ -4619,6 +4655,7 @@ async function iniciarBatch() {
 
   // Finalizar
   batchRunning = false;
+  liberarWakeLock(); // Liberar wake lock al terminar
   const btnStart = document.getElementById('btn-batch-start');
   btnStart.disabled = false;
   document.getElementById('batch-start-ico').textContent = '🚀';
@@ -4634,6 +4671,7 @@ async function iniciarBatch() {
 
 function detenerBatch() {
   batchStop = true;
+  liberarWakeLock(); // Liberar wake lock al detener manualmente
   document.getElementById('btn-batch-stop').style.display = 'none';
   document.getElementById('bs-act').textContent = '⏹ Deteniendo...';
 }
