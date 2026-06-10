@@ -1728,6 +1728,8 @@ async function cargarConfigFirestore() {
       }
     });
   } catch(e) { console.warn('cargarConfigFirestore error:', e); }
+  // Re-renderizar reportes para que los rankings usen los na_criterios recién llegados de Firestore
+  if (document.getElementById('page-reportes')?.style.display !== 'none') renderReportes();
 }
 
 async function persistirConfigFirestore(cfg, modelo) {
@@ -3503,7 +3505,7 @@ Evalúa del 0 al 100 según la Cédula QA Cobranza Titulación v1.0 y responde S
   "scores":{
 ${scoresTitKeys}
   },
-  "detalle_criterios":[{"key":"<key del criterio con score < 100>","hizo":"<en max 15 palabras qué sí hizo el asesor en este criterio, o vacío si nada>","no_hizo":"<en max 20 palabras qué le faltó hacer específicamente, citando los elementos del criterio que omitió>"}],
+  "detalle_criterios":[{"key":"<key del criterio con score < 100>","hizo":"<en max 15 palabras qué sí hizo el asesor en este criterio, o vacío si nada>","no_hizo":"<en max 20 palabras qué le faltó hacer específicamente, citando los elementos del criterio que omitió>","ejemplo":"<frase concreta y breve que el asesor DEBIÓ decir para cumplir este criterio, en primera persona como si fuera el asesor hablando. Max 25 palabras. Ej: '¿Qué te motivó a buscar una licenciatura en este momento?' o 'Te llamo el jueves a las 3pm para darle seguimiento, ¿te parece?'>"}],
   "fortalezas":"<2 cosas concretas que el asesor hizo bien SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa (Apertura|Investigación|Demostración|Manejo de Objeciones|Cierre|Etiqueta). NUNCA menciones criterios deshabilitados. Ejemplo: "Se presentó correctamente con nombre y universidad (Apertura)">",
   "areas_mejora":"<2-3 acciones específicas de mejora SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa. NUNCA menciones criterios deshabilitados aunque el asesor haya fallado en ellos. Ejemplo: "Practicar los 5 puntos del manejo de precio (Demostración)">",
   "palabras_riesgo":[],
@@ -3604,9 +3606,9 @@ DEFINICIÓN DE logro_objetivo (Titulación): true SOLO si el egresado confirmó 
     : 'lograr la MATRÍCULA o inscripción del prospecto en la misma llamada, sin necesidad de visita a campus';
   // Construir guía de cierre dinámicamente excluyendo criterios inhabilitados
   const _cierreBase = esTrad
-    ? 'CIERRE — cre_cita (5.1): El asesor debe proponer cita en ≤3 días con fecha, hora y campus específicos, Y el prospecto debe confirmar explícitamente que va a asistir. No es suficiente que el asesor proponga la cita — el prospecto debe aceptarla verbalmente. 100=propuso cita con fecha+hora+campus Y el prospecto confirmó asistencia. 50=propuso cita pero el prospecto no confirmó explícitamente. 0=no propuso cita.'
-    : 'CIERRE — cre_matricula (5.1): El asesor debe proponer matrícula inmediata o proceso de inscripción ≤24h con pasos claros, Y el prospecto debe confirmar explícitamente su intención de matricularse. No es suficiente que el asesor proponga el proceso — el prospecto debe aceptarlo verbalmente. 100=propuso matrícula/inscripción con pasos claros Y el prospecto confirmó. 50=propuso proceso pero el prospecto no confirmó. 0=no propuso matrícula.';
-  const _cierreSeguimiento = naKeys.has('cre_seguimiento') ? '' : ' cre_seguimiento: Definió fecha y hora de seguimiento.';
+    ? 'CIERRE — cre_cita (5.1): El asesor debe proponer una visita al campus con fecha específica, hora específica y campus, Y el prospecto debe confirmar verbalmente que va a asistir. No es suficiente que el asesor proponga — el prospecto debe aceptar. No cuenta "te mando información" ni "te llamo después". 100=propuso cita con fecha+hora+campus Y el prospecto confirmó asistencia. 75=propuso cita con fecha y hora pero el prospecto no confirmó explícitamente. 50=mencionó la cita pero sin fecha ni hora específica. 0=no propuso cita. Detección para detalle_criterios: en hizo indica qué intentó el asesor para cerrar (ej: "propuso dos opciones de horario" / "generó urgencia con beneficio vigente" / "no intentó cerrar"); en no_hizo indica qué faltó (ej: "el prospecto no confirmó verbalmente" / "no dio fecha específica" / "no propuso visita al campus"); en ejemplo la frase concreta que debió usar (ej: "¿Te queda mejor mañana a las 11am o el jueves a las 5pm?").'
+    : 'CIERRE — cre_matricula (5.1): El asesor debe proponer matrícula inmediata o proceso de inscripción ≤24h con pasos claros, Y el prospecto debe confirmar explícitamente su intención de matricularse. No es suficiente que el asesor proponga el proceso — el prospecto debe aceptarlo verbalmente. 100=propuso matrícula/inscripción con pasos claros Y el prospecto confirmó. 75=propuso proceso pero el prospecto no confirmó explícitamente. 50=mencionó inscripción sin pasos claros ni fecha. 0=no propuso matrícula. Detección para detalle_criterios: en hizo indica qué intentó el asesor; en no_hizo qué faltó; en ejemplo la frase que debió usar.';
+  const _cierreSeguimiento = naKeys.has('cre_seguimiento') ? '' : ' cre_seguimiento: Definió fecha y hora específicas para el próximo contacto, Y el prospecto lo aceptó. No cuenta "te llamo después" sin fecha y hora concretas. 100=definió fecha+hora Y el prospecto aceptó. 50=propuso seguimiento sin fecha u hora específica. 0=no propuso seguimiento. Detección para detalle_criterios: en hizo cita cómo propuso el seguimiento; en no_hizo indica qué faltó (fecha/hora/confirmación); en ejemplo: "¿Te parece si te contacto el jueves a las 3pm para darte seguimiento?"';
   const _cierreCRM = naKeys.has('cre_crm') ? '' : ' cre_crm: Mencionó tipificar, registrar o actualizar el CRM (si no hay evidencia en audio, score 0 o marca N/A).';
   const cierreGuia = _cierreBase + _cierreSeguimiento + _cierreCRM;
   const cierreKey = esTrad ? '"cre_cita":<0-100>,' : '"cre_matricula":<0-100>,';
@@ -3669,6 +3671,7 @@ REGLA 3 — DEPENDENCIA SONDEO→DEMOSTRACIÓN: Si inv_sondeo recibe menos de 50
 REGLA 4 — OBJECIONES SIN NEGATIVA: Si el prospecto NO presentó ninguna negativa, duda, resistencia u objeción durante la llamada, asigna obj_objeciones = 75 (no aplica penalización ni premio — el asesor no tuvo oportunidad de demostrar esta habilidad). Solo asigna 0 si el prospecto SÍ presentó una objeción y el asesor la ignoró o no respondió.
 
 REGLA 5 — REFERIDOS COMPLETOS: Para que obj_referidos reciba 100, el asesor DEBE haber mencionado explícitamente los 3 elementos: (a) la solicitud de referidos, (b) el beneficio del 5% de descuento, Y (c) que ese beneficio está CONDICIONADO a que el referido se inscriba. Si falta cualquiera de los tres, o si alguno se presenta de forma incorrecta o engañosa, el score es 0.
+Detección para detalle_criterios de obj_referidos: en hizo indica cuáles de los 3 elementos mencionó (solicitud / 5% / condición de inscripción) con cita textual; en no_hizo indica cuáles elementos faltaron; en ejemplo la frase completa con los 3 elementos: "¿Conoces a alguien que también esté buscando estudiar? Si se inscribe con nosotros, tú recibes un 5% de descuento en tu colegiatura.".
 
 ESCALA DE PUNTUACIÓN (aplica a todos los criterios):
 - 100: Lo realizó completo y correctamente — hay evidencia textual clara.
@@ -3689,11 +3692,13 @@ ap_presentacion (1.1) — Presentación con nombre, marca y rol.
 Acción esperada: Presentarse con nombre + Aliat desde el inicio.
 Frases ejemplo: "Hola, soy Ana de Aliat Universidades." / "Mi nombre es Carlos, asesor educativo de Aliat." / "Te contacto de Aliat para brindarte información académica."
 Puntuación: 100=dijo nombre Y mencionó Aliat/universidad. 50=solo uno de los dos. 0=no se presentó.
+Detección para detalle_criterios: en hizo cita textualmente cómo se presentó el asesor; en no_hizo indica qué elemento faltó (nombre / mención de Aliat / ambos); en ejemplo la frase completa que debió usar.
 
 ap_datos (1.2) — Valida carrera, modalidad o campus, valida comunicación previa.
 Acción esperada: Confirmar explícitamente el interés del prospecto.
 Frases ejemplo: "¿Te interesa Psicología en el campus de...?" / "¿Buscas licenciatura o bachillerato?" / "¿Qué campus o modalidad es de tu interés?"
 Puntuación: 100=confirmó programa Y modalidad/campus. 50=confirmó solo uno. 0=no preguntó nada.
+Detección para detalle_criterios: en hizo cita qué confirmó (carrera / modalidad / campus); en no_hizo indica qué elemento no confirmó; en ejemplo la pregunta que debió hacer para completar lo que faltó.
 
 ${naKeys.has('ap_parentesco')?'':'ap_parentesco (1.3) — Identifica si es tutor o familiar.\nAcción esperada: Preguntar relación y registrar.\nFrases ejemplo: "¿Con quién tengo el gusto y qué parentesco tienes?" / "¿Eres tutor o familiar del aspirante?" / "¿La información es para ti o para algún familiar?"\nPuntuación: 100=preguntó explícitamente parentesco o relación. 0=no preguntó.\n'}
 
@@ -3705,11 +3710,13 @@ inv_estudios (2.1) — Valida grado y certificado previo.
 Acción esperada: Confirmar certificado o fecha de entrega.
 Frases ejemplo: "¿Ya concluiste el nivel anterior?" / "¿Cuentas con tu certificado?" / "¿Cuándo te entregan el certificado?"
 Puntuación: 100=preguntó grado Y certificado/situación. 50=preguntó solo uno. 0=no investigó estudios previos.
+Detección para detalle_criterios: en hizo cita qué preguntó (grado previo / certificado / fecha de entrega); en no_hizo indica qué elemento no investigó; en ejemplo la pregunta que debió hacer.
 
-inv_sondeo (2.2) — Motivo real de interés.
-Acción esperada: Preguntar motivación principal.
-Frases ejemplo: "¿Qué te motivó a buscar esta carrera?" / "¿Por qué quieres estudiar ahora?" / "¿Qué esperas lograr con esta carrera?"
-Puntuación: 100=preguntó motivación o razón de interés. 0=no lo preguntó.
+inv_sondeo (2.2) — Investigación de necesidades: motivación, contexto de vida o prioridades del prospecto.
+Acción esperada: El asesor debe realizar al menos UNA pregunta que explore la motivación, situación o necesidad del prospecto. Pueden ser estas u otras similares: "¿Qué te motivó a buscar esta carrera?" / "¿Por qué quieres estudiar ahora?" / "¿Qué esperas lograr con esta carrera?" / "¿Qué te motivó a buscar opciones educativas en este momento?" / "¿Qué estás buscando principalmente en una universidad?" / "¿Qué es lo más importante para ti al elegir dónde estudiar?" / "¿Actualmente trabajas o solo te estás dedicando a estudiar?"
+No cuenta preguntar datos básicos (nombre, carrera, campus) — eso es apertura. Cuenta cualquier pregunta que indague motivación, contexto de vida, expectativas o prioridades del prospecto.
+Puntuación: 100=realizó al menos una pregunta de sondeo válida. 0=no realizó ninguna.
+Detección para detalle_criterios: en hizo cita textualmente la pregunta de sondeo que realizó; en no_hizo indica que no realizó ninguna pregunta de motivación o contexto; en ejemplo una pregunta concreta que debió hacer según el perfil del prospecto detectado en la llamada.
 
 inv_edad (2.3) — SOLO aplica si en la transcripción hay evidencia de que el prospecto tiene interés en bachillerato o está en nivel secundaria/preparatoria. No confundir cuando el asesor pregunta si el prospecto tiene certificado de bachillerato, si ya culminó la preparatoria, o si detectó que está terminando o ha terminado el bachillerato — es el prospecto quien debe confirmar que su interés es hacia el bachillerato. Si el interés es hacia licenciatura, maestría u otro nivel superior, marca este criterio como N/A (no penalizar). Si aplica bachillerato y no se preguntó la edad, puntuar 0.
 Acción esperada: Confirmar edad cuando el prospecto busca bachillerato.
@@ -3725,6 +3732,7 @@ Acción esperada: Identificar el grado académico de interés del prospecto (Bac
 - Maestría: resolución de casos reales de negocio, networking estratégico con profesionales activos, plataforma disponible 24/7, profesores líderes activos en sus sectores, actualización digital profunda, visión estratégica y competencias de alta dirección.
 Si el asesor menciona beneficios que no corresponden al grado del prospecto (ej: habla de certificaciones intermedias a alguien de bachillerato), no los cuentes. Si menciona beneficios genéricos no identificables con certeza ("es muy completa", "aprenderás mucho", "tenemos buenas instalaciones"), no los cuentes.
 Puntuación: 100=identificaste con certeza ≥2 beneficios concretos del grado correcto. 50=solo 1 beneficio concreto del grado correcto. 0=ningún beneficio concreto identificado con certeza o todos los mencionados corresponden a otro grado. No uses valores intermedios (0, 50 y 100 son los únicos valores válidos).
+Detección para detalle_criterios: en hizo lista los beneficios concretos que mencionó y el grado al que corresponden; en no_hizo indica cuántos faltaron y qué beneficios del grado correcto no mencionó; en ejemplo dos beneficios concretos del grado del prospecto que debió mencionar.
 
 demo_economico (3.2) — Costos, promociones o descuentos.
 Acción esperada: Mencionar solo diferenciadores económicos autorizados.
@@ -3732,9 +3740,17 @@ Frases ejemplo: Brightspace incluido / equivalencias sin costo / sin inscripció
 Puntuación: 100=mencionó ≥1 diferenciador económico autorizado. 0=no lo mencionó.
 
 demo_ventaja (3.3) — Diferencial institucional.
-Acción esperada: Mencionar ≥1 ventaja competitiva de Aliat como institución frente a otras universidades. La distinción con 3.1 es: un beneficio del programa (3.1) es algo específico de esa carrera o modalidad (laboratorio, Cámara de Gesell, enfoque práctico); una ventaja competitiva (3.3) es algo que distingue a Aliat como institución. Hay argumentos que aplican en ambos criterios simultáneamente — por ejemplo grupos reducidos en bachillerato es beneficio del programa Y ventaja institucional — en esos casos cuéntalo en ambos. Lo que no debe ocurrir es contar en 3.3 algo que es exclusivamente un beneficio de programa (Cámara de Gesell, laboratorio de Ingeniería Civil) sin ningún componente institucional.
-Frases ejemplo: 50 años de experiencia / RVOE Federal / docentes con maestría o doctorado y experiencia laboral / grupos reducidos / Emprende/Incubadora / Bolsa de Trabajo Santander (37,000+ empresas) / certificados por materia / carga modular 7+7.
-Puntuación: 100=mencionó ≥1 ventaja competitiva institucional concreta. 0=no la mencionó. No uses valores intermedios.
+Acción esperada: Mencionar ≥1 ventaja competitiva de Aliat como institución. No se requieren frases exactas — cualquier mención que transmita la idea cuenta. La distinción con 3.1 es: un beneficio del programa (3.1) es algo específico de esa carrera o modalidad; una ventaja competitiva (3.3) distingue a Aliat como institución. Argumentos que aplican en ambos simultáneamente (ej: grupos reducidos) cuentan en ambos.
+Ideas que cuentan en cualquier forma de expresarlas:
+- Validez oficial / reconocimiento SEP / RVOE / trayectoria institucional / años de experiencia / cantidad de egresados
+- Docentes que trabajan actualmente en su campo / experiencia laboral real de los profesores / no solo teoría
+- Flexibilidad de modalidades con el mismo título (presencial, ejecutiva, online — mismo valor oficial)
+- Red de campus a nivel nacional / posibilidad de cambiar de plantel entre instituciones
+- Posibilidad de adelantar materias / modelo que reduce el tiempo total de la carrera
+- Grupos reducidos y atención personalizada
+No cuenta mencionar beneficios exclusivos de una carrera específica (laboratorio de Ing. Civil, Cámara de Gesell) sin un componente institucional.
+Puntuación: 100=mencionó ≥1 ventaja competitiva institucional. 0=no la mencionó. No uses valores intermedios.
+Detección para detalle_criterios: en hizo cita textualmente la ventaja competitiva que mencionó; en no_hizo confirma que no mencionó ninguna ventaja institucional; en ejemplo una ventaja concreta que debió mencionar según el contexto de la llamada.
 
 demo_precio (3.4) — Maneja correctamente los 5 puntos de precio.
 Acción esperada: El asesor debe ejecutar los 5 puntos del manejo efectivo de precio en la llamada, en cualquier orden:
@@ -3745,35 +3761,39 @@ Acción esperada: El asesor debe ejecutar los 5 puntos del manejo efectivo de pr
 5. Detonador de cierre — menciona el 10% adicional de beca si el prospecto agenda visita al campus, y cómo impacta en el pago inicial y mensualidades.
 Los montos varían por programa — no evalúes si el monto es correcto, solo si el asesor ejecutó cada punto. Si un punto no se menciona en la llamada, no lo cuentes.
 Puntuación: 100=ejecutó los 5 puntos. 80=ejecutó 4 puntos. 60=ejecutó 3 puntos. 40=ejecutó 2 puntos. 20=ejecutó 1 punto. 0=no manejó el precio. Solo estos valores son válidos, no uses intermedios.
+Detección para detalle_criterios: en hizo lista numerados los puntos que sí ejecutó (ej: "1. Precio de lista ✓, 2. Beneficios aplicables ✓, 4. Pago inicial ✓"); en no_hizo lista los puntos que omitió con su descripción (ej: "3. No hizo comparativa lista vs final. 5. No mencionó detonador de cierre del 10%"); en ejemplo la frase que debió usar para el punto más crítico que omitió.
 
 demo_empleabilidad (3.5) — Dato duro de empleabilidad.
 Acción esperada: Indicar al menos un dato duro.
 Frases ejemplo: "84% de nuestros estudiantes trabajan en su campo de estudio." / "97% de nuestros egresados consiguen empleo a los 6 meses."
 Puntuación: 100=citó al menos un dato duro de empleabilidad. 0=no lo mencionó.
+Detección para detalle_criterios: en hizo cita textualmente el dato de empleabilidad que mencionó; en no_hizo confirma que no citó ningún dato duro; en ejemplo un dato concreto de empleabilidad que debió mencionar según la carrera del prospecto (ej: tasa de ocupación IMCO, rango salarial inicial).
 
 MANEJO DE OBJECIONES — Objetivo: Ofrecer argumentos de valor para cada objeción.
 
 obj_objeciones (4.1) — Uso del objecionario.
 Acción esperada: Cuando el prospecto presenta una objeción, el asesor debe identificarla correctamente y responder con un argumento estructurado y concreto que corresponda a esa objeción específica. La evaluación es sobre la ejecución del asesor, no sobre si logró convencer al prospecto.
-Objeciones reconocidas y cómo manejarlas:
-1. Costo/Economía — responde con beca, descuentos, comparativa precio lista vs precio final, pago inicial accesible.
-2. Lejanía del campus — responde con modalidad en línea, horarios flexibles, o campus más cercano disponible.
-3. Revisando con papás, familiares o pareja (esposo/a, hijos, familiares en general) — responde manteniendo el interés, ofreciendo información para compartir con ellos, agendando seguimiento con fecha específica, y destacando que invertir en uno mismo siempre tiene el respaldo de la familia.
-4. Llámame más tarde / Envía información — responde reencuadrando con urgencia del beneficio vigente, ofreciendo agendar cita en lugar de solo enviar info.
-5. Evaluando otras universidades — responde con ventajas competitivas de Aliat (RVOE, trayectoria, bolsa de trabajo, grupos reducidos).
-6. No existe la licenciatura en Aliat — responde informando programas disponibles o alternativas relacionadas.
-7. Falta de tiempo — responde con horarios flexibles (matutino, vespertino, sabatino) o modalidad en línea.
-8. Ya estoy estudiando en otro lado — responde con equivalencias sin costo.
-9. Edad / Soy muy grande para estudiar — responde con perfil de estudiantes adultos, grupos reducidos, modalidad en línea.
-10. No me interesa el presencial / Prefiero en línea — responde con OnAliat 100% en línea, misma validez oficial, Brightspace incluido.
-11. No confío en la calidad en línea — responde con RVOE Federal, docentes con maestría/doctorado, mismo plan de estudios que presencial.
-12. El bachillerato en línea no tiene valor — responde con validez SEP, egresados que ingresaron a universidades.
-13. No sé si el programa tiene lo que necesito — responde con descripción del plan de estudios y enfoque práctico.
-14. Mi empresa no me apoya / No tengo beca de empresa — responde con beca institucional del 40% y deducibilidad para maestría.
-15. Quiero esperar al siguiente ciclo — responde con urgencia del beneficio vigente y costo de oportunidad de esperar.
-16. No tengo los documentos completos — responde con posibilidad de apartar lugar con pago inicial y entregar docs después.
-17. Tengo deudas / Estoy en Buró — responde con que no se consulta buró, pago directo sin financiera.
-18. No sé si terminaré / Miedo a no poder — responde con acompañamiento académico, grupos reducidos, carga modular manejable.
+OBJECIONES PRIORITARIAS — las que se entrenan activamente y tienen argumentos específicos del script:
+1. Costo/Economía — argumentos válidos: sondear presupuesto / beca académica por promedio / referidos con descuento / costo de oportunidad ("cada año sin estudiar dejas de percibir el sueldo de un profesional") / flexibilidad de pago inicial mínimo para apartar lugar.
+2. Lejanía del campus — argumentos válidos: modalidad ejecutiva (1 día/semana) / modalidad 100% online / campus cercano en su zona.
+3. Revisando con papás/familia/pareja — argumentos válidos: sondear su preocupación específica (costos/seguridad/académico) / invitar a la familia al campus / ofrecer herramientas para que ellos decidan / apartar lugar mientras consultan.
+4. Llámame más tarde / Envía información — argumentos válidos: preguntar qué información específica necesita (plan de estudios, costos o requisitos de beca) / ofrecer cita en lugar de solo enviar info / urgencia del beneficio vigente.
+5. Evalúa otras universidades — argumentos válidos: sondear qué le llama la atención de otras opciones / diferenciador práctico de Aliat / costo-beneficio / sugerir apartar lugar mientras compara / plan B si no queda en la pública.
+6. No existe la licenciatura en Aliat — argumentos válidos: tronco común con carrera disponible / carrera afín con mismo perfil laboral / test vocacional gratuito en campus.
+
+OTRAS OBJECIONES — pueden ocurrir, evaluar con el mismo criterio de argumento concreto y correspondiente:
+7. Falta de tiempo — horarios flexibles (matutino, vespertino, sabatino) o modalidad en línea.
+8. Ya estoy estudiando en otro lado — equivalencias sin costo.
+9. Edad / Soy muy grande — perfil de estudiantes adultos, grupos reducidos, modalidad en línea.
+10. No me interesa el presencial / Prefiero en línea — OnAliat 100% en línea, misma validez oficial.
+11. No confío en la calidad en línea — RVOE Federal, docentes con maestría/doctorado, mismo plan de estudios.
+12. El bachillerato en línea no tiene valor — validez SEP, egresados que ingresaron a universidades.
+13. No sé si el programa tiene lo que necesito — plan de estudios y enfoque práctico.
+14. Mi empresa no me apoya / No tengo beca de empresa — beca institucional del 40%, deducibilidad para maestría.
+15. Quiero esperar al siguiente ciclo — urgencia del beneficio vigente, costo de oportunidad.
+16. No tengo los documentos completos — apartar lugar con pago inicial, entregar docs después.
+17. Tengo deudas / Estoy en Buró — no se consulta buró, pago directo sin financiera.
+18. No sé si terminaré / Miedo a no poder — acompañamiento académico, grupos reducidos, carga modular manejable.
 Esta lista no es exhaustiva — si detectas una objeción no listada, evalúa si el asesor la respondió con un argumento concreto y estructurado que corresponda a esa objeción.
 Detección: Para cada objeción encontrada, registra en objeciones_detectadas: el tipo (según la lista anterior o descripción libre si no está listada), la frase exacta o paráfrasis del prospecto, la respuesta del asesor, y tu evaluación (adecuada/vaga/ignorada). Si no hubo ninguna objeción, deja objeciones_detectadas vacío y pon sin_objeciones:true.
 Puntuación: 100=no hubo objeción en la llamada (prospecto nunca se negó). 100=hubo objeción y el asesor la identificó y respondió con argumento concreto y estructurado, haya tenido éxito o no. 50=hubo objeción y el asesor respondió pero de forma vaga o sin argumento estructurado. 0=hubo objeción y el asesor la ignoró, no respondió, o respondió con un argumento que no corresponde a la objeción presentada (ejemplo: objeción de tiempo respondida con argumento de costos). Solo estos valores son válidos, no uses intermedios.
@@ -5430,10 +5450,17 @@ function renderCriteriosRanking(data) {
     ? Object.values(ETAPAS_MAP)
     : [ETAPAS_MAP[filtroEtapa]].filter(Boolean);
 
-  // Calcular promedio por criterio sobre data filtrada (respeta criterios_na por llamada)
+  // Obtener criterios inhabilitados ÚNICAMENTE desde Calibrar (fuente de verdad)
+  const modeloCfgRanking = sharedFiltros.modelo !== '__todos__' ? sharedFiltros.modelo : (data[0]?.modelo || 'tradicional');
+  const cfgRanking = cargarConfig(modeloCfgRanking);
+  const naGlobalRanking = new Set((cfgRanking.na_criterios||[]).map(String));
+
+  // Calcular promedio por criterio sobre data filtrada (respeta criterios_na por llamada y los de Calibrar)
   const criteriosMap = {};
   etapasActivas.forEach(etapa => {
     etapa.keys.forEach(k => {
+      // Excluir criterios inhabilitados
+      if (naGlobalRanking.has(k)) return;
       const vals = data.flatMap(h => {
         const naH = new Set(Array.isArray(h.criterios_na) ? h.criterios_na.map(String) : []);
         if (naH.has(k)) return [];
@@ -5836,13 +5863,14 @@ async function generarPlanIA() {
     const debiles1 = etapaPrio ? criteriosDebiles(d.scoresCriterio, etapaPrio.label) : '';
     const debiles2 = etapa2 ? criteriosDebiles(d.scoresCriterio, etapa2.label) : '';
     const etapasStr = etapasAsesor.slice(0,3).map(e=>`${e.label}:${e.avg}`).join(', ');
-    // Acumular patrones de detalle_criterios (hizo/no_hizo) por criterio
+    // Acumular patrones de detalle_criterios (hizo/no_hizo/ejemplo) por criterio
     const patronesCriterio = {};
     d.llamadas_raw && d.llamadas_raw.forEach(h => {
       (h.detalle_criterios||[]).forEach(dc => {
-        if(!patronesCriterio[dc.key]) patronesCriterio[dc.key]={noHizo:[],total:0};
+        if(!patronesCriterio[dc.key]) patronesCriterio[dc.key]={noHizo:[],ejemplos:[],total:0};
         patronesCriterio[dc.key].total++;
         if(dc.no_hizo) patronesCriterio[dc.key].noHizo.push(dc.no_hizo);
+        if(dc.ejemplo) patronesCriterio[dc.key].ejemplos.push(dc.ejemplo);
       });
     });
     const totalLlamadas = d.llamadas;
@@ -5851,11 +5879,16 @@ async function generarPlanIA() {
       .map(([k,v]) => {
         const criterio = criteriosTodos.find(c=>c.key===k);
         const label = criterio?.label||k;
-        // Encontrar el no_hizo más frecuente
-        const freq={};
+        // Encontrar el no_hizo y ejemplo más frecuentes
+        const freq={}, freqEj={};
         v.noHizo.forEach(t=>{freq[t]=(freq[t]||0)+1;});
+        v.ejemplos.forEach(t=>{freqEj[t]=(freqEj[t]||0)+1;});
         const topNoHizo = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
-        return `    • ${label}: falla en ${v.noHizo.length}/${totalLlamadas} llamadas — ${topNoHizo}`;
+        const topEjemplo = Object.entries(freqEj).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+        // Guardar en agentMap para que top3Esqueleto pueda accederlo
+        if (!d._patronesCriterio) d._patronesCriterio = {};
+        d._patronesCriterio[k] = { topNoHizo, topEjemplo };
+        return `    • ${label}: falla en ${v.noHizo.length}/${totalLlamadas} llamadas — ${topNoHizo}${topEjemplo ? `\n      ✅ Debe decir: "${topEjemplo}"` : ''}`;
       }).join('\n');
     return `- ${n} [${modLabel}]: score ${avg} pts, ${ctx.labelCierre} ${cierre}%` +
       `\n  Etapas por prioridad: ${etapasStr}` +
@@ -5902,12 +5935,17 @@ async function generarPlanIA() {
           return typeof v === 'number' ? [v] : [];
         });
         const avg = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null;
-        return criterio && avg !== null && avg < 80 ? { label: criterio.label, avg } : null;
+        // Buscar ejemplo del criterio en los patrones acumulados del agente (plan individual) o del equipo
+        const patronK = esPlanIndividual && agentMap[nombreAsesor]
+          ? (agentMap[nombreAsesor]._patronesCriterio||{})[k]
+          : null;
+        const topEjemplo = patronK?.topEjemplo || '';
+        return criterio && avg !== null && avg < 80 ? { label: criterio.label, avg, ejemplo: topEjemplo } : null;
       })
       .filter(Boolean)
       .sort((a,b) => a.avg - b.avg);
     const bulletsCriterios = criteriosAfectados.length
-      ? criteriosAfectados.map(c => `- ${c.label}: ${c.avg}/100`).join('\n')
+      ? criteriosAfectados.map(c => `- ${c.label}: ${c.avg}/100${c.ejemplo ? `\n  ✅ Debe decir: "${c.ejemplo}"` : ''}`).join('\n')
       : '- (todos los criterios por encima de 80)';
     const naLabels = criteriosTodos.filter(c => keysEtapa.includes(c.key) && naKeys.has(c.key)).map(c => c.label);
     const advertencia = naLabels.length ? ` [NO mencionar: ${naLabels.join(', ')}]` : '';
@@ -5923,11 +5961,11 @@ async function generarPlanIA() {
 
   const secRecomIndividual = esPlanIndividual
     ? `PLAN DE ACCIÓN DETALLADO — ${nombreAsesor}
-Para cada prioridad del TOP usa los "Patrones recurrentes" del resumen. Formato por prioridad:
+Para cada prioridad del TOP usa los "Patrones recurrentes" del resumen. Formato EXACTO por prioridad:
 [Etapa] ([score]/100)
-❌ [qué no hizo]: patrón en X/Y llamadas — [detalle concreto de lo que omitió]
-✅ [qué sí hizo bien, si aplica]
-Acción: [acción específica con ejemplo concreto de frase o técnica]
+❌ [qué no hizo]: patrón en X/Y llamadas — [detalle concreto de lo que omitió en ESA etapa]
+Acción: [acción específica para ESA etapa, incorporando el ejemplo "✅ Debe decir" si está en los datos]
+NO incluyas líneas de "✅ qué sí hizo bien" — eso va solo en el diagnóstico. Cada punto debe hablar únicamente de la etapa que encabeza ese bloque.
 NUNCA menciones criterios deshabilitados.`
     : `RECOMENDACIÓN INDIVIDUAL POR ASESOR
 Una línea por asesor con: nombre, etapa prioritaria, patrón recurrente más crítico (de "Patrones recurrentes" si existe) y acción directa. Ejemplo: "— Martínez Iván: sin fecha/hora en cita (13/15 llamadas). Acción: doble alternativa obligatoria."
@@ -5954,7 +5992,7 @@ Genera el plan con EXACTAMENTE esta estructura y en este orden:
 ${secDiagnostico}
 
 TOP PRIORIDADES DE MEJORA
-Las etapas, su orden y los criterios afectados ya están determinados por los datos. Tu tarea es ÚNICAMENTE redactar la acción concreta después de cada "Acción:". No agregues ni quites criterios, no cambies los scores, no reordenes. Si dos etapas comparten el número 3, completa la acción de ambas:
+Las etapas, su orden, criterios y ejemplos de frases ya están determinados por los datos. Tu tarea es ÚNICAMENTE redactar la acción después de cada "Acción:". Úsala para: explicar qué hizo mal el asesor + incorporar naturalmente el ejemplo "✅ Debe decir" si está presente. Máximo 2 oraciones directas. No cambies scores ni orden. Si dos etapas comparten el número 3, completa ambas:
 ${top3Esqueleto}
 
 ${secRecomIndividual}
