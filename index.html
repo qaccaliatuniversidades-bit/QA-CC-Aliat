@@ -3013,15 +3013,32 @@ function buscarAgenteEnHC(nomenclaturaONombre) {
   // 2. Match parcial por nomenclatura (ej: "david" matchea "david.garcia")
   const partialKey = Object.keys(hcData).find(k => k.startsWith(key + '.') || k === key);
   if (partialKey) return { nomenclatura: partialKey, ...hcData[partialKey] };
-  // 3. Similitud por nombre completo (búsqueda de palabras clave)
+  // 3. Match por nomenclatura parcial inversa (ej: "valeria.jimenez" está en hcData como "valeria.jimenez")
+  // Primero intentar que la key sea prefijo de una nomenclatura existente con apellido
+  const exactNomMatch = Object.keys(hcData).find(k => {
+    const parts = k.split('.');
+    const keyParts = key.split('.');
+    // Todos los segmentos de la key deben estar en la nomenclatura en orden
+    return keyParts.every((p, i) => parts[i] === p);
+  });
+  if (exactNomMatch) return { nomenclatura: exactNomMatch, ...hcData[exactNomMatch] };
+
+  // 4. Similitud por nombre completo — solo como último recurso
+  // Para evitar falsos positivos (ej: valeria.jimenez → Valeria Cruz Jiménez),
+  // la nomenclatura del candidato también debe tener coincidencia con la key
   const palabras = key.replace(/[._]/g, ' ').split(/\s+/).filter(p => p.length > 2);
   let mejorMatch = null, mejorScore = 0;
   for (const [nom, agente] of Object.entries(hcData)) {
     const nombreNorm = agente.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const nomNorm = nom.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const keyNorm = key.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const coincidencias = palabras.filter(p => nombreNorm.includes(p)).length;
-    const score = coincidencias / Math.max(palabras.length, 1);
-    if (score > mejorScore && score >= 0.5) { mejorScore = score; mejorMatch = { nomenclatura: nom, ...agente }; }
+    const coincidenciasNombre = palabras.filter(p => nombreNorm.includes(p)).length;
+    const coincidenciasNom = palabras.filter(p => nomNorm.includes(p)).length;
+    // Score combinado: peso mayor a coincidencia de nomenclatura
+    const scoreNombre = coincidenciasNombre / Math.max(palabras.length, 1);
+    const scoreNom = coincidenciasNom / Math.max(palabras.length, 1);
+    const scoreFinal = (scoreNombre * 0.4) + (scoreNom * 0.6);
+    if (scoreFinal > mejorScore && scoreFinal >= 0.5) { mejorScore = scoreFinal; mejorMatch = { nomenclatura: nom, ...agente }; }
   }
   return mejorMatch;
 }
