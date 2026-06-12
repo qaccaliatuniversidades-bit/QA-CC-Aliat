@@ -1129,7 +1129,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
       <div class="card-head"><span>👤</span><h3>Ranking de supervisores</h3>
         <span style="margin-left:auto;font-size:11px;color:var(--muted)">Cada punto = 1 llamada</span>
       </div>
-      <div class="card-body" style="padding:16px">
+      <div class="card-body" style="padding:0;max-height:320px;overflow-y:auto">
         <div class="scatter-wrap" id="rep-antiguedad"><div style="padding:30px;text-align:center;color:var(--muted);font-size:12px">Sin datos de antigüedad aún</div></div>
       </div>
     </div>
@@ -1145,7 +1145,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
           <option value="etiqueta">Etiqueta</option>
         </select>
       </div>
-      <div class="card-body" style="padding:0">
+      <div class="card-body" style="padding:0;max-height:320px;overflow-y:auto">
         <div id="rep-criterios-ranking"><div style="padding:30px;text-align:center;color:var(--muted);font-size:12px">Sin datos aún</div></div>
       </div>
     </div>
@@ -1153,11 +1153,11 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
     <div class="card">
       <div class="card-head"><span>🏆</span><h3>Ranking de asesores</h3></div>
-      <div class="card-body" id="rep-ranking" style="padding:0 22px"></div>
+      <div class="card-body" id="rep-ranking" style="padding:0 22px;max-height:320px;overflow-y:auto"></div>
     </div>
     <div class="card">
       <div class="card-head"><span>🚨</span><h3>Asesores críticos</h3></div>
-      <div class="card-body" id="rep-criticas" style="padding:0 22px"></div>
+      <div class="card-body" id="rep-criticas" style="padding:0 22px;max-height:320px;overflow-y:auto"></div>
     </div>
   </div>
   <div class="card">
@@ -1166,7 +1166,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <span id="plan-btn-ico">✨</span> Generar plan
       </button>
     </div>
-    <div class="card-body"><div class="ai-plan-box loading" id="rep-plan-box">Presiona "Generar plan" para que la IA analice el período y proponga acciones concretas de mejora para cada agente y el equipo completo.</div>
+    <div class="card-body" style="max-height:420px;overflow-y:auto"><div class="ai-plan-box loading" id="rep-plan-box">Presiona "Generar plan" para que la IA analice el período y proponga acciones concretas de mejora para cada agente y el equipo completo.</div>
       <div id="rep-chat-box" style="display:none;margin-top:16px;border-top:1px solid var(--border2);padding-top:14px">
         <div id="rep-chat-messages" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;max-height:280px;overflow-y:auto"></div>
         <div style="display:flex;gap:8px;align-items:center">
@@ -1669,11 +1669,11 @@ function cargarHistorialFirestore() {
   };
 
   // Intentar con orderBy timestamp primero
-  db.collection('evaluaciones').orderBy('timestamp', 'desc').limit(500)
+  db.collection('evaluaciones').orderBy('timestamp', 'desc').limit(1000)
     .onSnapshot(procesarSnap, err => {
       console.warn('Firestore orderBy timestamp falló, usando fallback:', err.message);
       // Fallback: query sin orderBy (funciona sin índice compuesto)
-      db.collection('evaluaciones').limit(500)
+      db.collection('evaluaciones').limit(1000)
         .onSnapshot(procesarSnap, err2 => {
           console.error('Firestore error:', err2);
           // Último recurso: mostrar aviso en historial
@@ -2462,6 +2462,7 @@ function syncEvaluadorSelect(origen, valor) {
 }
 
 function aplicarFiltrosCompartidos() {
+  histPaginaActual = 1; // Reset página al cambiar filtros
   renderHistorial();
   // Si Reportes está visible, refrescarlo también
   const repPage = document.getElementById('page-reportes');
@@ -2519,6 +2520,7 @@ function limpiarTodosFiltros() {
   ['hist-fechas-custom','hist-llamada-fechas-custom','rep-fechas-custom','rep-llamada-fechas-custom'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
+  histPaginaActual = 1; // Reset página al limpiar filtros
   aplicarFiltrosCompartidos();
   renderReportes();
 }
@@ -2553,6 +2555,8 @@ function scoreTc(s, pts) {
 
 // Historial filter state
 let histPeriod = 0;
+let histPaginaActual = 1;
+const HIST_PAGE_SIZE = 50;
 let histFechaDesde = null;
 let histFechaHasta = null;
 // Filtros secundarios historial: fecha llamada + turno
@@ -4858,7 +4862,15 @@ function renderHistorialDatos() {
   const cierres=data.filter(h=>h.logro_objetivo).length;
   if (statsEl) statsEl.innerHTML=`<div class="stat-card"><div class="stat-val" style="color:${avgPct>=80?'var(--green)':avgPct>=60?'var(--yellow)':'var(--red)'}">${avg.toFixed(1)}</div><div class="stat-lbl">Score promedio</div></div><div class="stat-card"><div class="stat-val">${data.length}</div><div class="stat-lbl">Llamadas evaluadas</div></div><div class="stat-card"><div class="stat-val" style="color:${criticas>0?'var(--red)':'var(--green)'}">${criticas}</div><div class="stat-lbl">Llamadas críticas</div></div><div class="stat-card"><div class="stat-val" style="color:var(--cyan)">${Math.round(cierres/data.length*100)}%</div><div class="stat-lbl">Tasa de cierre</div></div>`;
   const esAdmin=qaIsAdmin;
-  const filas=data.map(h=>{
+  // Paginación — data completa filtrada, mostrar solo la página activa
+  const totalEvals = data.length;
+  const totalPaginas = Math.max(1, Math.ceil(totalEvals / HIST_PAGE_SIZE));
+  if (histPaginaActual > totalPaginas) histPaginaActual = totalPaginas;
+  if (histPaginaActual < 1) histPaginaActual = 1;
+  const inicio = (histPaginaActual - 1) * HIST_PAGE_SIZE;
+  const dataPagina = data.slice(inicio, inicio + HIST_PAGE_SIZE);
+
+  const filas=dataPagina.map(h=>{
     const col=scoreColor(h.score_total, h.pts_activos);
     const ico=scoreIco(h.score_total, h.pts_activos);
     const scoreStr=fmtScore(h);
@@ -4882,7 +4894,36 @@ function renderHistorialDatos() {
     </tr>`;
   }).join('');
   const thDel=esAdmin?'<th></th>':'';
-  if (tablaEl) tablaEl.innerHTML=`<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Fecha llamada</th><th>Hora</th><th>Fecha evaluación</th><th>Supervisor</th><th>Agente</th><th>Modelo · Tipo</th><th>Score</th><th>Prob. Inscripción/Pago</th><th>Duración</th><th>Cerró</th><th>Evaluado por</th>${thDel}</tr></thead><tbody>${filas}</tbody></table></div>`;
+
+  // Control de paginación
+  const btnStyle = (disabled) => `padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:12px;cursor:${disabled?'default':'pointer'};opacity:${disabled?0.35:1};font-family:var(--font)`;
+  const paginacion = totalPaginas > 1 ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border);background:var(--surface);flex-wrap:wrap;gap:8px">
+      <span style="font-size:12px;color:var(--muted)">Mostrando ${inicio+1}–${Math.min(inicio+HIST_PAGE_SIZE,totalEvals)} de <strong style="color:var(--text)">${totalEvals.toLocaleString()}</strong> evaluaciones</span>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <button onclick="cambiarPaginaHist(1)" ${histPaginaActual===1?'disabled':''} style="${btnStyle(histPaginaActual===1)}" title="Primera página">⏮</button>
+        <button onclick="cambiarPaginaHist(${Math.max(1,histPaginaActual-5)})" ${histPaginaActual<=1?'disabled':''} style="${btnStyle(histPaginaActual<=1)}" title="−5 páginas">«</button>
+        <button onclick="cambiarPaginaHist(${histPaginaActual-1})" ${histPaginaActual===1?'disabled':''} style="${btnStyle(histPaginaActual===1)}" title="Anterior">‹</button>
+        <span style="font-size:12px;color:var(--text);font-weight:600;white-space:nowrap">
+          Pág.
+          <input type="number" min="1" max="${totalPaginas}" value="${histPaginaActual}"
+            onchange="cambiarPaginaHist(Math.max(1,Math.min(${totalPaginas},parseInt(this.value)||1)))"
+            onkeydown="if(event.key==='Enter')cambiarPaginaHist(Math.max(1,Math.min(${totalPaginas},parseInt(this.value)||1)))"
+            style="width:44px;padding:3px 6px;background:var(--surface3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-size:12px;font-family:var(--mono);text-align:center;outline:none">
+          de ${totalPaginas}
+        </span>
+        <button onclick="cambiarPaginaHist(${histPaginaActual+1})" ${histPaginaActual===totalPaginas?'disabled':''} style="${btnStyle(histPaginaActual===totalPaginas)}" title="Siguiente">›</button>
+        <button onclick="cambiarPaginaHist(${Math.min(totalPaginas,histPaginaActual+5)})" ${histPaginaActual>=totalPaginas?'disabled':''} style="${btnStyle(histPaginaActual>=totalPaginas)}" title="+5 páginas">»</button>
+        <button onclick="cambiarPaginaHist(${totalPaginas})" ${histPaginaActual===totalPaginas?'disabled':''} style="${btnStyle(histPaginaActual===totalPaginas)}" title="Última página">⏭</button>
+      </div>
+    </div>` : `<div style="padding:8px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">${totalEvals.toLocaleString()} evaluaciones en total</div>`;
+
+  if (tablaEl) tablaEl.innerHTML=`<div style="overflow:auto;max-height:480px;border-radius:8px 8px 0 0"><table class="hist-table" style="min-width:900px;width:100%"><thead><tr style="position:sticky;top:0;z-index:2;background:var(--surface2)"><th>Fecha llamada</th><th>Hora</th><th>Fecha evaluación</th><th>Supervisor</th><th>Agente</th><th>Modelo · Tipo</th><th>Score</th><th>Prob. Inscripción/Pago</th><th>Duración</th><th>Cerró</th><th>Evaluado por</th>${thDel}</tr></thead><tbody>${filas}</tbody></table></div>${paginacion}`;
+}
+
+function cambiarPaginaHist(pagina) {
+  histPaginaActual = pagina;
+  renderHistorialDatos();
 }
 
 // Renderiza solo datos de reportes sin recrear el bloque de filtros
