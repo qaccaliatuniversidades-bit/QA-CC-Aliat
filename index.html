@@ -1897,6 +1897,8 @@ function cerrarAdmin() { document.getElementById('admin-overlay').classList.add(
 // ═══════════════════════════════════════════════
 let _modelosCache = null;
 let _modelosCacheTs = 0;
+// Limpiar caché al cargar para que MODELOS_EXCLUIR actualizado tome efecto
+try { _modelosCache = null; _modelosCacheTs = 0; } catch(e) {}
 
 // Prioridad de modelos: el orden define cuál se intenta primero.
 // Llama 4 > Llama 3.3 > resto como fallback.
@@ -1916,6 +1918,9 @@ const MODELOS_PRIORIDAD = [
 const MODELOS_EXCLUIR = [
   'whisper', 'tts', 'embed', 'guard', 'tool', 'vision',
   'distil', '8b', 'instant', 'preview',
+  'qwen',       // contexto muy limitado, falla con transcripciones largas
+  'deepseek',   // no optimizado para español ni para este tipo de evaluación
+  '1b', '3b',   // modelos muy pequeños
 ];
 
 async function obtenerModelosDisponibles(groqKey) {
@@ -3664,7 +3669,7 @@ DEFINICIÓN DE logro_objetivo (Titulación): true SOLO si el egresado confirmó 
   const _cierreBase = esTrad
     ? 'CIERRE — cre_cita (5.1): El asesor debe proponer una visita al campus con fecha específica, hora específica y campus, Y el prospecto debe confirmar verbalmente que va a asistir. No es suficiente que el asesor proponga — el prospecto debe aceptar. No cuenta "te mando información" ni "te llamo después". 100=propuso cita con fecha+hora+campus Y el prospecto confirmó asistencia. 75=propuso cita con fecha y hora pero el prospecto no confirmó explícitamente. 50=mencionó la cita pero sin fecha ni hora específica. 0=no propuso cita. Detección para detalle_criterios: en hizo indica qué intentó el asesor para cerrar (ej: "propuso dos opciones de horario" / "generó urgencia con beneficio vigente" / "no intentó cerrar"); en no_hizo indica qué faltó (ej: "el prospecto no confirmó verbalmente" / "no dio fecha específica" / "no propuso visita al campus"); en ejemplo la frase concreta que debió usar (ej: "¿Te queda mejor mañana a las 11am o el jueves a las 5pm?").'
     : 'CIERRE — cre_matricula (5.1): El asesor debe proponer matrícula inmediata o proceso de inscripción ≤24h con pasos claros, Y el prospecto debe confirmar explícitamente su intención de matricularse. No es suficiente que el asesor proponga el proceso — el prospecto debe aceptarlo verbalmente. 100=propuso matrícula/inscripción con pasos claros Y el prospecto confirmó. 75=propuso proceso pero el prospecto no confirmó explícitamente. 50=mencionó inscripción sin pasos claros ni fecha. 0=no propuso matrícula. Detección para detalle_criterios: en hizo indica qué intentó el asesor; en no_hizo qué faltó; en ejemplo la frase que debió usar.';
-  const _cierreSeguimiento = naKeys.has('cre_seguimiento') ? '' : ' cre_seguimiento: Definió fecha y hora específicas para el próximo contacto, Y el prospecto lo aceptó. No cuenta "te llamo después" sin fecha y hora concretas. 100=definió fecha+hora Y el prospecto aceptó. 50=propuso seguimiento sin fecha u hora específica. 0=no propuso seguimiento. Detección para detalle_criterios: en hizo cita cómo propuso el seguimiento; en no_hizo indica qué faltó (fecha/hora/confirmación); en ejemplo: "¿Te parece si te contacto el jueves a las 3pm para darte seguimiento?"';
+  const _cierreSeguimiento = naKeys.has('cre_seguimiento') ? '' : ' cre_seguimiento (5.2): Este criterio SOLO aplica si el prospecto aceptó explícitamente la cita (cre_cita=100). Reglas: Si cre_cita=0 (no ofreció cita) → marcar N/A. Si cre_cita=50 (ofreció cita pero prospecto no aceptó) → marcar N/A. Si cre_cita=100 (prospecto aceptó la cita) → evaluar: 100=propuso fecha Y hora específicas Y el prospecto aceptó. 50=propuso seguimiento sin fecha u hora específica ("te llamo esta semana", "te marco después"). 0=no propuso ningún seguimiento. No cuenta frases genéricas sin fecha y hora concretas. Detección para detalle_criterios: en hizo cita cómo propuso el seguimiento o indica por qué aplica N/A; en no_hizo indica qué faltó (fecha/hora/confirmación del prospecto); en ejemplo: "¿Te parece si te contacto el jueves a las 3pm para confirmar tu asistencia?"';
   const _cierreCRM = naKeys.has('cre_crm') ? '' : ' cre_crm: Mencionó tipificar, registrar o actualizar el CRM (si no hay evidencia en audio, score 0 o marca N/A).';
   const cierreGuia = _cierreBase + _cierreSeguimiento + _cierreCRM;
   const cierreKey = esTrad ? '"cre_cita":<0-100>,' : '"cre_matricula":<0-100>,';
@@ -5963,8 +5968,9 @@ async function generarPlanIA() {
     const patronesCriterio = {};
     d.llamadas_raw && d.llamadas_raw.forEach(h => {
       (h.detalle_criterios||[]).forEach(dc => {
-        if(!patronesCriterio[dc.key]) patronesCriterio[dc.key]={noHizo:[],ejemplos:[],total:0};
+        if(!patronesCriterio[dc.key]) patronesCriterio[dc.key]={hizo:[],noHizo:[],ejemplos:[],total:0};
         patronesCriterio[dc.key].total++;
+        if(dc.hizo) patronesCriterio[dc.key].hizo.push(dc.hizo);
         if(dc.no_hizo) patronesCriterio[dc.key].noHizo.push(dc.no_hizo);
         if(dc.ejemplo) patronesCriterio[dc.key].ejemplos.push(dc.ejemplo);
       });
@@ -5975,16 +5981,19 @@ async function generarPlanIA() {
       .map(([k,v]) => {
         const criterio = criteriosTodos.find(c=>c.key===k);
         const label = criterio?.label||k;
-        // Encontrar el no_hizo y ejemplo más frecuentes
-        const freq={}, freqEj={};
+        const freq={}, freqHizo={}, freqEj={};
         v.noHizo.forEach(t=>{freq[t]=(freq[t]||0)+1;});
+        v.hizo.forEach(t=>{freqHizo[t]=(freqHizo[t]||0)+1;});
         v.ejemplos.forEach(t=>{freqEj[t]=(freqEj[t]||0)+1;});
         const topNoHizo = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+        const topHizo = Object.entries(freqHizo).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
         const topEjemplo = Object.entries(freqEj).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
-        // Guardar en agentMap para que top3Esqueleto pueda accederlo
         if (!d._patronesCriterio) d._patronesCriterio = {};
-        d._patronesCriterio[k] = { topNoHizo, topEjemplo };
-        return `    • ${label}: falla en ${v.noHizo.length}/${totalLlamadas} llamadas — ${topNoHizo}${topEjemplo ? `\n      ✅ Debe decir: "${topEjemplo}"` : ''}`;
+        d._patronesCriterio[k] = { topHizo, topNoHizo, topEjemplo };
+        return `    • ${label}: falla en ${v.noHizo.length}/${totalLlamadas} llamadas` +
+          (topHizo ? `\n      ✅ Sí hizo: ${topHizo}` : '') +
+          `\n      ❌ No hizo: ${topNoHizo}` +
+          (topEjemplo ? `\n      💬 Debe decir: "${topEjemplo}"` : '');
       }).join('\n');
     return `- ${n} [${modLabel}]: score ${avg} pts, ${ctx.labelCierre} ${cierre}%` +
       `\n  Etapas por prioridad: ${etapasStr}` +
@@ -6036,12 +6045,19 @@ async function generarPlanIA() {
           ? (agentMap[nombreAsesor]._patronesCriterio||{})[k]
           : null;
         const topEjemplo = patronK?.topEjemplo || '';
-        return criterio && avg !== null && avg < 80 ? { label: criterio.label, avg, ejemplo: topEjemplo } : null;
+        const topHizo = patronK?.topHizo || '';
+        const topNoHizo = patronK?.topNoHizo || '';
+        return criterio && avg !== null && avg < 80 ? { label: criterio.label, avg, hizo: topHizo, noHizo: topNoHizo, ejemplo: topEjemplo } : null;
       })
       .filter(Boolean)
       .sort((a,b) => a.avg - b.avg);
     const bulletsCriterios = criteriosAfectados.length
-      ? criteriosAfectados.map(c => `- ${c.label}: ${c.avg}/100${c.ejemplo ? `\n  ✅ Debe decir: "${c.ejemplo}"` : ''}`).join('\n')
+      ? criteriosAfectados.map(c =>
+          `- ${c.label}: ${c.avg}/100` +
+          (c.hizo ? `\n  ✅ Sí hizo: ${c.hizo}` : '') +
+          (c.noHizo ? `\n  ❌ No hizo: ${c.noHizo}` : '') +
+          (c.ejemplo ? `\n  💬 Debe decir: "${c.ejemplo}"` : '')
+        ).join('\n')
       : '- (todos los criterios por encima de 80)';
     const naLabels = criteriosTodos.filter(c => keysEtapa.includes(c.key) && naKeys.has(c.key)).map(c => c.label);
     const advertencia = naLabels.length ? ` [NO mencionar: ${naLabels.join(', ')}]` : '';
@@ -6142,18 +6158,18 @@ async function preguntarPlanIA() {
 
   // Construir prompt con contexto compacto
   const ctx = window._planChatContext;
-  const systemCtx = `Eres un analista de calidad para callcenter de admisiones educativas. 
-Tienes acceso a estos datos del período:
+  const systemCtx = `Eres un analista de calidad para callcenter de admisiones educativas.
+Tienes acceso a los siguientes datos detallados del período. En "DATOS POR ASESOR" encontrarás para cada criterio con falla: qué SÍ hizo el asesor (✅ Sí hizo), qué NO hizo (❌ No hizo) y la frase que debió usar (💬 Debe decir). Usa esos detalles para responder preguntas específicas sobre evaluaciones.
 
 PLAN DE MEJORA GENERADO:
 ${ctx.planActual}
 
 RENDIMIENTO POR ETAPA: ${ctx.etapasResumen}
 
-RESUMEN POR ASESOR:
+DATOS POR ASESOR (incluye detalle de qué hizo y qué no hizo por criterio):
 ${ctx.resumenAgentes}
 
-Responde de forma concisa y directa. Sin markdown. Máximo 150 palabras.`;
+Responde de forma concisa y directa. Sin markdown. Máximo 200 palabras.`;
 
   // Historial de conversación
   window._planChatHistory.push({ role: 'user', content: pregunta });
