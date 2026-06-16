@@ -2531,10 +2531,14 @@ function limpiarTodosFiltros() {
 }
 
 // Formatea score como "65/80" usando pts_activos si está disponible, si no muestra solo el número
+function normScore(score_total, pts_activos) {
+  if (!pts_activos || pts_activos === 0) return score_total || 0;
+  return Math.round((score_total / pts_activos) * 100);
+}
 function fmtScore(h) {
   const s = h.score_total ?? h;
   const pts = h.pts_activos;
-  return pts ? `${s}/${pts}` : `${s}`;
+  return String(normScore(s, pts));
 }
 function scoreColor(s, pts) {
   // Calcular porcentaje para el color
@@ -3987,11 +3991,12 @@ function renderResultado(r, transcripcionCompleta) {
   const esTit   = modelo === 'titulacion';
   const s = r.score_total;
   const pts = r.pts_activos;
+  const sNorm = normScore(s, pts);
   const pct = pts ? Math.round(s/pts*100) : s;
   const dc = scoreDonutClass(s, pts);
   const nivel = scoreNivel(s, pts);
   const tc = scoreTc(s, pts);
-  const scoreDisplay = pts ? `${s}<span style="font-size:14px;opacity:.7">/${pts}</span>` : `${s}`;
+  const scoreDisplay = `${sNorm}`;
   const sc=r.sentimiento_cliente==='positivo'?'tg':r.sentimiento_cliente==='negativo'?'tr':'tb';
   const modeloTag = esTit ? `<span class="tag ty">🎓 Titulación</span>` : esTrad ? `<span class="tag tb">🏫 Tradicional</span>` : `<span class="tag tp">💻 OnAliat</span>`;
   const logroTxt  = r.logro_objetivo
@@ -4521,7 +4526,7 @@ function renderBatchQueue() {
                        item.status==='error'?`<span class="bfr-status bs-error">✗ Error</span>`:
                        item.status==='active'?`<span class="bfr-status bs-active spinning">◌</span>`:
                        `<span class="bfr-status bs-pending">Pendiente</span>`;
-    const scoreHtml = item.result?`<div class="bfr-score" style="color:${scoreColor(item.result.score_total,item.result.pts_activos)}">${fmtScore(item.result)}</div>`:'';
+    const scoreHtml = item.result?`<div class="bfr-score" style="color:${scoreColor(item.result.score_total,item.result.pts_activos)}">${normScore(item.result.score_total,item.result.pts_activos)}</div>`:'';
     const canRemove = !batchRunning || item.status==='pending';
     const retryBtn  = item.status==='error' && !batchRunning
       ? `<button onclick="reintentarUno(${i})" title="Reintentar esta llamada" style="background:none;border:1px solid rgba(248,113,113,.4);border-radius:6px;color:var(--red);cursor:pointer;font-size:11px;font-weight:600;padding:3px 9px;flex-shrink:0;transition:all .15s" onmouseover="this.style.background='rgba(248,113,113,.12)'" onmouseout="this.style.background='none'">🔄 Reintentar</button>`
@@ -5364,8 +5369,8 @@ function _renderReportesBody(data, kpiEl, esFiltradoAgente) {
   const criticas=data.filter(h=>(h.pts_activos?Math.round(h.score_total/h.pts_activos*100):h.score_total)<60).length;
   const cierres=data.filter(h=>h.logro_objetivo).length;
   const agentesCount=[...new Set(data.map(h=>h.agente))].length;
-  const scoreDisplay=`${Math.round(avg)}/${Math.round(avgPtsActivos)}`;
   const avgPct=avg/avgPtsActivos*100;
+  const scoreDisplay=`${Math.round(avgPct)}`;
 
   // KPIs — si es agente individual muestra "mejor llamada" en lugar de agentes evaluados
   kpiEl.style.gridTemplateColumns='repeat(5,1fr)';
@@ -5400,7 +5405,7 @@ function _renderReportesBody(data, kpiEl, esFiltradoAgente) {
           <div class="rank-meta">${h.tipo}${h.campana?' · '+h.campana:''}</div>
         </div>
         <div class="rank-bar-wrap"><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${pct}%;background:${col}"></div></div></div>
-        <div class="rank-score" style="color:${col}">${fmtScore(h)}</div>
+        <div class="rank-score" style="color:${col}">${normScore(h.score_total,h.pts_activos)}</div>
       </div>`;
     }).join('') || '<div class="empty-state" style="padding:24px"><p>Sin llamadas</p></div>';
   } else {
@@ -5775,7 +5780,7 @@ function renderAntiguedadScatter(data) {
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);${i===0?'background:rgba(248,113,113,.04)':''}">
       <span style="font-size:12px;font-weight:700;color:var(--dim);min-width:18px;text-align:right">${i+1}</span>
       <span style="flex:1;font-size:13px;font-weight:600;color:var(--text)">${f.nombre}</span>
-      <span style="font-size:14px;font-weight:700;color:${col};min-width:56px;text-align:right">${f.avgScore}/${f.avgPts}</span>
+      <span style="font-size:14px;font-weight:700;color:${col};min-width:56px;text-align:right">${pct}</span>
       <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;min-width:200px">${e1txt}${e2txt}</div>
     </div>`;
   }).join('');
@@ -6772,7 +6777,7 @@ async function generarPDFEvaluacion(containerId) {
 
 function copiarFeedback(id) {
   const r=historial.find(h=>String(h.id)===String(id)); if(!r) return;
-  const txt=`RETROALIMENTACIÓN DE CALIDAD — ${r.fecha}\nAgente: ${r.agente} | Score: ${r.score_total}/100\n\n✅ LO QUE HICISTE BIEN:\n${r.fortalezas}\n\n📈 EN QUÉ TRABAJAR:\n${r.areas_mejora}\n\n💬 MENSAJE PARA TI:\n${r.feedback_agente}`;
+  const txt=`RETROALIMENTACIÓN DE CALIDAD — ${r.fecha}\nAgente: ${r.agente} | Score: ${normScore(r.score_total,r.pts_activos)}/100\n\n✅ LO QUE HICISTE BIEN:\n${r.fortalezas}\n\n📈 EN QUÉ TRABAJAR:\n${r.areas_mejora}\n\n💬 MENSAJE PARA TI:\n${r.feedback_agente}`;
   navigator.clipboard.writeText(txt).then(()=>alert('Feedback copiado ✅')).catch(()=>alert('Copia este texto:\n\n'+txt));
 }
 // ══════════════════════════════════════════
@@ -7022,7 +7027,7 @@ function filaHtml2(f, tipo='normal') {
   const cobStr = f.cobertura!=null ? f.cobertura+'%' : '—';
   const cobPct = f.cobertura ?? 0;
   const cobCls = cobPct>=80?'cn-g':cobPct>=60?'cn-y':'cn-r';
-  const scoreStr = f.scorePromedio ? `${f.scorePromedio}/80` : '—';
+  const scoreStr = f.scorePromedio ? `${f.scorePromedio}` : '—';
   const scorePct = f.scorePromedio/80*100;
   const sCls = scorePct>=80?'cn-g':scorePct>=60?'cn-y':'cn-r';
   const supCell = isTotalTurno
@@ -7274,7 +7279,7 @@ function exportarCSV() {
   const encabezadosFijos = [
     'Fecha llamada','Hora llamada','Fecha evaluación',
     'Supervisor','Asesor','Modelo','Programa','Campaña','Archivo',
-    'Score total','Pts activos','Prob. inscripción/pago (%)','Duración (min)',
+    'Score (0-100)','Pts obtenidos','Pts activos','Prob. inscripción/pago (%)','Duración (min)',
     'Prospecto (sentimiento)','Logró objetivo','Nivel urgencia',
     'Evaluado por','Fortalezas','Áreas de mejora',
     'Feedback asesor','Resumen supervisor','Transcripción'
@@ -7301,6 +7306,7 @@ function exportarCSV() {
       h.tipo||'',
       h.campana||'',
       h.archivo||'',
+      (()=>{ const _p=h.pts_activos; const _s=h.score_total||0; return _p ? Math.round(_s/_p*100) : _s; })(),
       h.score_total||'',
       h.pts_activos||'',
       h.probabilidad_inscripcion!=null ? h.probabilidad_inscripcion : '',
