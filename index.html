@@ -3402,6 +3402,7 @@ async function evaluarTranscripcion(transcripcion, agente, tipo, campana, groqKe
   const fraOblig = (cfg.frases_obligatorias||[]).filter(f=>f.trim());
   const fraProhib = (cfg.frases_prohibidas||[]).filter(f=>f.trim());
   const naKeys = new Set((cfg.na_criterios||[]).map(String));
+  const criteriosActivos = getCriterios(modelo).filter(c => !naKeys.has(c.key));
   const secOblig = fraOblig.length ? `\nFRASES QUE EL ASESOR DEBE DECIR (penalizar si no las menciona):\n${fraOblig.map(f=>'- '+f).join('\n')}` : '';
   const secProhib = fraProhib.length ? `\nFRASES PROHIBIDAS (penalizar severamente si las usa):\n${fraProhib.map(f=>'- '+f).join('\n')}` : '';
   const criteriosNALabels = getCriterios(modelo).filter(c => naKeys.has(c.key)).map(c => c.label);
