@@ -3525,6 +3525,12 @@ async function transcribirAudio(file, groqKey) {
 }
 
 async function evaluarTranscripcion(transcripcion, agente, tipo, campana, groqKey, modelo, _unused, duracionSegundos) {
+  // Validar que la transcripción tenga contenido evaluable
+  const palabras = (transcripcion||'').toLowerCase().replace(/[^a-záéíóúüñ\s]/gi,'').split(/\s+/).filter(p=>p.length>1);
+  const palabrasUnicas = new Set(palabras);
+  if (palabras.length < 30 || palabrasUnicas.size < 3) {
+    throw new Error(`Audio sin contenido evaluable — transcripción insuficiente (${palabras.length} palabras, ${palabrasUnicas.size} únicas). Verifica que el audio tenga conversación real.`);
+  }
   modelo = modelo || 'tradicional';
   const criterios = getCriterios(modelo);
   const cfg = cargarConfig(modelo);
