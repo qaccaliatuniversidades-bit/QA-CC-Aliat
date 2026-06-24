@@ -1668,12 +1668,17 @@ function cargarHistorialFirestore() {
     }, 100);
   };
 
+  // Obtener total real de Firestore (sin límite) para mostrar en KPIs
+  db.collection('evaluaciones').get().then(snap => {
+    totalEvalsFirestore = snap.size;
+  }).catch(() => {});
+
   // Intentar con orderBy timestamp primero
-  db.collection('evaluaciones').orderBy('timestamp', 'desc').limit(1000)
+  db.collection('evaluaciones').orderBy('timestamp', 'desc').limit(2000)
     .onSnapshot(procesarSnap, err => {
       console.warn('Firestore orderBy timestamp falló, usando fallback:', err.message);
       // Fallback: query sin orderBy (funciona sin índice compuesto)
-      db.collection('evaluaciones').limit(1000)
+      db.collection('evaluaciones').limit(2000)
         .onSnapshot(procesarSnap, err2 => {
           console.error('Firestore error:', err2);
           // Último recurso: mostrar aviso en historial
@@ -3083,6 +3088,7 @@ let batchStartTs  = 0;
 let batchErrConsecutivos = 0;
 const BATCH_MAX_ERR_CONSECUTIVOS = 3;
 let _wakeLock     = null;
+let totalEvalsFirestore = null; // Total real de evaluaciones en Firestore (sin límite)
 
 async function solicitarWakeLock() {
   if (!('wakeLock' in navigator)) return; // No soportado en este navegador
@@ -4888,7 +4894,7 @@ function renderHistorialDatos() {
   const avgPct=Math.round(avg/avgPts*100);
   const criticas=data.filter(h=>(h.pts_activos?Math.round(h.score_total/h.pts_activos*100):h.score_total)<60).length;
   const cierres=data.filter(h=>h.logro_objetivo).length;
-  if (statsEl) statsEl.innerHTML=`<div class="stat-card"><div class="stat-val" style="color:${avgPct>=80?'var(--green)':avgPct>=60?'var(--yellow)':'var(--red)'}">${avg.toFixed(1)}</div><div class="stat-lbl">Score promedio</div></div><div class="stat-card"><div class="stat-val">${data.length}</div><div class="stat-lbl">Llamadas evaluadas</div></div><div class="stat-card"><div class="stat-val" style="color:${criticas>0?'var(--red)':'var(--green)'}">${criticas}</div><div class="stat-lbl">Llamadas críticas</div></div><div class="stat-card"><div class="stat-val" style="color:var(--cyan)">${Math.round(cierres/data.length*100)}%</div><div class="stat-lbl">Tasa de cierre</div></div>`;
+  if (statsEl) statsEl.innerHTML=`<div class="stat-card"><div class="stat-val" style="color:${avgPct>=80?'var(--green)':avgPct>=60?'var(--yellow)':'var(--red)'}">${avg.toFixed(1)}</div><div class="stat-lbl">Score promedio</div></div><div class="stat-card"><div class="stat-val">${data.length}</div><div class="stat-lbl">Llamadas evaluadas${(totalEvalsFirestore && totalEvalsFirestore > data.length) ? `<br><span style="font-size:10px;color:var(--dim)">${totalEvalsFirestore.toLocaleString()} en total</span>` : ''}</div></div><div class="stat-card"><div class="stat-val" style="color:${criticas>0?'var(--red)':'var(--green)'}">${criticas}</div><div class="stat-lbl">Llamadas críticas</div></div><div class="stat-card"><div class="stat-val" style="color:var(--cyan)">${Math.round(cierres/data.length*100)}%</div><div class="stat-lbl">Tasa de cierre</div></div>`;
   const esAdmin=qaIsAdmin;
   // Paginación — data completa filtrada, mostrar solo la página activa
   const totalEvals = data.length;
@@ -5396,7 +5402,7 @@ function _renderReportesBody(data, kpiEl, esFiltradoAgente) {
   const peorScore  = esFiltradoAgente ? Math.min(...data.map(h=>h.score_total||0)) : null;
   kpiEl.innerHTML=`
     <div class="stat-card"><div class="stat-val" style="color:${avgPct>=80?'var(--green)':avgPct>=60?'var(--yellow)':'var(--red)'}">${scoreDisplay}</div><div class="stat-lbl">Score promedio</div></div>
-    <div class="stat-card"><div class="stat-val">${data.length}</div><div class="stat-lbl">Llamadas evaluadas</div></div>
+    <div class="stat-card"><div class="stat-val">${data.length}</div><div class="stat-lbl">Llamadas evaluadas${(totalEvalsFirestore && totalEvalsFirestore > data.length) ? `<br><span style="font-size:10px;color:var(--dim)">${totalEvalsFirestore.toLocaleString()} en total</span>` : ''}</div></div>
     <div class="stat-card"><div class="stat-val" style="color:var(--cyan)">${Math.round(cierres/data.length*100)}%</div><div class="stat-lbl">Tasa de cierre</div></div>
     <div class="stat-card"><div class="stat-val" style="color:${criticas>0?'var(--red)':'var(--green)'}">${criticas}</div><div class="stat-lbl">Llamadas críticas</div></div>
     ${esFiltradoAgente
