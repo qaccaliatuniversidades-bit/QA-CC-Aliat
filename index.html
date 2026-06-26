@@ -1315,7 +1315,7 @@ const CRITERIOS_COMUNES_PRE = [
   {etapa:'demostracion',  key:'demo_beneficios',     num:'3.1', label:'Menciona ≥2 beneficios del programa o modalidad'},
   {etapa:'demostracion',  key:'demo_economico',      num:'3.2', label:'Indica ≥1 diferenciador económico'},
   {etapa:'demostracion',  key:'demo_ventaja',        num:'3.3', label:'Menciona ≥1 ventaja competitiva de Aliat'},
-  {etapa:'demostracion',  key:'demo_precio',         num:'3.4', label:'Maneja correctamente los 5 puntos de precio'},
+  {etapa:'demostracion',  key:'demo_precio',         num:'3.4', label:'Manejo de precios'},
   {etapa:'demostracion',  key:'demo_empleabilidad',  num:'3.5', label:'Menciona ≥1 argumento de empleabilidad'},
   {etapa:'objeciones',    key:'obj_objeciones',      num:'4.1', label:'Utiliza argumento del objecionario'},
   {etapa:'objeciones',    key:'obj_referidos',       num:'4.2', label:'Solicita referidos con beneficio del 5%'},
@@ -3586,7 +3586,7 @@ ${scoresTitKeys}
   },
   "detalle_criterios":[{"key":"<key del criterio con score < 100>","hizo":"<en max 15 palabras qué sí hizo el asesor en este criterio, o vacío si nada>","no_hizo":"<en max 20 palabras qué le faltó hacer específicamente, citando los elementos del criterio que omitió>","ejemplo":"<frase concreta y breve que el asesor DEBIÓ decir para cumplir este criterio, en primera persona como si fuera el asesor hablando. Max 25 palabras. Ej: '¿Qué te motivó a buscar una licenciatura en este momento?' o 'Te llamo el jueves a las 3pm para darle seguimiento, ¿te parece?'>"}],
   "fortalezas":"<2 cosas concretas que el asesor hizo bien SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa (Apertura|Investigación|Demostración|Manejo de Objeciones|Cierre|Etiqueta). NUNCA menciones criterios deshabilitados. Ejemplo: "Se presentó correctamente con nombre y universidad (Apertura)">",
-  "areas_mejora":"<2-3 acciones específicas de mejora SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa. NUNCA menciones criterios deshabilitados aunque el asesor haya fallado en ellos. Ejemplo: "Practicar los 5 puntos del manejo de precio (Demostración)">",
+  "areas_mejora":"<2-3 acciones específicas de mejora SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa. NUNCA menciones criterios deshabilitados aunque el asesor haya fallado en ellos. Ejemplo: "Practicar el manejo de precios: pago inicial y parcialidades (Demostración)">",
   "palabras_riesgo":[],
   "sentimiento_cliente":"<positivo|neutral|negativo>",
   "logro_objetivo":<true|false>,
@@ -3719,7 +3719,7 @@ Evalúa del 0 al 100 cada criterio según la Cédula QA Aliat v4.0 y responde SO
     ${cierreKey}
   },
   "fortalezas":"<2 cosas concretas que el asesor hizo bien SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa (Apertura|Investigación|Demostración|Manejo de Objeciones|Cierre|Etiqueta). NUNCA menciones criterios deshabilitados. Ejemplo: "Se presentó correctamente con nombre y universidad (Apertura)">",
-  "areas_mejora":"<2-3 acciones específicas de mejora SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa. NUNCA menciones criterios deshabilitados aunque el asesor haya fallado en ellos. Ejemplo: "Practicar los 5 puntos del manejo de precio (Demostración)">",
+  "areas_mejora":"<2-3 acciones específicas de mejora SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa. NUNCA menciones criterios deshabilitados aunque el asesor haya fallado en ellos. Ejemplo: "Practicar el manejo de precios: pago inicial y parcialidades (Demostración)">",
   "palabras_riesgo":[],
   "objeciones_detectadas":[
     {
@@ -3831,16 +3831,13 @@ No cuenta mencionar beneficios exclusivos de una carrera específica (laboratori
 Puntuación: 100=mencionó ≥1 ventaja competitiva institucional. 0=no la mencionó. No uses valores intermedios.
 Detección para detalle_criterios: en hizo cita textualmente la ventaja competitiva que mencionó; en no_hizo confirma que no mencionó ninguna ventaja institucional; en ejemplo una ventaja concreta que debió mencionar según el contexto de la llamada.
 
-demo_precio (3.4) — Maneja correctamente los 5 puntos de precio.
-Acción esperada: El asesor debe ejecutar los 5 puntos del manejo efectivo de precio en la llamada, en cualquier orden:
-1. Precio de lista — menciona el precio total del cuatrimestre sin descuentos.
-2. Beneficios aplicables — menciona la beca y/o descuentos que reducen la inversión (porcentaje de beca, descuento en primer pago, seguro escolar, incorporación SEP incluidos).
-3. Comparativa precio lista vs precio final — contrasta el precio original con el precio final después de descuentos, mencionando el ahorro total.
-4. Pago inicial y parcialidades — informa cuánto es el pago inicial para quedar inscrito y cuánto quedan las mensualidades.
-5. Detonador de cierre — menciona el 10% adicional de beca si el prospecto agenda visita al campus, y cómo impacta en el pago inicial y mensualidades.
-Los montos varían por programa — no evalúes si el monto es correcto, solo si el asesor ejecutó cada punto. Si un punto no se menciona en la llamada, no lo cuentes.
-Puntuación: 100=ejecutó los 5 puntos. 80=ejecutó 4 puntos. 60=ejecutó 3 puntos. 40=ejecutó 2 puntos. 20=ejecutó 1 punto. 0=no manejó el precio. Solo estos valores son válidos, no uses intermedios.
-Detección para detalle_criterios: en hizo lista numerados los puntos que sí ejecutó (ej: "1. Precio de lista ✓, 2. Beneficios aplicables ✓, 4. Pago inicial ✓"); en no_hizo lista los puntos que omitió con su descripción (ej: "3. No hizo comparativa lista vs final. 5. No mencionó detonador de cierre del 10%"); en ejemplo la frase que debió usar para el punto más crítico que omitió.
+demo_precio (3.4) — Manejo de precios.
+Acción esperada: El asesor debe explicar la estructura de precios con estos 2 elementos, en cualquier orden:
+1. Pago inicial — informa cuánto es el primer pago para quedar formalmente inscrito. Opcionalmente puede mencionar que incluye registro ante la SEP y/o seguro estudiantil.
+2. Parcialidades — informa el monto de las mensualidades siguientes. Opcionalmente puede mencionar el beneficio o beca aplicada sin necesidad de especificar el porcentaje exacto.
+Los montos varían por programa — no evalúes si el monto es correcto, solo si el asesor explicó ambos elementos.
+Puntuación: 100=explicó pago inicial Y parcialidades. 50=explicó solo uno de los dos. 0=no habló de precios o solo mencionó un monto sin estructura. No uses valores intermedios.
+Detección para detalle_criterios: en hizo indica cuáles elementos mencionó con cita textual; en no_hizo indica cuál faltó; en ejemplo la frase que debió usar para el elemento omitido, como: "Tu primer pago sería de $X y quedarías formalmente inscrito, y a partir de ahí tus mensualidades quedarían en $Y."
 
 demo_empleabilidad (3.5) — Dato duro de empleabilidad.
 Acción esperada: Indicar al menos un dato duro.
@@ -5876,7 +5873,7 @@ async function generarPlanIA() {
         objetivo:     'generar una CITA para que el prospecto visite el campus y avance su proceso de inscripción',
         enfoque:      'admisiones presenciales y agendado de citas en campus',
         metricas:     'tasa de cita agendada, manejo del precio con los 5 puntos, manejo de objeciones',
-        ejemploAccion:'"Reforzar manejo de precio con los 5 puntos: precio full, beca 40%, mensualidad $2100, pago inicial $1200, proceso de inscripción"',
+        ejemploAccion:'"Explicar estructura de precios: pago inicial para quedar inscrito y mensualidades siguientes con beneficio aplicado"',
         labelCierre:  'tasa de cita' };
 
   const notaMixto = hasMixto
@@ -6277,7 +6274,7 @@ function _renderSliders() {
           {key:'demo_beneficios',   num:'3.1', label:'Menciona ≥2 beneficios del programa o modalidad'},
           {key:'demo_economico',    num:'3.2', label:'Indica ≥1 diferenciador económico'},
           {key:'demo_ventaja',      num:'3.3', label:'Menciona ≥1 ventaja competitiva de Aliat'},
-          {key:'demo_precio',       num:'3.4', label:'Maneja correctamente los 5 puntos de precio'},
+          {key:'demo_precio',       num:'3.4', label:'Manejo de precios'},
           {key:'demo_empleabilidad',num:'3.5', label:'Menciona ≥1 argumento de empleabilidad'},
         ]},
         {etapa:'objeciones',    emoji:'🛡', label:'Manejo de Objeciones (10 pts)', items:[
@@ -6313,7 +6310,7 @@ function _renderSliders() {
           {key:'demo_beneficios',   num:'3.1', label:'Menciona ≥2 beneficios del programa o modalidad'},
           {key:'demo_economico',    num:'3.2', label:'Indica ≥1 diferenciador económico'},
           {key:'demo_ventaja',      num:'3.3', label:'Menciona ≥1 ventaja competitiva de Aliat'},
-          {key:'demo_precio',       num:'3.4', label:'Maneja correctamente los 5 puntos de precio'},
+          {key:'demo_precio',       num:'3.4', label:'Manejo de precios'},
           {key:'demo_empleabilidad',num:'3.5', label:'Menciona ≥1 argumento de empleabilidad'},
         ]},
         {etapa:'objeciones',    emoji:'🛡', label:'Manejo de Objeciones',  items:[
