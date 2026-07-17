@@ -141,6 +141,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
 .tg{background:rgba(52,211,153,.12);color:var(--green)} .ty{background:rgba(251,191,36,.12);color:var(--yellow)}
 .tr{background:rgba(248,113,113,.12);color:var(--red)} .tb{background:rgba(26,95,168,.15);color:var(--blue)}
 .tp{background:rgba(167,139,250,.12);color:var(--purple)} .tc{background:rgba(56,189,248,.12);color:var(--cyan)}
+.to{background:rgba(247,148,29,.12);color:var(--orange)}
 .result-grid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)}
 .result-col{padding:22px 24px}
 .result-col:first-child{border-right:1px solid var(--border)}
@@ -599,6 +600,16 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
           <option value="__todos__">Todos</option>
         </select>
       </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--muted);font-weight:600">MODELO</span>
+        <select id="corte-modelo" onchange="renderReporteCorte()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:5px 9px;outline:none;cursor:pointer">
+          <option value="__todos__">Todos</option>
+          <option value="tradicional">🏫 Tradicional</option>
+          <option value="onaliat">💻 OnAliat</option>
+          <option value="titulacion">🎓 Titulación</option>
+          <option value="corbuse">🧑‍🍳 CORBUSÉ</option>
+        </select>
+      </div>
       <!-- Modo: por llamada / por evaluación -->
       <div style="display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:3px">
         <button id="corte-modo-llamada" onclick="setCorteMode('llamada')" style="padding:4px 12px;border-radius:6px;background:var(--blue);color:#fff;border:none;font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer">Por llamada</button>
@@ -753,6 +764,10 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
           style="flex:1;padding:10px;border-radius:9px;border:2px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s">
           🎓 Titulación
         </button>
+        <button id="mod-btn-corb" onclick="setModeloForm('corbuse')"
+          style="flex:1;padding:10px;border-radius:9px;border:2px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s">
+          🧑‍🍳 CORBUSÉ
+        </button>
       </div>
       <div class="form-grid">
         <div class="field"><label>Agente</label><input id="f-agente" type="text" placeholder="Nombre del asesor" /></div>
@@ -820,6 +835,10 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <button id="b-mod-btn-tit" onclick="setBatchModelo('titulacion')"
           style="flex:1;padding:9px;border-radius:9px;border:2px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s">
           🎓 Titulación
+        </button>
+        <button id="b-mod-btn-corb" onclick="setBatchModelo('corbuse')"
+          style="flex:1;padding:9px;border-radius:9px;border:2px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s">
+          🧑‍🍳 CORBUSÉ
         </button>
       </div>
       <div class="batch-meta-grid">
@@ -1191,6 +1210,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <option value="__todos__">Todos los modelos</option>
         <option value="tradicional">🏫 Tradicional</option>
         <option value="onaliat">💻 OnAliat</option>
+        <option value="corbuse">🧑‍🍳 CORBUSÉ</option>
       </select>
       <select id="top-agente-filter" onchange="renderTopCalls()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none">
         <option value="__todos__">Todos los asesores</option>
@@ -1239,6 +1259,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <button class="period-tab active" id="cfg-mod-trad" onclick="setCfgModelo('tradicional',this)">🏫 Tradicional</button>
         <button class="period-tab" id="cfg-mod-on" onclick="setCfgModelo('onaliat',this)">💻 OnAliat</button>
         <button class="period-tab" id="cfg-mod-tit" onclick="setCfgModelo('titulacion',this)">🎓 Titulación</button>
+        <button class="period-tab" id="cfg-mod-corb" onclick="setCfgModelo('corbuse',this)">🧑‍🍳 CORBUSÉ</button>
       </div>
       <span class="cfg-saved-badge" id="cfg-saved-badge">✅ Guardado</span>
       <button class="btn-cfg-reset" onclick="resetCalibracion()">↩ Restaurar defaults</button>
@@ -1543,7 +1564,7 @@ async function cerrarSesion() {
 
 function aplicarRestriccionModelos() {
   if (!currentUserData) return;
-  const permitidos = currentUserData.modelos_permitidos || ['tradicional','onaliat','titulacion'];
+  const permitidos = currentUserData.modelos_permitidos || ['tradicional','onaliat','titulacion','corbuse'];
 
   // Botones de selector en Evaluar llamada
   const mapEval = { tradicional:'mod-btn-trad', onaliat:'mod-btn-on', titulacion:'mod-btn-tit' };
@@ -1785,12 +1806,13 @@ async function cargarListaUsuarios() {
   if (!listEl) return;
 
   listEl.innerHTML = lista.map(u => {
-    const modelos = u.modelos_permitidos || ['tradicional','onaliat','titulacion']; // default: todos
+    const modelos = u.modelos_permitidos || ['tradicional','onaliat','titulacion','corbuse']; // default: todos
     const esYo = u.uid === currentUserData?.uid;
     const modelosInfo = [
       { key:'tradicional', label:'🏫 Trad.', color:'var(--blue)' },
       { key:'onaliat',     label:'💻 OnAliat', color:'var(--cyan)' },
       { key:'titulacion',  label:'🎓 Tit.', color:'var(--yellow)' },
+      { key:'corbuse',     label:'🧑‍🍳 CORBUSÉ', color:'var(--orange)' },
     ];
     const chips = modelosInfo.map(m => {
       const activo = modelos.includes(m.key);
@@ -1832,7 +1854,7 @@ async function cargarListaUsuarios() {
 async function toggleModeloUsuario(uid, modelo, activar, el) {
   if (!db) return;
   const snap = await db.collection('usuarios').doc(uid).get();
-  const modelos = snap.data()?.modelos_permitidos || ['tradicional','onaliat','titulacion'];
+  const modelos = snap.data()?.modelos_permitidos || ['tradicional','onaliat','titulacion','corbuse'];
   let nuevos;
   if (activar) {
     nuevos = [...new Set([...modelos, modelo])];
@@ -2253,6 +2275,7 @@ function renderFiltrosCompartidos(containerId, modeloSelectId, evaluadorSelectId
         <option value="tradicional"${modeloVal==='tradicional'?' selected':''}>🏫 Tradicional</option>
         <option value="onaliat"${modeloVal==='onaliat'?' selected':''}>💻 OnAliat</option>
         <option value="titulacion"${modeloVal==='titulacion'?' selected':''}>🎓 Titulación</option>
+        <option value="corbuse"${modeloVal==='corbuse'?' selected':''}>🧑‍🍳 CORBUSÉ</option>
       </select>
       <select id="${evaluadorSelectId}" onchange="syncEvaluadorSelect('${containerId}',this.value);aplicarFiltrosCompartidos()"
         style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none;cursor:pointer">
@@ -3134,7 +3157,7 @@ function setModeloForm(m) {
   _modeloForm = m;
   const actBg='rgba(26,95,168,.15)', actBorder='var(--blue)', actColor='var(--blue)';
   const inBg='transparent', inBorder='var(--border2)', inColor='var(--muted)';
-  [['mod-btn-trad','tradicional'],['mod-btn-on','onaliat'],['mod-btn-tit','titulacion']].forEach(function(p){
+  [['mod-btn-trad','tradicional'],['mod-btn-on','onaliat'],['mod-btn-tit','titulacion'],['mod-btn-corb','corbuse']].forEach(function(p){
     var b=document.getElementById(p[0]); if(!b) return;
     b.style.background=m===p[1]?actBg:inBg; b.style.borderColor=m===p[1]?actBorder:inBorder; b.style.color=m===p[1]?actColor:inColor;
   });
@@ -3143,14 +3166,14 @@ function setBatchModelo(m) {
   _modeloBatch = m;
   const actBg='rgba(26,95,168,.15)', actBorder='var(--blue)', actColor='var(--blue)';
   const inBg='transparent', inBorder='var(--border2)', inColor='var(--muted)';
-  [['b-mod-btn-trad','tradicional'],['b-mod-btn-on','onaliat'],['b-mod-btn-tit','titulacion']].forEach(function(p){
+  [['b-mod-btn-trad','tradicional'],['b-mod-btn-on','onaliat'],['b-mod-btn-tit','titulacion'],['b-mod-btn-corb','corbuse']].forEach(function(p){
     var b=document.getElementById(p[0]); if(!b) return;
     b.style.background=m===p[1]?actBg:inBg; b.style.borderColor=m===p[1]?actBorder:inBorder; b.style.color=m===p[1]?actColor:inColor;
   });
 }
 function setCfgModelo(m, btn) {
   _modeloCfg = m;
-  document.querySelectorAll('#cfg-mod-trad,#cfg-mod-on').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#cfg-mod-trad,#cfg-mod-on,#cfg-mod-tit,#cfg-mod-corb').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderConfigPage();
 }
@@ -3557,7 +3580,9 @@ async function evaluarTranscripcion(transcripcion, agente, tipo, campana, groqKe
     ? `\n- Duración de la llamada: ${durMin} minutos (${duracionSegundos}s)`
     : '';
 
-  const esTrad = modelo === 'tradicional';
+  // CORBUSÉ comparte la cédula y el objetivo de negocio de Tradicional (cita a campus),
+  // por eso se trata igual que 'tradicional' en toda la lógica de prompt/cierre.
+  const esTrad = modelo === 'tradicional' || modelo === 'corbuse';
   const esTit  = modelo === 'titulacion';
 
   if (esTit) {
@@ -3696,7 +3721,7 @@ DEFINICIÓN DE logro_objetivo (Titulación): true SOLO si el egresado confirmó 
     : 'modalidad 100% en línea a través de la plataforma Brightspace';
 
   const prompt = `Eres un auditor experto de calidad para callcenter de ADMISIONES EDUCATIVAS de Aliat Universidades en México.
-Modelo educativo evaluado: ${esTrad ? 'TRADICIONAL (presencial/mixto)' : 'ONALIAT (100% en línea)'}.
+Modelo educativo evaluado: ${modelo === 'corbuse' ? 'CORBUSÉ (presencial/mixto, misma lógica de cierre que Tradicional)' : esTrad ? 'TRADICIONAL (presencial/mixto)' : 'ONALIAT (100% en línea)'}.
 El objetivo del asesor es ${objetivoTexto}.
 La oferta es ${modalidadCtx}.
 Analiza esta llamada con criterio profesional y responde ÚNICAMENTE con JSON válido, sin texto adicional ni markdown.
@@ -3998,8 +4023,10 @@ function renderResultado(r, transcripcionCompleta) {
   const criterios = getCriterios(modelo);
   const cfg     = cargarConfig(modelo);
   const pesos   = cfg.pesos;
-  const esTrad  = modelo === 'tradicional';
+  // CORBUSÉ comparte la lógica de negocio de Tradicional (cita a campus, no matrícula en línea)
+  const esTrad  = modelo === 'tradicional' || modelo === 'corbuse';
   const esTit   = modelo === 'titulacion';
+  const esCorbuse = modelo === 'corbuse';
   const s = r.score_total;
   const pts = r.pts_activos;
   const sNorm = normScore(s, pts);
@@ -4009,7 +4036,7 @@ function renderResultado(r, transcripcionCompleta) {
   const tc = scoreTc(s, pts);
   const scoreDisplay = `${sNorm}`;
   const sc=r.sentimiento_cliente==='positivo'?'tg':r.sentimiento_cliente==='negativo'?'tr':'tb';
-  const modeloTag = esTit ? `<span class="tag ty">🎓 Titulación</span>` : esTrad ? `<span class="tag tb">🏫 Tradicional</span>` : `<span class="tag tp">💻 OnAliat</span>`;
+  const modeloTag = esTit ? `<span class="tag ty">🎓 Titulación</span>` : esCorbuse ? `<span class="tag to">🧑‍🍳 CORBUSÉ</span>` : esTrad ? `<span class="tag tb">🏫 Tradicional</span>` : `<span class="tag tp">💻 OnAliat</span>`;
   const logroTxt  = r.logro_objetivo
     ? (esTit?'✅ Cerró venta':esTrad?'✅ Confirma asistencia':'✅ Confirma matrícula')
     : (esTit?'❌ Sin venta':esTrad?'❌ Sin confirmación':'❌ Sin matrícula');
@@ -4212,7 +4239,7 @@ async function abrirPanelCalibraciones() {
       const dirIcon = direccion==='up'?'↑':direccion==='down'?'↓':'✓';
       const dirCol = direccion==='up'?'var(--green)':direccion==='down'?'var(--red)':'var(--blue)';
       const dirTxt = direccion==='up'?'Debió ser mayor':direccion==='down'?'Debió ser menor':'Correcto';
-      const modeloTxt = modelo==='onaliat'?'💻 OnAliat':modelo==='titulacion'?'🎓 Titulación':'🏫 Tradicional';
+      const modeloTxt = modelo==='onaliat'?'💻 OnAliat':modelo==='titulacion'?'🎓 Titulación':modelo==='corbuse'?'🧑‍🍳 CORBUSÉ':'🏫 Tradicional';
       const alertBadge = items.length >= 3
         ? `<span style="background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3);border-radius:6px;font-size:10px;font-weight:700;padding:2px 8px">${items.length} feedbacks</span>`
         : `<span style="background:var(--surface2);color:var(--muted);border-radius:6px;font-size:10px;padding:2px 8px">${items.length} feedback${items.length!==1?'s':''}</span>`;
@@ -4970,7 +4997,7 @@ function renderReportesDatos() {
     else if (repPeriod===1){periodoTxt='Hoy';}
     else if (repPeriod===0){periodoTxt='Historial completo';}
     else{periodoTxt=`Últimos ${repPeriod} días`;}
-    const modeloTxt=sharedFiltros.modelo==='tradicional'?'🏫 Tradicional':sharedFiltros.modelo==='onaliat'?'💻 OnAliat':'Todos los modelos';
+    const modeloTxt=sharedFiltros.modelo==='tradicional'?'🏫 Tradicional':sharedFiltros.modelo==='onaliat'?'💻 OnAliat':sharedFiltros.modelo==='titulacion'?'🎓 Titulación':sharedFiltros.modelo==='corbuse'?'🧑‍🍳 CORBUSÉ':'Todos los modelos';
     const agentesTxt=esFiltradoAgente?`${sharedFiltros.agentes.size} agente${sharedFiltros.agentes.size!==1?'s':''}`:'Todos los agentes';
     subEl.textContent=agentesTxt+` · ${modeloTxt} · ${periodoTxt}`;
   }
@@ -5844,8 +5871,8 @@ async function generarPlanIA() {
     ? sharedFiltros.modelo
     : (() => {
         // Sin filtro de modelo: detectar el predominante en los datos
-        const cnt = {tradicional:0, onaliat:0, titulacion:0};
-        data.forEach(h => { const m = h.modelo||'tradicional'; if(cnt[m]!==undefined) cnt[m]++; else cnt.tradicional++; });
+        const cnt = {};
+        data.forEach(h => { const m = h.modelo||'tradicional'; cnt[m] = (cnt[m]||0) + 1; });
         return Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
       })();
 
@@ -6557,7 +6584,11 @@ function renderTopCalls() {
     const col = h.score_total>=90?'var(--green)':h.score_total>=85?'var(--yellow)':'var(--muted)';
     const prob = h.probabilidad_inscripcion!=null ? `<span class="tag tg">${h.probabilidad_inscripcion}% inscripción</span>` : '';
     const dur = h.duracion_segundos ? `<span class="tag tb">⏱ ${formatDuracion(h.duracion_segundos)}</span>` : '';
-    const modeloTag = (h.modelo||'tradicional')==='onaliat' ? '<span class="tag tp">💻 OnAliat</span>' : '<span class="tag tb">🏫 Tradicional</span>';
+    const modeloTC = h.modelo||'tradicional';
+    const modeloTag = modeloTC==='onaliat' ? '<span class="tag tp">💻 OnAliat</span>'
+      : modeloTC==='titulacion' ? '<span class="tag ty">🎓 Titulación</span>'
+      : modeloTC==='corbuse' ? '<span class="tag to">🧑‍🍳 CORBUSÉ</span>'
+      : '<span class="tag tb">🏫 Tradicional</span>';
     return `<div class="top-call-row" onclick="verDetalle(${h.id})">
       <span style="font-size:22px">⭐</span>
       <div style="flex:1;min-width:0">
@@ -6976,8 +7007,8 @@ function calcularPlantillaSup(supervisor, proyectoFiltro) {
   return n;
 }
 
-// Filtra el historial para un corte (fijo o custom) y un proyecto
-function filtrarParaCorte(corteObj, fdDesde, fdHasta, proyectoFiltro) {
+// Filtra el historial para un corte (fijo o custom), un proyecto y un modelo
+function filtrarParaCorte(corteObj, fdDesde, fdHasta, proyectoFiltro, modeloFiltro) {
   return historial.filter(h => {
     // Fecha
     const fl = parseFechaLlamada(getFechaCorte(h));
@@ -6999,12 +7030,16 @@ function filtrarParaCorte(corteObj, fdDesde, fdHasta, proyectoFiltro) {
       const hcM = buscarAgenteEnHC(h.agente);
       if (hcM?.idProyecto !== proyectoFiltro) return false;
     }
+    // Modelo (evita mezclar líneas de negocio, p.ej. CORBUSÉ, en el mismo corte)
+    if (modeloFiltro && modeloFiltro !== '__todos__') {
+      if ((h.modelo||'tradicional') !== modeloFiltro) return false;
+    }
     return true;
   });
 }
 
-function calcularFilasSupervisor2(corteObj, fdDesde, fdHasta, proyectoFiltro) {
-  const data = filtrarParaCorte(corteObj, fdDesde, fdHasta, proyectoFiltro);
+function calcularFilasSupervisor2(corteObj, fdDesde, fdHasta, proyectoFiltro, modeloFiltro) {
+  const data = filtrarParaCorte(corteObj, fdDesde, fdHasta, proyectoFiltro, modeloFiltro);
   const grupos = {};
   data.forEach(h => {
     const hcM = buscarAgenteEnHC(h.agente);
@@ -7097,10 +7132,9 @@ function renderReporteCorte() {
   const desde = document.getElementById('corte-fecha-desde')?.value;
   const hasta  = document.getElementById('corte-fecha-hasta')?.value;
   const proyecto = document.getElementById('corte-proyecto')?.value || '__todos__';
+  const modeloCorte = document.getElementById('corte-modelo')?.value || '__todos__';
   const fdDesde = desde ? new Date(desde+'T00:00:00') : null;
   const fdHasta  = hasta  ? new Date(hasta+'T23:59:59') : null;
-
-  // Construir lista de cortes activos (fijos + custom)
   const btnActivos = [...document.querySelectorAll('#corte-horarios .corte-btn.active')].map(b=>b.dataset.corte);
   const cortesActivos = [
     ...btnActivos.map(k=>CORTES_DEF.find(c=>c.key===k)).filter(Boolean),
@@ -7116,7 +7150,7 @@ function renderReporteCorte() {
   // Agrupar por turno
   const turnosData = {}; // {turno: [{corteLabel, filas}]}
   cortesActivos.forEach((corte, ci) => {
-    const filas = calcularFilasSupervisor2(corte, fdDesde, fdHasta, proyecto);
+    const filas = calcularFilasSupervisor2(corte, fdDesde, fdHasta, proyecto, modeloCorte);
     filas.forEach(f => {
       if (!turnosData[f.turno]) turnosData[f.turno] = [];
       // Find or create corte entry for this turno
@@ -7188,6 +7222,7 @@ function exportarCSVCorte() {
   const desde = document.getElementById('corte-fecha-desde')?.value;
   const hasta  = document.getElementById('corte-fecha-hasta')?.value;
   const proyecto = document.getElementById('corte-proyecto')?.value || '__todos__';
+  const modeloCorte = document.getElementById('corte-modelo')?.value || '__todos__';
   const fdDesde = desde ? new Date(desde+'T00:00:00') : null;
   const fdHasta  = hasta  ? new Date(hasta+'T23:59:59') : null;
   const btnActivos = [...document.querySelectorAll('#corte-horarios .corte-btn.active')].map(b=>b.dataset.corte);
@@ -7203,7 +7238,7 @@ function exportarCSVCorte() {
   const rows = [];
   const turnosData = {};
   cortesActivos.forEach((corte,ci) => {
-    const filas = calcularFilasSupervisor2(corte, fdDesde, fdHasta, proyecto);
+    const filas = calcularFilasSupervisor2(corte, fdDesde, fdHasta, proyecto, modeloCorte);
     filas.forEach(f => {
       if (!turnosData[f.turno]) turnosData[f.turno] = [];
       let entry = turnosData[f.turno].find(e=>e.corteKey===(corte.key||corte.id));
