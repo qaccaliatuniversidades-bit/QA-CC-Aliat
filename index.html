@@ -883,9 +883,17 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <div class="field"><label>Campaña</label><input id="b-campana" type="text" placeholder="Ej: Ciclo Ago-Dic 2025" /></div>
         <div class="field"><label>Intervalo entre llamadas</label>
           <select id="b-delay" onchange="actualizarDelayInfo(this.value)">
+            <option value="8000" id="opt-delay-8">8 seg (solo Gemini)</option>
             <option value="12000">12 seg (recomendado)</option>
             <option value="15000">15 seg</option>
             <option value="20000">20 seg (conservador)</option>
+          </select>
+        </div>
+        <div class="field"><label>Llamadas simultáneas</label>
+          <select id="b-concurrencia" onchange="actualizarDelayInfo(document.getElementById('b-delay').value)">
+            <option value="1">1 (secuencial)</option>
+            <option value="2">2 a la vez</option>
+            <option value="3">3 a la vez</option>
           </select>
         </div>
       </div>
@@ -1551,6 +1559,7 @@ async function onAuthChanged(user) {
     cargarCalibracionesAprobadas();
     cargarGroqKeys();
     cargarGeminiKeys();
+    setTimeout(actualizarControlesVelocidadBatch, 300); // esperar a que las keys carguen
     // qaIsAdmin is now set — force re-render of any visible page with role-gated UI
     const _histPage = document.getElementById('page-historial');
     const _repPage  = document.getElementById('page-reportes');
@@ -3663,6 +3672,8 @@ async function guardarKeys() {
   }
 
   document.getElementById('setup-overlay').classList.add('hidden');
+  const delaySel = document.getElementById('b-delay');
+  if (delaySel) actualizarControlesVelocidadBatch();
 }
 function abrirConfig() {
   const sel = document.getElementById('select-proveedor-ia');
@@ -5081,6 +5092,12 @@ async function iniciarBatch() {
   const delay   = parseInt(document.getElementById('b-delay').value);
   const modelo  = _modeloBatch;
 
+  // Concurrencia: la elige el usuario en el desplegable, pero si el proveedor activo es Groq
+  // se fuerza a 1 (secuencial) — Groq se satura más fácil con paralelismo real.
+  const concurrencia = getProveedorActivo() === 'gemini'
+    ? (parseInt(document.getElementById('b-concurrencia').value) || 1)
+    : 1;
+
   batchRunning = true; batchStop = false;
   batchDone = batchErrors = 0;
   batchErrConsecutivos = 0;
@@ -5096,32 +5113,26 @@ async function iniciarBatch() {
 
   const total = pending.length;
 
-  for (let i=0; i<batchQueue.length; i++) {
-    if (batchStop) break;
-    const item = batchQueue[i];
-    if (item.status !== 'pending') continue;
-
-    // Marcar activo
+  const procesarItem = async (item, idx) => {
     item.status = 'active';
     renderBatchQueue();
     actualizarProgreso(total);
-
     const agente = item.agente.trim() || item.file.name.replace(/\.[^.]+$/,'');
 
     try {
-      document.getElementById('bs-act').textContent = '⚡ ' + item.file.name.slice(0,30);
+      document.getElementById('bs-act').textContent = concurrencia > 1
+        ? `⚡ Procesando ${concurrencia} archivos a la vez...`
+        : '⚡ ' + item.file.name.slice(0,30);
 
       // 1. Transcribir
       const transcripcion = await transcribirAudioIA(item.file);
-
       // 2. Medir duración (necesaria para las reglas de calibración del prompt)
       const duracion = await medirDuracionAudio(item.file);
-
       // 3. Evaluar
       const resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, groqKey, modelo, undefined, duracion);
       // 4. Guardar
       const entrada = {
-        id: Date.now()+i,
+        id: Date.now()+idx,
         fecha: new Date().toLocaleString('es-MX'),
         agente, tipo, campana, modelo,
         archivo: item.file.name,
@@ -5148,7 +5159,7 @@ async function iniciarBatch() {
       batchErrConsecutivos++;
       agregarResultadoBatch(item);
 
-      if (batchErrConsecutivos >= BATCH_MAX_ERR_CONSECUTIVOS && groqKeys.length > 1) {
+      if (batchErrConsecutivos >= BATCH_MAX_ERR_CONSECUTIVOS && groqKeys.length > 1 && getProveedorActivo() !== 'gemini') {
         console.warn(`Batch: ${batchErrConsecutivos} errores consecutivos — rotando key proactivamente`);
         await rotarGroqKey();
         batchErrConsecutivos = 0;
@@ -5158,9 +5169,17 @@ async function iniciarBatch() {
 
     renderBatchQueue();
     actualizarProgreso(total);
+  };
 
-    // Delay entre llamadas (respeta límites Groq)
-    if (i < batchQueue.length-1 && !batchStop) {
+  // Índices de los pendientes, procesados en tandas de tamaño = concurrencia
+  const pendientesIdx = [];
+  for (let i=0; i<batchQueue.length; i++) if (batchQueue[i].status==='pending') pendientesIdx.push(i);
+
+  for (let k=0; k<pendientesIdx.length; k+=concurrencia) {
+    if (batchStop) break;
+    const tanda = pendientesIdx.slice(k, k+concurrencia);
+    await Promise.all(tanda.map(idx => procesarItem(batchQueue[idx], idx)));
+    if (k+concurrencia < pendientesIdx.length && !batchStop) {
       await new Promise(r => setTimeout(r, delay));
     }
   }
@@ -7632,12 +7651,40 @@ function renderReporteCorte() {
 function actualizarDelayInfo(val) {
   const info = document.getElementById('batch-delay-info-txt');
   if (!info) return;
+  const esGemini = getProveedorActivo() === 'gemini';
+  const concurrencia = esGemini ? (parseInt(document.getElementById('b-concurrencia')?.value) || 1) : 1;
+  const segundos = parseInt(val) / 1000;
+  const porTanda = segundos + 30; // estimado de tiempo de transcripción+evaluación por llamada
+  const llamadasPorHora = Math.round((3600 / porTanda) * concurrencia * (groqKeys.length > 1 && concurrencia===1 ? groqKeys.length : 1));
+  const etiquetaConc = concurrencia > 1 ? ` · procesando ${concurrencia} a la vez (Gemini)` : '';
   const map = {
-    '12000': '12 segundos entre llamadas. Con rotación de 5 keys: ~1,500 llamadas/hora.',
-    '15000': '15 segundos entre llamadas. Con rotación de 5 keys: ~1,200 llamadas/hora.',
-    '20000': '20 segundos entre llamadas (conservador). Con rotación de 5 keys: ~900 llamadas/hora.'
+    '8000': `8 segundos entre tandas${etiquetaConc}. Estimado: ~${llamadasPorHora} llamadas/hora.`,
+    '12000': `12 segundos entre tandas${etiquetaConc}. Estimado: ~${llamadasPorHora} llamadas/hora.`,
+    '15000': `15 segundos entre tandas${etiquetaConc}. Estimado: ~${llamadasPorHora} llamadas/hora.`,
+    '20000': `20 segundos entre tandas (conservador)${etiquetaConc}. Estimado: ~${llamadasPorHora} llamadas/hora.`
   };
   info.textContent = map[val] || '';
+}
+
+// Habilita/deshabilita los controles de velocidad (8s y concurrencia) según el proveedor activo.
+// Con Groq se fuerza 1 llamada a la vez y mínimo 12s, tal como funcionaba siempre.
+function actualizarControlesVelocidadBatch() {
+  const esGemini = getProveedorActivo() === 'gemini';
+  const selConc = document.getElementById('b-concurrencia');
+  const selDelay = document.getElementById('b-delay');
+  const opt8 = document.getElementById('opt-delay-8');
+  if (!selConc || !selDelay || !opt8) return;
+
+  if (esGemini) {
+    selConc.disabled = false;
+    opt8.disabled = false;
+  } else {
+    selConc.value = '1';
+    selConc.disabled = true;
+    opt8.disabled = true;
+    if (selDelay.value === '8000') selDelay.value = '12000';
+  }
+  actualizarDelayInfo(selDelay.value);
 }
 
 function exportarCSVCorte() {
