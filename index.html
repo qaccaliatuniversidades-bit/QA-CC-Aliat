@@ -637,6 +637,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
           <option value="onaliat">💻 OnAliat</option>
           <option value="titulacion">🎓 Titulación</option>
           <option value="corbuse">🧑‍🍳 CORBUSÉ</option>
+          <option value="campus">🧑‍🎓 Campus</option>
         </select>
       </div>
       <!-- Modo: por llamada / por evaluación -->
@@ -797,6 +798,10 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
           style="flex:1;padding:10px;border-radius:9px;border:2px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s">
           🧑‍🍳 CORBUSÉ
         </button>
+        <button id="mod-btn-cam" onclick="setModeloForm('campus')"
+          style="flex:1;padding:10px;border-radius:9px;border:2px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s">
+          🧑‍🎓 Campus
+        </button>
       </div>
       <div class="form-grid">
         <div class="field"><label>Agente</label><input id="f-agente" type="text" placeholder="Nombre del asesor" /></div>
@@ -868,6 +873,10 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <button id="b-mod-btn-corb" onclick="setBatchModelo('corbuse')"
           style="flex:1;padding:9px;border-radius:9px;border:2px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s">
           🧑‍🍳 CORBUSÉ
+        </button>
+        <button id="b-mod-btn-cam" onclick="setBatchModelo('campus')"
+          style="flex:1;padding:9px;border-radius:9px;border:2px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s">
+          🧑‍🎓 Campus
         </button>
       </div>
       <div class="batch-meta-grid">
@@ -1248,6 +1257,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <option value="tradicional">🏫 Tradicional</option>
         <option value="onaliat">💻 OnAliat</option>
         <option value="corbuse">🧑‍🍳 CORBUSÉ</option>
+        <option value="campus">🧑‍🎓 Campus</option>
       </select>
       <select id="top-agente-filter" onchange="renderTopCalls()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none">
         <option value="__todos__">Todos los asesores</option>
@@ -1297,6 +1307,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <button class="period-tab" id="cfg-mod-on" onclick="setCfgModelo('onaliat',this)">💻 OnAliat</button>
         <button class="period-tab" id="cfg-mod-tit" onclick="setCfgModelo('titulacion',this)">🎓 Titulación</button>
         <button class="period-tab" id="cfg-mod-corb" onclick="setCfgModelo('corbuse',this)">🧑‍🍳 CORBUSÉ</button>
+        <button class="period-tab" id="cfg-mod-cam" onclick="setCfgModelo('campus',this)">🧑‍🎓 Campus</button>
       </div>
       <span class="cfg-saved-badge" id="cfg-saved-badge">✅ Guardado</span>
       <button class="btn-cfg-reset" onclick="resetCalibracion()">↩ Restaurar defaults</button>
@@ -1418,6 +1429,28 @@ const CRITERIOS_TITULACION = [
   {etapa:'etiqueta',      key:'tit_etq_conflicto',        num:'6.4', label:'Manejo emocional y control de conflicto'},
 ];
 
+const CRITERIOS_CAMPUS = [
+  {etapa:'presentacion',    key:'cam_pres_saludo',            num:'1.1', label:'Saludo cordial inicial'},
+  {etapa:'presentacion',    key:'cam_pres_confirma_prospecto', num:'1.2', label:'Confirma identidad del prospecto'},
+  {etapa:'presentacion',    key:'cam_pres_nombre_asesor',      num:'1.3', label:'Se presenta con su nombre'},
+  {etapa:'presentacion',    key:'cam_pres_rol_universidad',    num:'1.4', label:'Menciona rol y universidad'},
+  {etapa:'objetivo',        key:'cam_obj_procedencia',         num:'2.1', label:'Menciona procedencia del dato'},
+  {etapa:'objetivo',        key:'cam_obj_pregunta_interes',    num:'2.2', label:'Pregunta interés en continuar estudios'},
+  {etapa:'propuesta_valor', key:'cam_pv_intro',                num:'3.1', label:'Introduce plática sobre Aliat'},
+  {etapa:'propuesta_valor', key:'cam_pv_beneficio',            num:'3.2', label:'Menciona un beneficio'},
+  {etapa:'invitacion',      key:'cam_inv_invitacion',          num:'4.1', label:'Invita a conocer el campus'},
+  {etapa:'invitacion',      key:'cam_inv_plan_estudios',       num:'4.2', label:'Menciona plan de estudios'},
+  {etapa:'invitacion',      key:'cam_inv_instalaciones',       num:'4.3', label:'Menciona instalaciones'},
+  {etapa:'invitacion',      key:'cam_inv_beneficio_economico', num:'4.4', label:'Menciona beneficio económico'},
+  {etapa:'invitacion',      key:'cam_inv_pregunta_dia',        num:'4.5', label:'Pregunta día de preferencia'},
+  {etapa:'confirmacion',    key:'cam_conf_confirma',           num:'5.1', label:'Confirma la cita'},
+  {etapa:'confirmacion',    key:'cam_conf_dia_hora',           num:'5.2', label:'Confirma día y hora'},
+  {etapa:'confirmacion',    key:'cam_conf_whatsapp',           num:'5.3', label:'Envía WhatsApp de la cita'},
+  {etapa:'confirmacion',    key:'cam_conf_ubicacion',          num:'5.4', label:'Envía ubicación del campus'},
+  {etapa:'cierre',          key:'cam_cierre_despedida',        num:'6.1', label:'Despedida cordial'},
+  {etapa:'cierre',          key:'cam_cierre_nombre_final',     num:'6.2', label:'Recuerda su nombre al cierre'},
+];
+
 const CRITERIOS_POR_MODELO = {
   tradicional: [
     ...CRITERIOS_COMUNES_PRE,
@@ -1429,7 +1462,8 @@ const CRITERIOS_POR_MODELO = {
     {etapa:'cierre', key:'cre_matricula', num:'5.1', label:'Ofrece matrícula en ≤24h'},
     ...CRITERIOS_COMUNES_POST
   ],
-  titulacion: CRITERIOS_TITULACION
+  titulacion: CRITERIOS_TITULACION,
+  campus: CRITERIOS_CAMPUS
 };
 
 const ETAPAS_META = {
@@ -1448,8 +1482,16 @@ const ETAPAS_META_TITULACION = {
   cierre:       {label:'Cierre de Venta',       emoji:'💰'},
   etiqueta:     {label:'Etiqueta',              emoji:'💬'},
 };
+const ETAPAS_META_CAMPUS = {
+  presentacion:    {label:'Presentación',           emoji:'👋'},
+  objetivo:        {label:'Objetivo',               emoji:'🎯'},
+  propuesta_valor: {label:'Propuesta de Valor',     emoji:'💎'},
+  invitacion:      {label:'Invitación a Campus',    emoji:'🏫'},
+  confirmacion:    {label:'Confirmación de Cita',   emoji:'📅'},
+  cierre:          {label:'Cierre',                 emoji:'👋'},
+};
 function getEtapasMeta(modelo) {
-  return modelo === 'titulacion' ? ETAPAS_META_TITULACION : ETAPAS_META;
+  return modelo === 'titulacion' ? ETAPAS_META_TITULACION : modelo === 'campus' ? ETAPAS_META_CAMPUS : ETAPAS_META;
 }
 
 const DEFAULT_PESOS_POR_MODELO = {
@@ -1480,6 +1522,17 @@ const DEFAULT_PESOS_POR_MODELO = {
     tit_obj_economica:8,  tit_obj_tiempo:4,  tit_obj_desconfianza:3,
     tit_cre_cierre:12,  tit_cre_confirmacion:5,  tit_cre_crm:3,
     tit_etq_personalizacion:3,  tit_etq_tono:3,  tit_etq_respuesta:2,  tit_etq_conflicto:2
+  },
+  campus: {
+    // Cédula QA Campus — Programación de Cita (Excel "nuevas rúbricas para aircall julio")
+    // 19 puntos totales, cada ítem vale 1 punto (binario). Suma=19; se normaliza a 100 igual
+    // que los demás modelos vía pts_activos/score_total.
+    cam_pres_saludo:1, cam_pres_confirma_prospecto:1, cam_pres_nombre_asesor:1, cam_pres_rol_universidad:1,
+    cam_obj_procedencia:1, cam_obj_pregunta_interes:1,
+    cam_pv_intro:1, cam_pv_beneficio:1,
+    cam_inv_invitacion:1, cam_inv_plan_estudios:1, cam_inv_instalaciones:1, cam_inv_beneficio_economico:1, cam_inv_pregunta_dia:1,
+    cam_conf_confirma:1, cam_conf_dia_hora:1, cam_conf_whatsapp:1, cam_conf_ubicacion:1,
+    cam_cierre_despedida:1, cam_cierre_nombre_final:1
   }
 };
 // Helper: obtener criterios y pesos del modelo activo
@@ -1603,10 +1656,10 @@ async function cerrarSesion() {
 
 function aplicarRestriccionModelos() {
   if (!currentUserData) return;
-  const permitidos = currentUserData.modelos_permitidos || ['tradicional','onaliat','titulacion','corbuse'];
+  const permitidos = currentUserData.modelos_permitidos || ['tradicional','onaliat','titulacion','corbuse','campus'];
 
   // Botones de selector en Evaluar llamada
-  const mapEval = { tradicional:'mod-btn-trad', onaliat:'mod-btn-on', titulacion:'mod-btn-tit' };
+  const mapEval = { tradicional:'mod-btn-trad', onaliat:'mod-btn-on', titulacion:'mod-btn-tit', campus:'mod-btn-cam' };
   let primerPermitidoEval = null;
   Object.entries(mapEval).forEach(([modelo, id]) => {
     const btn = document.getElementById(id);
@@ -1621,7 +1674,7 @@ function aplicarRestriccionModelos() {
   if (primerPermitidoEval) setModeloForm(primerPermitidoEval);
 
   // Botones de selector en Carga masiva
-  const mapBatch = { tradicional:'b-mod-btn-trad', onaliat:'b-mod-btn-on', titulacion:'b-mod-btn-tit' };
+  const mapBatch = { tradicional:'b-mod-btn-trad', onaliat:'b-mod-btn-on', titulacion:'b-mod-btn-tit', campus:'b-mod-btn-cam' };
   let primerPermitidoBatch = null;
   Object.entries(mapBatch).forEach(([modelo, id]) => {
     const btn = document.getElementById(id);
@@ -1651,7 +1704,7 @@ function aplicarRestriccionModelos() {
   const navHistorial = document.getElementById('nav-historial');
   if (navHistorial) navHistorial.style.display = currentUserData?.rol === 'admin' ? '' : 'none';
   // Pestañas de Calibrar — solo modelos permitidos
-  const mapCfg = { tradicional:'cfg-mod-trad', onaliat:'cfg-mod-on', titulacion:'cfg-mod-tit' };
+  const mapCfg = { tradicional:'cfg-mod-trad', onaliat:'cfg-mod-on', titulacion:'cfg-mod-tit', campus:'cfg-mod-cam' };
   let primerPermitidoCfg = null;
   Object.entries(mapCfg).forEach(([modelo, id]) => {
     const btn = document.getElementById(id);
@@ -1845,13 +1898,14 @@ async function cargarListaUsuarios() {
   if (!listEl) return;
 
   listEl.innerHTML = lista.map(u => {
-    const modelos = u.modelos_permitidos || ['tradicional','onaliat','titulacion','corbuse']; // default: todos
+    const modelos = u.modelos_permitidos || ['tradicional','onaliat','titulacion','corbuse','campus']; // default: todos
     const esYo = u.uid === currentUserData?.uid;
     const modelosInfo = [
       { key:'tradicional', label:'🏫 Trad.', color:'var(--blue)' },
       { key:'onaliat',     label:'💻 OnAliat', color:'var(--cyan)' },
       { key:'titulacion',  label:'🎓 Tit.', color:'var(--yellow)' },
       { key:'corbuse',     label:'🧑‍🍳 CORBUSÉ', color:'var(--orange)' },
+      { key:'campus',      label:'🧑‍🎓 Campus', color:'var(--green)' },
     ];
     const chips = modelosInfo.map(m => {
       const activo = modelos.includes(m.key);
@@ -1893,7 +1947,7 @@ async function cargarListaUsuarios() {
 async function toggleModeloUsuario(uid, modelo, activar, el) {
   if (!db) return;
   const snap = await db.collection('usuarios').doc(uid).get();
-  const modelos = snap.data()?.modelos_permitidos || ['tradicional','onaliat','titulacion','corbuse'];
+  const modelos = snap.data()?.modelos_permitidos || ['tradicional','onaliat','titulacion','corbuse','campus'];
   let nuevos;
   if (activar) {
     nuevos = [...new Set([...modelos, modelo])];
@@ -1903,7 +1957,7 @@ async function toggleModeloUsuario(uid, modelo, activar, el) {
   }
   await db.collection('usuarios').doc(uid).update({ modelos_permitidos: nuevos });
   // Actualizar visual del chip sin recargar toda la lista
-  const colores = { tradicional:'var(--blue)', onaliat:'var(--cyan)', titulacion:'var(--yellow)' };
+  const colores = { tradicional:'var(--blue)', onaliat:'var(--cyan)', titulacion:'var(--yellow)', corbuse:'var(--orange)', campus:'var(--green)' };
   el.style.background  = activar ? 'rgba(99,140,255,.15)' : 'var(--surface3)';
   el.style.color       = activar ? colores[modelo] : 'var(--dim)';
   el.style.borderColor = activar ? colores[modelo] : 'var(--border)';
@@ -2525,6 +2579,7 @@ function renderFiltrosCompartidos(containerId, modeloSelectId, evaluadorSelectId
         <option value="onaliat"${modeloVal==='onaliat'?' selected':''}>💻 OnAliat</option>
         <option value="titulacion"${modeloVal==='titulacion'?' selected':''}>🎓 Titulación</option>
         <option value="corbuse"${modeloVal==='corbuse'?' selected':''}>🧑‍🍳 CORBUSÉ</option>
+        <option value="campus"${modeloVal==='campus'?' selected':''}>🧑‍🎓 Campus</option>
       </select>
       <select id="${evaluadorSelectId}" onchange="syncEvaluadorSelect('${containerId}',this.value);aplicarFiltrosCompartidos()"
         style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:6px 10px;outline:none;cursor:pointer">
@@ -3406,7 +3461,7 @@ function setModeloForm(m) {
   _modeloForm = m;
   const actBg='rgba(26,95,168,.15)', actBorder='var(--blue)', actColor='var(--blue)';
   const inBg='transparent', inBorder='var(--border2)', inColor='var(--muted)';
-  [['mod-btn-trad','tradicional'],['mod-btn-on','onaliat'],['mod-btn-tit','titulacion'],['mod-btn-corb','corbuse']].forEach(function(p){
+  [['mod-btn-trad','tradicional'],['mod-btn-on','onaliat'],['mod-btn-tit','titulacion'],['mod-btn-corb','corbuse'],['mod-btn-cam','campus']].forEach(function(p){
     var b=document.getElementById(p[0]); if(!b) return;
     b.style.background=m===p[1]?actBg:inBg; b.style.borderColor=m===p[1]?actBorder:inBorder; b.style.color=m===p[1]?actColor:inColor;
   });
@@ -3415,14 +3470,14 @@ function setBatchModelo(m) {
   _modeloBatch = m;
   const actBg='rgba(26,95,168,.15)', actBorder='var(--blue)', actColor='var(--blue)';
   const inBg='transparent', inBorder='var(--border2)', inColor='var(--muted)';
-  [['b-mod-btn-trad','tradicional'],['b-mod-btn-on','onaliat'],['b-mod-btn-tit','titulacion'],['b-mod-btn-corb','corbuse']].forEach(function(p){
+  [['b-mod-btn-trad','tradicional'],['b-mod-btn-on','onaliat'],['b-mod-btn-tit','titulacion'],['b-mod-btn-corb','corbuse'],['b-mod-btn-cam','campus']].forEach(function(p){
     var b=document.getElementById(p[0]); if(!b) return;
     b.style.background=m===p[1]?actBg:inBg; b.style.borderColor=m===p[1]?actBorder:inBorder; b.style.color=m===p[1]?actColor:inColor;
   });
 }
 function setCfgModelo(m, btn) {
   _modeloCfg = m;
-  document.querySelectorAll('#cfg-mod-trad,#cfg-mod-on,#cfg-mod-tit,#cfg-mod-corb').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#cfg-mod-trad,#cfg-mod-on,#cfg-mod-tit,#cfg-mod-corb,#cfg-mod-cam').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderConfigPage();
 }
@@ -4091,6 +4146,125 @@ DEFINICIÓN DE logro_objetivo (Titulación): true SOLO si el egresado confirmó 
     return resultadoT;
   }
 
+  const esCampus = modelo === 'campus';
+  if (esCampus) {
+    // ══ PROMPT ESPECIAL CAMPUS — Programación de Cita ══
+    const criteriosCam = getCriterios('campus');
+    const criteriosCamActivos = criteriosCam.filter(c => !naKeys.has(c.key));
+    const scoresCamKeys = criteriosCamActivos.map(c => `    "${c.key}": 0`).join(',\n');
+
+    const G = (key, texto) => naKeys.has(key) ? '' : texto + '\n';
+
+    const promptCampus = `Eres un auditor experto de calidad para callcenter de ADMISIONES EDUCATIVAS de Aliat Universidades en México.
+Modelo educativo evaluado: CAMPUS (programación de cita presencial).
+El objetivo del asesor es agendar una cita confirmada en el campus con el prospecto, siguiendo la estructura de llamada establecida (presentación, objetivo, propuesta de valor, invitación, confirmación y cierre).
+Analiza esta llamada con criterio profesional y responde ÚNICAMENTE con JSON válido, sin texto adicional ni markdown.
+
+DATOS:
+- Asesor: ${agente}
+- Programa de interés: ${tipo}
+- Campaña: ${campana}${secDuracion}
+${secOblig}${secProhib}${secNA}${secCalib}
+
+TRANSCRIPCIÓN:
+---
+${transcripcion.slice(0,15000)}
+---
+
+Evalúa del 0 al 100 cada criterio y responde SOLO con este JSON:
+{
+  "scores": {
+${scoresCamKeys}
+  },
+  "fortalezas": "<2 cosas concretas que el asesor hizo bien, cada una indicando entre paréntesis la etapa (Presentación|Objetivo|Propuesta de Valor|Invitación a Campus|Confirmación de Cita|Cierre). NUNCA menciones criterios deshabilitados>",
+  "areas_mejora": "<2-3 acciones específicas de mejora, cada una indicando entre paréntesis la etapa. NUNCA menciones criterios deshabilitados>",
+  "palabras_riesgo": [],
+  "objeciones_detectadas": [{"tipo":"...","frase_prospecto":"...","respuesta_asesor":"...","evaluacion":"adecuada|vaga|ignorada"}],
+  "sin_objeciones": true,
+  "sentimiento_cliente": "positivo|neutral|negativo",
+  "logro_objetivo": false,
+  "nivel_urgencia": "critica|revisar|normal",
+  "feedback_agente": "2-3 oraciones directas al asesor",
+  "resumen_supervisor": "2-3 oraciones dirigidas al supervisor"
+}
+
+⚠️ NOTA SOBRE OBJECIONES: "objeciones_detectadas" y "sin_objeciones" son puramente INFORMATIVOS en este modelo — no forman parte de la Cédula de Campus y NO afectan ningún score. Regístralas únicamente para que el supervisor tenga contexto (ej. si el prospecto dudó por tiempo, dinero, etc.), pero no penalices ni premies ningún criterio por cómo se manejaron.
+
+REGLAS DE CALIBRACIÓN:
+1. DURACIÓN CORTA: Si la llamada duró menos de 1 minuto, es probable que no haya dado tiempo de cubrir la estructura completa — considera esto al redactar resumen_supervisor, pero puntúa cada criterio según lo que sí ocurrió en el tiempo disponible.
+2. PROSPECTO HOSTIL/CUELGA: Si el prospecto muestra actitud claramente negativa desde el inicio (interrumpe, cuelga pronto, se niega a escuchar) y por eso el asesor no alcanzó a cubrir ciertos criterios, esos criterios se marcan como "N/A" en tu respuesta (no como 0) — indícalo en areas_mejora como "no evaluable por corte del prospecto". Solo aplica si el corte fue causado por el prospecto, no si el asesor simplemente no lo intentó.
+3. DEPENDENCIA WHATSAPP/UBICACIÓN (REGLA CAM-1): cam_conf_whatsapp y cam_conf_ubicacion dependen de dos pasos previos: (a) ¿el asesor intentó agendar la cita? (cam_inv_invitacion=100 O cam_inv_pregunta_dia=100), y (b) ¿la cita quedó confirmada? (cam_conf_confirma=100 Y cam_conf_dia_hora=100). Si el asesor NUNCA intentó agendar (ambos en 0): puntúa cam_conf_whatsapp y cam_conf_ubicacion normalmente en 0 — es una falla real, no algo no aplicable. Si SÍ intentó agendar pero la cita no quedó confirmada: marca cam_conf_whatsapp y cam_conf_ubicacion como "N/A" — hubo intento, pero no hay cita que notificar. Si la cita SÍ quedó confirmada: evalúa ambos normalmente (100/0).
+4. IDENTIFICACIÓN DE ROLES (audio de un solo canal, sin diarización): Al inicio de la llamada, ambos hablantes pueden usar frases genéricas de saludo que no distinguen quién es quién (ej. "hola, buenas tardes", "¿qué tal?"). NO asignes el rol de cada hablante basándote únicamente en esas primeras líneas. En vez de eso, busca primero en TODA la transcripción las frases que son inequívocamente del asesor — mencionar que es asesor de la universidad, la procedencia del dato del prospecto, la invitación al campus, el envío de WhatsApp o de ubicación, o la pregunta sobre disponibilidad para la cita. Una vez que identifiques con certeza cuál hablante es el asesor (por este tipo de contenido inequívoco), aplica esa misma asignación de rol de forma RETROACTIVA a TODA la llamada, incluyendo las líneas iniciales ambiguas. NUNCA cambies de opinión sobre quién es quién a la mitad de la transcripción — la asignación de roles debe ser una sola, consistente de principio a fin.
+
+ESCALA: Todos los criterios de esta cédula son BINARIOS — no existen valores intermedios (nunca 25/50/75). Para cada uno: 100=el asesor comunicó esa idea, aunque sea con palabras distintas a las del script (no se requiere frase textual exacta — cualquier expresión que transmita el mismo mensaje cuenta). 0=no hay evidencia de que lo haya comunicado. N/A=solo en los casos descritos en Regla 2 y Regla CAM-1 arriba.
+
+logro_objetivo: true SOLO si el prospecto confirmó explícitamente día Y hora concretos para la visita al campus (cam_conf_confirma Y cam_conf_dia_hora ambos en 100). false en cualquier otro caso.
+
+GUÍA CRITERIO POR CRITERIO:
+
+PRESENTACIÓN — Objetivo: El asesor saluda, confirma identidad y se presenta correctamente.
+
+${G('cam_pres_saludo', 'cam_pres_saludo (1.1) — Saludo cordial inicial.\nAcción esperada: Iniciar la llamada con un saludo cortés.\nFrases ejemplo: "Hola, ¿qué tal? Muy buenas tardes." / "Buenas tardes, ¿cómo está?" / cualquier saludo cordial similar.\nPuntuación: 100=saludó cordialmente. 0=no hubo saludo (entró directo al tema o fue cortante).')}
+${G('cam_pres_confirma_prospecto', 'cam_pres_confirma_prospecto (1.2) — Confirma que habla con la persona correcta.\nAcción esperada: Preguntar si está hablando con el prospecto por su nombre.\nFrases ejemplo: "¿Tengo el gusto con [nombre]?" / "¿Hablo con [nombre]?"\nPuntuación: 100=confirmó identidad del prospecto. 0=no lo hizo.')}
+${G('cam_pres_nombre_asesor', 'cam_pres_nombre_asesor (1.3) — Se presenta con su propio nombre.\nAcción esperada: Decir su nombre completo o de pila.\nFrases ejemplo: "Mucho gusto, me presento: mi nombre es [nombre]." / "Soy [nombre]."\nPuntuación: 100=dijo su nombre. 0=no se identificó.')}
+${G('cam_pres_rol_universidad', 'cam_pres_rol_universidad (1.4) — Menciona su rol y la universidad.\nAcción esperada: Indicar que es asesor Y mencionar el nombre de la universidad/marca (Aliat, UVG, UNEA, UTAN, Tangamanga, ETAC, CEST, CORBUSÉ).\nFrases ejemplo: "Soy asesor de Aliat Universidades."\nPuntuación: 100=mencionó rol Y universidad. 0=no mencionó ninguno, o solo uno de los dos.')}
+
+OBJETIVO — Objetivo: El asesor explica por qué llama y confirma interés del prospecto.
+
+${G('cam_obj_procedencia', 'cam_obj_procedencia (2.1) — Menciona de dónde salió el dato del prospecto.\nAcción esperada: Explicar el origen del contacto.\nFrases ejemplo: "Te llamo porque dejaste tus datos en nuestra página web." / "Porque mostraste interés en Facebook."\nPuntuación: 100=mencionó la procedencia del dato. 0=no lo mencionó.')}
+${G('cam_obj_pregunta_interes', 'cam_obj_pregunta_interes (2.2) — Pregunta si sigue interesado en estudiar.\nAcción esperada: Confirmar interés vigente en continuar estudios.\nFrases ejemplo: "Cuéntame, ¿estás interesado en continuar con tus estudios?"\nPuntuación: 100=preguntó por el interés. 0=no lo hizo.')}
+
+PROPUESTA DE VALOR — Objetivo: El asesor presenta brevemente la institución y un beneficio.
+
+${G('cam_pv_intro', 'cam_pv_intro (3.1) — Introduce brevemente la plática sobre Aliat.\nFrases ejemplo: "¡Excelente! Te platico un poco sobre Aliat Universidades."\nPuntuación: 100=hizo la introducción. 0=no la hizo.')}
+${G('cam_pv_beneficio', 'cam_pv_beneficio (3.2) — Menciona al menos un beneficio.\nAcción esperada: Cualquier beneficio concreto de la institución o el programa (no requiere ser uno específico).\nPuntuación: 100=mencionó ≥1 beneficio concreto. 0=no mencionó ninguno.')}
+
+INVITACIÓN A CAMPUS — Objetivo: El asesor invita explícitamente a conocer el campus y pregunta disponibilidad.
+
+${G('cam_inv_invitacion', 'cam_inv_invitacion (4.1) — Invita personalmente a conocer el campus.\nFrases ejemplo: "Quiero invitarte personalmente al campus para que conozcas..."\nPuntuación: 100=hizo la invitación explícita. 0=no invitó.')}
+${G('cam_inv_plan_estudios', 'cam_inv_plan_estudios (4.2) — Menciona que podrá conocer el plan de estudios.\nPuntuación: 100=lo mencionó. 0=no lo mencionó.')}
+${G('cam_inv_instalaciones', 'cam_inv_instalaciones (4.3) — Menciona que podrá ver las instalaciones.\nPuntuación: 100=lo mencionó. 0=no lo mencionó.')}
+${G('cam_inv_beneficio_economico', 'cam_inv_beneficio_economico (4.4) — Menciona que hablarán de un beneficio económico en el campus.\nPuntuación: 100=lo mencionó. 0=no lo mencionó.')}
+${G('cam_inv_pregunta_dia', 'cam_inv_pregunta_dia (4.5) — Pregunta qué día/momento prefiere visitar.\nFrases ejemplo: "¿Qué día prefieres venir a visitarnos? ¿Te queda mejor por la mañana o por la tarde?"\nPuntuación: 100=preguntó preferencia de día/horario. 0=no preguntó.')}
+
+CONFIRMACIÓN DE CITA — Objetivo: Cerrar con fecha y hora concretas, y dar seguimiento inmediato.
+
+${G('cam_conf_confirma', 'cam_conf_confirma (5.1) — Confirma verbalmente la cita.\nFrases ejemplo: "Perfecto, entonces confirmamos tu cita."\nPuntuación: 100=confirmó la cita. 0=no confirmó.')}
+${G('cam_conf_dia_hora', 'cam_conf_dia_hora (5.2) — Confirma día Y hora específicos.\nFrases ejemplo: "Nos vemos el día [día] a las [hora]."\nPuntuación: 100=confirmó día Y hora concretos. 0=no lo hizo, o quedó ambiguo (ej. "un día de esta semana").')}
+${G('cam_conf_whatsapp', 'cam_conf_whatsapp (5.3) — Menciona el envío de WhatsApp con datos de la cita.\nVer REGLA CAM-1 para cuándo marcar N/A.\nPuntuación: 100=lo mencionó. 0=no lo mencionó (y sí aplicaba). N/A=según Regla CAM-1.')}
+${G('cam_conf_ubicacion', 'cam_conf_ubicacion (5.4) — Menciona el envío de la ubicación del campus.\nVer REGLA CAM-1 para cuándo marcar N/A.\nPuntuación: 100=lo mencionó. 0=no lo mencionó (y sí aplicaba). N/A=según Regla CAM-1.')}
+
+CIERRE — Objetivo: Despedida cordial y profesional.
+
+${G('cam_cierre_despedida', 'cam_cierre_despedida (6.1) — Despedida cordial.\nFrases ejemplo: "Que tengas un excelente día."\nPuntuación: 100=se despidió cordialmente. 0=no hubo despedida o fue cortante.')}
+${G('cam_cierre_nombre_final', 'cam_cierre_nombre_final (6.2) — Recuerda su nombre al despedirse.\nFrases ejemplo: "Te recuerdo mi nombre, soy [nombre]. ¡Hasta luego!"\nPuntuación: 100=recordó su nombre al cierre. 0=no lo hizo.')}`;
+
+    let resultadoCam;
+    try {
+      const textoIA = await llamarIA(promptCampus, { temperature: 0.2, maxTokens: 2500 });
+      resultadoCam = limpiarYParsearJSON(textoIA);
+    } catch(e) {
+      throw new Error('Evaluación IA falló: ' + e.message);
+    }
+    if (!resultadoCam.scores || typeof resultadoCam.scores !== 'object') {
+      throw new Error('JSON sin campo "scores"');
+    }
+    const totalPesoCam = criteriosCamActivos.reduce((s,c) => s + (pesos[c.key]||0), 0) || 19;
+    let ptsObtenidosCam = 0;
+    criteriosCamActivos.forEach(c => {
+      const val = resultadoCam.scores[c.key];
+      const esDynNA = typeof val === 'string' && val.trim().toUpperCase() === 'N/A';
+      const pct = Math.min(esDynNA ? 100 : (val || 0), 100);
+      ptsObtenidosCam += (pct / 100) * (pesos[c.key]||0);
+    });
+    resultadoCam.score_total = Math.min(Math.round(ptsObtenidosCam), totalPesoCam);
+    resultadoCam.criterios_na = Array.from(naKeys);
+    resultadoCam.pts_activos = totalPesoCam;
+    const _pctCam = totalPesoCam ? Math.round(resultadoCam.score_total / totalPesoCam * 100) : 0;
+    resultadoCam.nivel_urgencia = _pctCam < 60 ? 'critica' : _pctCam <= 80 ? 'revisar' : 'normal';
+    return resultadoCam;
+  }
+
   const objetivoTexto = esTrad
     ? 'generar una CITA para que el prospecto visite el campus y el líder de admisiones cierre la inscripción presencialmente'
     : 'lograr la MATRÍCULA o inscripción del prospecto en la misma llamada, sin necesidad de visita a campus';
@@ -4529,7 +4703,7 @@ function renderResultado(r, transcripcionCompleta) {
   const tc = scoreTc(s, pts);
   const scoreDisplay = `${sNorm}`;
   const sc=r.sentimiento_cliente==='positivo'?'tg':r.sentimiento_cliente==='negativo'?'tr':'tb';
-  const modeloTag = esTit ? `<span class="tag ty">🎓 Titulación</span>` : esCorbuse ? `<span class="tag to">🧑‍🍳 CORBUSÉ</span>` : esTrad ? `<span class="tag tb">🏫 Tradicional</span>` : `<span class="tag tp">💻 OnAliat</span>`;
+  const modeloTag = esTit ? `<span class="tag ty">🎓 Titulación</span>` : esCorbuse ? `<span class="tag to">🧑‍🍳 CORBUSÉ</span>` : modelo==='campus' ? `<span class="tag tg">🧑‍🎓 Campus</span>` : esTrad ? `<span class="tag tb">🏫 Tradicional</span>` : `<span class="tag tp">💻 OnAliat</span>`;
   const logroTxt  = r.logro_objetivo
     ? (esTit?'✅ Cerró venta':esTrad?'✅ Confirma asistencia':'✅ Confirma matrícula')
     : (esTit?'❌ Sin venta':esTrad?'❌ Sin confirmación':'❌ Sin matrícula');
@@ -4559,7 +4733,9 @@ function renderResultado(r, transcripcionCompleta) {
       .map(([k]) => k)
   );
   let barrasHtml = '';
-  const etapasOrden = ['apertura','investigacion','demostracion','objeciones','cierre','etiqueta'];
+  const etapasOrden = modelo === 'campus'
+    ? ['presentacion','objetivo','propuesta_valor','invitacion','confirmacion','cierre']
+    : ['apertura','investigacion','demostracion','objeciones','cierre','etiqueta'];
   const etapasMeta = getEtapasMeta(modelo);
   etapasOrden.forEach(etapa => {
     const meta = etapasMeta[etapa];
@@ -4725,14 +4901,14 @@ async function abrirPanelCalibraciones() {
     });
     const gruposOrdenados = Object.entries(grupos).sort((a,b) => b[1].length - a[1].length);
     const CRITERIO_LABELS = {};
-    ['tradicional','onaliat','titulacion'].forEach(m => getCriterios(m).forEach(c => { CRITERIO_LABELS[c.key] = c.label; }));
+    ['tradicional','onaliat','titulacion','campus'].forEach(m => getCriterios(m).forEach(c => { CRITERIO_LABELS[c.key] = c.label; }));
     list.innerHTML = gruposOrdenados.map(([gkey, items]) => {
       const [criterioKey, modelo, direccion] = gkey.split('||');
       const label = CRITERIO_LABELS[criterioKey] || criterioKey;
       const dirIcon = direccion==='up'?'↑':direccion==='down'?'↓':'✓';
       const dirCol = direccion==='up'?'var(--green)':direccion==='down'?'var(--red)':'var(--blue)';
       const dirTxt = direccion==='up'?'Debió ser mayor':direccion==='down'?'Debió ser menor':'Correcto';
-      const modeloTxt = modelo==='onaliat'?'💻 OnAliat':modelo==='titulacion'?'🎓 Titulación':modelo==='corbuse'?'🧑‍🍳 CORBUSÉ':'🏫 Tradicional';
+      const modeloTxt = modelo==='onaliat'?'💻 OnAliat':modelo==='titulacion'?'🎓 Titulación':modelo==='corbuse'?'🧑‍🍳 CORBUSÉ':modelo==='campus'?'🧑‍🎓 Campus':'🏫 Tradicional';
       const alertBadge = items.length >= 3
         ? `<span style="background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3);border-radius:6px;font-size:10px;font-weight:700;padding:2px 8px">${items.length} feedbacks</span>`
         : `<span style="background:var(--surface2);color:var(--muted);border-radius:6px;font-size:10px;padding:2px 8px">${items.length} feedback${items.length!==1?'s':''}</span>`;
@@ -5403,7 +5579,7 @@ function renderHistorialDatos() {
   const infoEl=document.getElementById('hist-filter-info');
   if (infoEl) {
     const filtros=[];
-    if (modeloF!=='__todos__') filtros.push(modeloF==='onaliat'?'💻 OnAliat':modeloF==='titulacion'?'🎓 Titulación':'🏫 Tradicional');
+    if (modeloF!=='__todos__') filtros.push(modeloF==='onaliat'?'💻 OnAliat':modeloF==='titulacion'?'🎓 Titulación':modeloF==='corbuse'?'🧑‍🍳 CORBUSÉ':modeloF==='campus'?'🧑‍🎓 Campus':'🏫 Tradicional');
     if (evaluadorF!=='__todos__') filtros.push('Eval: '+evaluadorF);
     if (sharedFiltros.agentes.size>0&&!sharedFiltros.agentes.has('__ninguno__')) filtros.push(sharedFiltros.agentes.size+' agente'+(sharedFiltros.agentes.size!==1?'s':''));
     if (sharedFiltros.supervisores.size>0&&!sharedFiltros.supervisores.has('__ninguno__')) filtros.push(sharedFiltros.supervisores.size+' supervisor'+(sharedFiltros.supervisores.size!==1?'es':''));
@@ -5443,7 +5619,7 @@ function renderHistorialDatos() {
       <td style="color:var(--muted);font-size:12px">${h.fecha||'—'}</td>
       <td style="color:var(--muted);font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${supervisor}">${supervisor}</td>
       <td style="font-weight:500">${h.es_top?'⭐ ':' '}${h.agente}</td>
-      <td style="color:var(--muted)">${(h.modelo||'trad')==='onaliat'?'💻':(h.modelo==='titulacion'?'🎓':'🏫')} ${h.tipo}</td>
+      <td style="color:var(--muted)">${(h.modelo||'trad')==='onaliat'?'💻':h.modelo==='titulacion'?'🎓':h.modelo==='corbuse'?'🧑‍🍳':h.modelo==='campus'?'🧑‍🎓':'🏫'} ${h.tipo}</td>
       <td><strong style="color:${col}">${ico} ${scoreStr}</strong></td>
       <td style="color:${h.probabilidad_inscripcion!=null?probCol:'var(--muted)'};">${h.probabilidad_inscripcion!=null?h.probabilidad_inscripcion+'%':'—'}</td>
       <td style="color:var(--muted);font-family:var(--mono);font-size:12px">${formatDuracion(h.duracion_segundos)}</td>
@@ -5498,7 +5674,7 @@ function renderReportesDatos() {
     else if (repPeriod===1){periodoTxt='Hoy';}
     else if (repPeriod===0){periodoTxt='Historial completo';}
     else{periodoTxt=`Últimos ${repPeriod} días`;}
-    const modeloTxt=sharedFiltros.modelo==='tradicional'?'🏫 Tradicional':sharedFiltros.modelo==='onaliat'?'💻 OnAliat':sharedFiltros.modelo==='titulacion'?'🎓 Titulación':sharedFiltros.modelo==='corbuse'?'🧑‍🍳 CORBUSÉ':'Todos los modelos';
+    const modeloTxt=sharedFiltros.modelo==='tradicional'?'🏫 Tradicional':sharedFiltros.modelo==='onaliat'?'💻 OnAliat':sharedFiltros.modelo==='titulacion'?'🎓 Titulación':sharedFiltros.modelo==='corbuse'?'🧑‍🍳 CORBUSÉ':sharedFiltros.modelo==='campus'?'🧑‍🎓 Campus':'Todos los modelos';
     const agentesTxt=esFiltradoAgente?`${sharedFiltros.agentes.size} agente${sharedFiltros.agentes.size!==1?'s':''}`:'Todos los agentes';
     subEl.textContent=agentesTxt+` · ${modeloTxt} · ${periodoTxt}`;
   }
@@ -6397,6 +6573,13 @@ async function generarPlanIA() {
         metricas:     'tasa de matrícula directa, manejo de propuesta online, cierre en llamada',
         ejemploAccion:'"Asegurar que el asesor presente los beneficios del modelo online antes de hablar de precio"',
         labelCierre:  'tasa de matrícula' }
+    : modeloActivo === 'campus'
+    ? { rol:          'director de calidad para el equipo de Campus (programación de cita) de Aliat Universidades en México',
+        objetivo:     'agendar y confirmar citas en campus siguiendo la estructura de llamada establecida (presentación, objetivo, propuesta de valor, invitación, confirmación y cierre)',
+        enfoque:      'apego a la estructura de programación de cita y confirmación efectiva (WhatsApp + ubicación)',
+        metricas:     'tasa de citas confirmadas con día y hora concretos, envío de WhatsApp/ubicación, cierre cordial',
+        ejemploAccion:'"Reforzar la confirmación de día y hora específicos antes de colgar, y el envío inmediato de WhatsApp con los datos de la cita"',
+        labelCierre:  'tasa de cita confirmada' }
     : { rol:          'director de calidad para callcenter de ADMISIONES EDUCATIVAS de Aliat Universidades en México',
         objetivo:     'generar una CITA para que el prospecto visite el campus y avance su proceso de inscripción',
         enfoque:      'admisiones presenciales y agendado de citas en campus',
@@ -6511,7 +6694,7 @@ async function generarPlanIA() {
     const avgTotal = d.pts.reduce((a,b)=>a+b,0)/d.pts.length;
     const avg = `${Math.round(avgPts)}/${Math.round(avgTotal)}`;
     const cierre = Math.round(d.logros/d.llamadas*100);
-    const modLabel = d.modelo==='titulacion'?'Titulación':d.modelo==='onaliat'?'OnAliat':'Tradicional';
+    const modLabel = d.modelo==='titulacion'?'Titulación':d.modelo==='onaliat'?'OnAliat':d.modelo==='campus'?'Campus':'Tradicional';
     const etapasAsesor = calcEtapasAsesor(d.scoresCriterio);
     const etapaPrio = etapasAsesor[0];
     const etapa2 = etapasAsesor[1];
@@ -6869,6 +7052,39 @@ function _renderSliders() {
           {key:'tit_etq_respuesta',       num:'6.3', label:'Tiempo de respuesta y agilidad'},
           {key:'tit_etq_conflicto',       num:'6.4', label:'Manejo emocional y control de conflicto'},
         ]},
+      ],
+      campus: [
+        {etapa:'presentacion',    emoji:'👋', label:'Presentación (4 pts)',          items:[
+          {key:'cam_pres_saludo',            num:'1.1', label:'Saludo cordial inicial'},
+          {key:'cam_pres_confirma_prospecto', num:'1.2', label:'Confirma identidad del prospecto'},
+          {key:'cam_pres_nombre_asesor',      num:'1.3', label:'Se presenta con su nombre'},
+          {key:'cam_pres_rol_universidad',    num:'1.4', label:'Menciona rol y universidad'},
+        ]},
+        {etapa:'objetivo',        emoji:'🎯', label:'Objetivo (2 pts)',              items:[
+          {key:'cam_obj_procedencia',      num:'2.1', label:'Menciona procedencia del dato'},
+          {key:'cam_obj_pregunta_interes', num:'2.2', label:'Pregunta interés en continuar estudios'},
+        ]},
+        {etapa:'propuesta_valor', emoji:'💎', label:'Propuesta de Valor (2 pts)',    items:[
+          {key:'cam_pv_intro',      num:'3.1', label:'Introduce plática sobre Aliat'},
+          {key:'cam_pv_beneficio',  num:'3.2', label:'Menciona un beneficio'},
+        ]},
+        {etapa:'invitacion',      emoji:'🏫', label:'Invitación a Campus (5 pts)',   items:[
+          {key:'cam_inv_invitacion',          num:'4.1', label:'Invita a conocer el campus'},
+          {key:'cam_inv_plan_estudios',       num:'4.2', label:'Menciona plan de estudios'},
+          {key:'cam_inv_instalaciones',       num:'4.3', label:'Menciona instalaciones'},
+          {key:'cam_inv_beneficio_economico', num:'4.4', label:'Menciona beneficio económico'},
+          {key:'cam_inv_pregunta_dia',        num:'4.5', label:'Pregunta día de preferencia'},
+        ]},
+        {etapa:'confirmacion',    emoji:'📅', label:'Confirmación de Cita (4 pts)',  items:[
+          {key:'cam_conf_confirma',   num:'5.1', label:'Confirma la cita'},
+          {key:'cam_conf_dia_hora',   num:'5.2', label:'Confirma día y hora'},
+          {key:'cam_conf_whatsapp',   num:'5.3', label:'Envía WhatsApp de la cita'},
+          {key:'cam_conf_ubicacion',  num:'5.4', label:'Envía ubicación del campus'},
+        ]},
+        {etapa:'cierre',          emoji:'👋', label:'Cierre (2 pts)',                items:[
+          {key:'cam_cierre_despedida',    num:'6.1', label:'Despedida cordial'},
+          {key:'cam_cierre_nombre_final', num:'6.2', label:'Recuerda su nombre al cierre'},
+        ]},
       ]
     };
 
@@ -7066,6 +7282,7 @@ function renderTopCalls() {
     const modeloTag = modeloTC==='onaliat' ? '<span class="tag tp">💻 OnAliat</span>'
       : modeloTC==='titulacion' ? '<span class="tag ty">🎓 Titulación</span>'
       : modeloTC==='corbuse' ? '<span class="tag to">🧑‍🍳 CORBUSÉ</span>'
+      : modeloTC==='campus' ? '<span class="tag tg">🧑‍🎓 Campus</span>'
       : '<span class="tag tb">🏫 Tradicional</span>';
     return `<div class="top-call-row" onclick="verDetalle(${h.id})">
       <span style="font-size:22px">⭐</span>
@@ -7846,7 +8063,7 @@ function exportarCSV() {
 
   const filas = datos.map(h => {
     const dur = h.duracion_segundos ? (h.duracion_segundos/60).toFixed(2) : '';
-    const modeloLabel = h.modelo === 'onaliat' ? 'OnAliat' : h.modelo === 'titulacion' ? 'Titulación' : 'Tradicional';
+    const modeloLabel = h.modelo === 'onaliat' ? 'OnAliat' : h.modelo === 'titulacion' ? 'Titulación' : h.modelo === 'campus' ? 'Campus' : 'Tradicional';
     const hcM = buscarAgenteEnHC(h.agente);
     const supervisor = hcM?.jefeDirecto || '';
     const urgencia = (()=>{ const _p = h.pts_activos ? Math.round((h.score_total||0)/h.pts_activos*100) : (h.score_total||0); return _p < 60 ? 'critica' : _p <= 80 ? 'revisar' : 'normal'; })();
