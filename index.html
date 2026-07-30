@@ -4096,9 +4096,31 @@ DEFINICIÓN DE logro_objetivo (Titulación): true SOLO si el egresado confirmó 
     : 'lograr la MATRÍCULA o inscripción del prospecto en la misma llamada, sin necesidad de visita a campus';
   // Construir guía de cierre dinámicamente excluyendo criterios inhabilitados
   const _cierreBase = esTrad
-    ? 'CIERRE — cre_cita (5.1): El asesor debe proponer una visita al campus con fecha específica, hora específica y campus, Y el prospecto debe confirmar verbalmente que va a asistir. No es suficiente que el asesor proponga — el prospecto debe aceptar. No cuenta "te mando información" ni "te llamo después". 100=propuso cita con fecha+hora+campus Y el prospecto confirmó asistencia. 75=propuso cita con fecha y hora pero el prospecto no confirmó explícitamente. 50=mencionó la cita pero sin fecha ni hora específica. 0=no propuso cita. [Valores válidos: 100/75/50/0 únicamente, nunca 25] Notas: hizo=qué intentó el asesor para cerrar (ej: "propuso dos opciones de horario"/"generó urgencia con beneficio vigente"/"no intentó cerrar"); no_hizo=qué faltó (ej: "el prospecto no confirmó verbalmente"/"no dio fecha específica"/"no propuso visita al campus"); ejemplo=frase concreta (ej: "¿Te queda mejor mañana a las 11am o el jueves a las 5pm?").'
+    ? `CIERRE — cre_cita (5.1): El asesor de Tradicional/CORBUSÉ NO tiene permisos para matricular directamente ni para vender OnAliat por su cuenta — su única función de cierre es lograr uno de estos dos caminos:
+
+CAMINO A (estándar): Proponer una visita al campus con fecha específica, hora específica y campus, Y el prospecto debe confirmar verbalmente que va a asistir. No cuenta "te mando información" ni "te llamo después".
+100=propuso cita con fecha+hora+campus Y el prospecto confirmó asistencia.
+75=propuso cita con fecha y hora pero el prospecto no confirmó explícitamente.
+50=mencionó la cita pero sin fecha ni hora específica.
+0=no propuso cita.
+
+CAMINO B (solo si la Regla 6 confirma que la oferta de OnAliat fue LEGÍTIMA — el prospecto lo pidió, o fue último recurso ante objeción real de costo/lejanía): el asesor debe hacer una pregunta de cierre real que induzca a la inscripción (cualquier técnica de cierre de ventas es válida), y actuar según la respuesta del prospecto: transferirlo si acepta, o programar seguimiento concreto si no acepta en el momento. Que el prospecto termine inscribiéndose o no NO es lo que se evalúa aquí — solo si el asesor intentó el cierre correctamente y actuó bien según la respuesta.
+100=hizo la pregunta de cierre Y ejecutó bien la acción correspondiente (transfirió claramente, o programó seguimiento con fecha/hora concreta).
+75=hizo el cierre pero no ejecutó bien la transferencia/derivación (fue vago sobre a quién transfiere, o el "seguimiento" quedó sin fecha/hora).
+50=intento débil de cierre (insinuó algo pero sin una verdadera pregunta que induzca a inscribirse).
+0=no intentó ningún cierre hacia la inscripción.
+
+⚠️ Si Regla 6 detecta que la oferta de OnAliat fue INDEBIDA: cre_cita queda TOPADO a máximo 50, sin importar cómo haya ejecutado el resto — no se evalúa el Camino A en ese caso.
+
+[Valores válidos: 100/75/50/0 únicamente, nunca 25]
+Notas: hizo=qué camino tomó la llamada (A o B) y qué intentó el asesor; no_hizo=qué faltó; ejemplo=frase concreta que debió usar según el camino correspondiente.`
     : 'CIERRE — cre_matricula (5.1): El asesor debe proponer matrícula inmediata o proceso de inscripción ≤24h con pasos claros, Y el prospecto debe confirmar explícitamente su intención de matricularse. No es suficiente que el asesor proponga el proceso — el prospecto debe aceptarlo verbalmente. 100=propuso matrícula/inscripción con pasos claros Y el prospecto confirmó. 75=propuso proceso pero el prospecto no confirmó explícitamente. 50=mencionó inscripción sin pasos claros ni fecha. 0=no propuso matrícula. [Valores válidos: 100/75/50/0 únicamente, nunca 25] Notas: hizo=qué intentó el asesor; no_hizo=qué faltó; ejemplo=frase que debió usar.';
-  const _cierreSeguimiento = naKeys.has('cre_seguimiento') ? '' : ` cre_seguimiento (5.2): Este criterio SOLO aplica si el prospecto aceptó explícitamente ${esTrad ? 'la cita (cre_cita=100)' : 'la matrícula (cre_matricula=100)'}. Reglas: Si ${esTrad?'cre_cita':'cre_matricula'}=0 (no ofreció) → marcar N/A. Si ${esTrad?'cre_cita':'cre_matricula'}=50 (ofreció pero prospecto no aceptó) → marcar N/A. Si ${esTrad?'cre_cita':'cre_matricula'}=100 (prospecto aceptó) → evaluar: 100=propuso fecha Y hora específicas Y el prospecto aceptó. 50=propuso seguimiento sin fecha u hora específica ("te llamo esta semana", "te marco después"). 0=no propuso ningún seguimiento. No cuenta frases genéricas sin fecha y hora concretas. [Valores válidos: 100/50/0/N/A únicamente, nunca 75/25] Notas: hizo=cómo propuso el seguimiento o por qué aplica N/A; no_hizo=qué faltó (fecha/hora/confirmación); ejemplo: "¿Te parece si te contacto el jueves a las 3pm para confirmar tu asistencia?"`;
+  const _cierreSeguimiento = naKeys.has('cre_seguimiento') ? '' : (esTrad ? `
+cre_seguimiento (5.2): Este criterio SOLO aplica si cre_cita=100 (por cualquiera de los dos caminos).
+- Si cre_cita=0 o 50 (cualquier camino) → marcar N/A.
+- Si cre_cita=100 vía Camino A → evaluar como siempre: 100=propuso fecha Y hora específicas de confirmación de visita Y el prospecto aceptó. 50=propuso seguimiento sin fecha/hora concreta. 0=no propuso ningún seguimiento.
+- Si cre_cita=100 vía Camino B → evaluar la calidad de la transferencia/derivación: 100=especificó con detalle concreto a quién se transfiere o la fecha/hora exacta del siguiente contacto. 50=mencionó que habría transferencia/seguimiento pero sin detalle concreto. 0=no dio ningún detalle de qué sigue después.
+[Valores válidos: 100/50/0/N/A únicamente, nunca 75/25]` : ` cre_seguimiento (5.2): Este criterio SOLO aplica si el prospecto aceptó explícitamente la matrícula (cre_matricula=100). Reglas: Si cre_matricula=0 (no ofreció) → marcar N/A. Si cre_matricula=50 (ofreció pero prospecto no aceptó) → marcar N/A. Si cre_matricula=100 (prospecto aceptó) → evaluar: 100=propuso fecha Y hora específicas Y el prospecto aceptó. 50=propuso seguimiento sin fecha u hora específica ("te llamo esta semana", "te marco después"). 0=no propuso ningún seguimiento. No cuenta frases genéricas sin fecha y hora concretas. [Valores válidos: 100/50/0/N/A únicamente, nunca 75/25] Notas: hizo=cómo propuso el seguimiento o por qué aplica N/A; no_hizo=qué faltó (fecha/hora/confirmación); ejemplo: "¿Te parece si te contacto el jueves a las 3pm para confirmar tu asistencia?"`);
   const _cierreCRM = naKeys.has('cre_crm') ? '' : ' cre_crm: Mencionó tipificar, registrar o actualizar el CRM. 100=hay evidencia clara. 0=no hay evidencia (o marca N/A si la evaluación es solo de audio). [Valores válidos: SOLO 100, 0 o "N/A", nunca 50/75/25]';
   const cierreGuia = _cierreBase + _cierreSeguimiento + _cierreCRM;
   const cierreKey = esTrad ? '"cre_cita":<0-100>,' : '"cre_matricula":<0-100>,';
@@ -4127,8 +4149,8 @@ DEFINICIÓN DE logro_objetivo (Titulación): true SOLO si el egresado confirmó 
       demo_empleabilidad: 'demo_empleabilidad (3.5): dato duro de empleabilidad (ej: 84% trabaja en su campo). 100=sí. 0=no.',
       obj_objeciones: 'obj_objeciones (4.1): identificar y responder con argumento correspondiente. Catálogo con argumento clave c/u:\n  1.Costo→beca por promedio/costo de oportunidad. 2.Lejanía→ejecutiva/online/campus cercano. 3.Familia→invitar al campus/sondear preocupación. 4."Llámame/manda info"→preguntar qué necesita, ofrecer cita. 5.Otras universidades→sondear qué le atrae, diferenciador Aliat. 6.No existe la carrera→tronco común/carrera afín/test vocacional. 7.Tiempo→horarios flexibles/en línea. 8.Ya estudia en otro lado→equivalencias sin costo. 9.Edad→perfil adultos/grupos reducidos. 10.Prefiere en línea→OnAliat misma validez. 11.Duda calidad en línea→RVOE/docentes con posgrado. 12.Duda bachillerato en línea→validez SEP. 13.Duda del programa→plan de estudios/enfoque práctico. 14.Sin apoyo empresa→beca institucional 40%. 15.Esperar ciclo→urgencia del beneficio vigente. 16.Documentos incompletos→apartar con pago inicial. 17.Deudas/Buró→no se consulta buró. 18.Miedo a no terminar→acompañamiento/grupos reducidos.\n  Puntuación: 100=sin objeción, o respondió con argumento correspondiente. 50=vago/sin estructura. 0=ignoró o argumento no correspondía.',
       obj_referidos: 'obj_referidos (4.2): 100=3 elementos (solicitud+5%+condicionado). 0=incompleto/engañoso.',
-      cre_cita: 'cre_cita (5.1): 100=fecha+hora+campus Y prospecto confirmó. 75=propuso pero no confirmó. 50=sin fecha/hora. 0=no propuso.',
-      cre_seguimiento: 'cre_seguimiento (5.2): solo si cre_cita=100 (si no, N/A). 100=fecha Y hora Y aceptó. 50=sin fecha/hora concreta. 0=no propuso.',
+      cre_cita: 'cre_cita (5.1): CAMINO A (estándar) 100=fecha+hora+campus Y prospecto confirmó. 75=propuso pero no confirmó. 50=sin fecha/hora. 0=no propuso. CAMINO B (solo si Regla 6 dice que la oferta de OnAliat fue legítima): 100=pregunta de cierre real + transfirió/derivó bien. 75=cerró pero transferencia/derivación vaga. 50=intento débil de cierre. 0=no intentó. Si oferta de OnAliat fue indebida (Regla 6): tope máx 50 sin evaluar Camino A.',
+      cre_seguimiento: 'cre_seguimiento (5.2): solo si cre_cita=100 (si no, N/A). Camino A: 100=fecha Y hora Y aceptó. 50=sin fecha/hora concreta. 0=no propuso. Camino B: 100=detalle concreto de a quién transfiere o fecha/hora del siguiente contacto. 50=mencionó transferencia/seguimiento sin detalle. 0=sin ningún detalle.',
       cre_crm: 'cre_crm (5.3): 100=evidencia de tipificar/CRM. 0/N/A=sin evidencia.',
       etq_personalizacion: 'etq_personalizacion (6.1): 100=≥3 veces. 50=1-2. 0=ninguna.',
       etq_plantillas: 'etq_plantillas (6.2): 100=adaptó al caso. 50=rígida. 0=no siguió o N/A.',
@@ -4171,6 +4193,7 @@ ${scoresSchemaTrad}
   "palabras_riesgo": [],
   "objeciones_detectadas": [{"tipo":"...","frase_prospecto":"...","respuesta_asesor":"...","evaluacion":"adecuada|vaga|ignorada"}],
   "sin_objeciones": true,
+  "oferta_onaliat_indebida": false,
   "sentimiento_cliente": "positivo|neutral|negativo",
   "logro_objetivo": false,
   "nivel_urgencia": "critica|revisar|normal",
@@ -4186,6 +4209,7 @@ REGLAS DE CALIBRACIÓN:
 3. SONDEO→DEMOSTRACIÓN: si inv_sondeo <50, todos los demo_* máx 50.
 4. OBJECIONES SIN NEGATIVA: si el prospecto no objetó nada: si cre_cita=100 → obj_objeciones=100 (no había nada que rebatir, y el cierre sí se logró). Si cre_cita≠100 → obj_objeciones=75. En ambos casos: sin_objeciones=true, objeciones_detectadas=[]. Asigna 0 solo si hubo objeción real y el asesor la ignoró.
 5. REFERIDOS COMPLETOS: obj_referidos=100 solo con los 3 elementos (solicitud + 5% + condicionado a inscripción). Si falta uno, 0.
+6. OFERTA DE ONALIAT DENTRO DE TRADICIONAL: el asesor solo puede ofertar OnAliat (100% en línea) si (a) el prospecto lo pidió, o (b) fue último recurso ante objeción real de costo/lejanía. Si cumple esto, la llamada puede cerrar por el Camino B de cre_cita (pregunta de cierre + transferencia/seguimiento, en vez de cita a campus — el asesor no tiene permisos para matricular OnAliat directamente). Si ofertó OnAliat SIN que se cumplan esas condiciones: no cuentes esa mención en demo_beneficios/demo_ventaja, trátala como argumento fuera de lugar en obj_objeciones, y cre_cita queda topado a máx 50 (no se evalúa el Camino A). Marca oferta_onaliat_indebida=true si detectas esto.
 
 ESCALA: 100=completo y correcto. 75=incompleto o con errores menores. 50=deficiente o no evaluable por causa externa (regla 2). 25=mención mínima. 0=sin evidencia textual (nunca infieras).
 
@@ -4232,7 +4256,7 @@ Evalúa del 0 al 100 cada criterio según la Cédula QA Aliat v4.0 y responde SO
     }
   ],
   "sin_objeciones":<true si el prospecto no presentó ninguna negativa, duda ni resistencia; false si hubo al menos una>,
-  "sentimiento_cliente":"<positivo|neutral|negativo>",
+  ${esTrad ? '"oferta_onaliat_indebida":<true|false — ver REGLA 6>,\n  ' : ''}"sentimiento_cliente":"<positivo|neutral|negativo>",
   "logro_objetivo":<true|false>,
   "nivel_urgencia":"<critica si score<60% pts activos | revisar si 60-80% | normal si >80%>",
   "feedback_agente":"<2-3 oraciones directas al asesor, tono constructivo. NUNCA menciones criterios deshabilitados>",
@@ -4253,6 +4277,11 @@ REGLA 4 — OBJECIONES SIN NEGATIVA: Si el prospecto NO presentó ninguna negati
 
 REGLA 5 — REFERIDOS COMPLETOS: Para que obj_referidos reciba 100, el asesor DEBE haber mencionado explícitamente los 3 elementos: (a) la solicitud de referidos, (b) el beneficio del 5% de descuento, Y (c) que ese beneficio está CONDICIONADO a que el referido se inscriba. Si falta cualquiera de los tres, o si alguno se presenta de forma incorrecta o engañosa, el score es 0.
 Notas: hizo=cuáles de los 3 elementos mencionó (solicitud/5%/condición de inscripción) con cita textual; no_hizo=cuáles faltaron; ejemplo=frase completa con los 3 elementos: "¿Conoces a alguien que también esté buscando estudiar? Si se inscribe con nosotros, tú recibes un 5% de descuento en tu colegiatura.".
+${esTrad ? `
+REGLA 6 — OFERTA DE MODALIDAD ONALIAT DENTRO DE UNA LLAMADA TRADICIONAL: En llamadas de Tradicional/CORBUSÉ, el asesor puede mencionar u ofertar la modalidad OnAliat (100% en línea) ÚNICAMENTE si: (a) el prospecto la solicitó explícitamente por iniciativa propia, o (b) el prospecto presentó una objeción real de costo/economía o de distancia/lejanía, Y el asesor la ofrece como último recurso para resolver esa objeción específica.
+Si estas condiciones SÍ se cumplen, la llamada puede seguir el "Camino B" descrito en cre_cita (5.1) — el asesor no matricula directamente (no tiene permisos para eso en Tradicional), debe cerrar con una pregunta que induzca a la inscripción y luego transferir o derivar a seguimiento.
+Si el asesor menciona, promueve o vende la modalidad en línea SIN que se cumplan estas condiciones (oferta indebida): no cuentes esa mención como beneficio válido en demo_beneficios, no la cuentes como ventaja institucional en demo_ventaja, trátala en obj_objeciones como un argumento que no corresponde a lo que el prospecto pidió, Y además cre_cita queda topado a un máximo de 50 puntos, sin importar qué tan bien haya ejecutado el resto del cierre — no se le da oportunidad de puntuar por el Camino A (visita a campus) en ese caso, porque la llamada ya se desvió indebidamente.
+Marca en el campo "oferta_onaliat_indebida" (true/false) si detectaste este comportamiento, y menciónalo explícitamente en areas_mejora si aplica.` : ''}
 
 ESCALA DE PUNTUACIÓN (aplica a todos los criterios, EXCEPTO cuando la guía de un criterio específico defina su propio conjunto de valores):
 - 100: Lo realizó completo y correctamente — hay evidencia textual clara.
@@ -4297,7 +4326,7 @@ Puntuación: 100=preguntó grado Y certificado/situación. 50=preguntó solo uno
 Notas: hizo=qué preguntó (grado previo/certificado/fecha de entrega); no_hizo=qué elemento no investigó; ejemplo=pregunta que debió hacer.
 
 inv_sondeo (2.2) — Investigación de necesidades: motivación, contexto de vida o prioridades del prospecto.
-Acción esperada: El asesor debe realizar al menos UNA pregunta que explore la motivación, situación o necesidad del prospecto. Pueden ser estas u otras similares: "¿Qué te motivó a buscar esta carrera?" / "¿Por qué quieres estudiar ahora?" / "¿Qué esperas lograr con esta carrera?" / "¿Qué te motivó a buscar opciones educativas en este momento?" / "¿Qué estás buscando principalmente en una universidad?" / "¿Qué es lo más importante para ti al elegir dónde estudiar?" / "¿Actualmente trabajas o solo te estás dedicando a estudiar?"
+Acción esperada: El asesor debe realizar al menos UNA pregunta que explore la motivación, situación o necesidad del prospecto. Pueden ser estas u otras similares: "¿Qué te motivó a buscar esta carrera?" / "¿Por qué quieres estudiar ahora?" / "¿Qué esperas lograr con esta carrera?" / "¿Qué te motivó a buscar opciones educativas en este momento?" / "¿Qué estás buscando principalmente en una universidad?" / "¿Qué te gustaría saber de nosotros?" / "¿Qué es lo más importante para ti al elegir dónde estudiar?" / "¿Actualmente trabajas o solo te estás dedicando a estudiar?"
 No cuenta preguntar datos básicos (nombre, carrera, campus) — eso es apertura. Cuenta cualquier pregunta que indague motivación, contexto de vida, expectativas o prioridades del prospecto.
 Puntuación: 100=realizó al menos una pregunta de sondeo válida. 0=no realizó ninguna. [BINARIO — Valores válidos: SOLO 100 o 0, nunca 50/75/25]
 Notas: hizo=cita textual la pregunta de sondeo que realizó; no_hizo=confirma que no hizo ninguna pregunta de motivación/contexto; ejemplo=pregunta concreta según el perfil detectado en la llamada.
@@ -4310,13 +4339,16 @@ Puntuación: 100=preguntó o confirmó edad (y aplica bachillerato). 0=no la pre
 DEMOSTRACIÓN — Objetivo: Ofrecer alternativas que cubran necesidades del prospecto resaltando beneficios de Aliat.
 
 demo_beneficios (3.1) — Menciona ≥2 beneficios del programa o modalidad.
-Acción esperada: Identificar el grado académico de interés del prospecto (Bachillerato, Licenciatura o Maestría) y mencionar al menos 2 beneficios concretos y específicos que correspondan a ese grado. Hay beneficios que aplican a cualquier grado (grupos reducidos, modalidades flexibles presencial/ejecutiva/online, RVOE Federal, docentes con experiencia laboral real, Bolsa de Trabajo) y beneficios exclusivos de cada grado:
+Acción esperada: Identificar el grado académico de interés del prospecto (Bachillerato, Licenciatura o Maestría) y mencionar al menos 2 beneficios concretos y específicos — ya sea del grado, de la modalidad, o una combinación de ambos. Hay beneficios que aplican a cualquier grado (grupos reducidos, modalidades flexibles presencial/ejecutiva/online, RVOE Federal, docentes con experiencia laboral real, Bolsa de Trabajo), beneficios exclusivos de cada grado, y (solo si la modalidad es 100% en línea) beneficios propios de esa modalidad:
 - Bachillerato: orientación vocacional activa, pase directo a licenciatura sin examen de admisión, habilidades socioemocionales y digitales, talleres de emprendimiento y networking, campus seguros, ALEKS con IA, acompañamiento académico.
 - Licenciatura: certificaciones intermedias por materia, Biblioteca Digital, Office 365 incluido sin costo, sin inscripción ni reinscripción, becas académicas por promedio, laboratorios y aulas especializadas por carrera (Cámara de Gesell, Sala de Juicios Orales, taller de Ing. Industrial, Aula MAC, laboratorio de Ing. Civil, etc.), enfoque práctico, adelanto de materias para reducir tiempo total.
 - Maestría: resolución de casos reales de negocio, networking estratégico con profesionales activos, plataforma disponible 24/7, profesores líderes activos en sus sectores, actualización digital profunda, visión estratégica y competencias de alta dirección.
-Si el asesor menciona beneficios que no corresponden al grado del prospecto (ej: habla de certificaciones intermedias a alguien de bachillerato), no los cuentes. Si menciona beneficios genéricos no identificables con certeza ("es muy completa", "aprenderás mucho", "tenemos buenas instalaciones"), no los cuentes.
-Puntuación: 100=identificaste con certeza ≥2 beneficios concretos del grado correcto. 50=solo 1 beneficio concreto del grado correcto. 0=ningún beneficio concreto identificado con certeza o todos los mencionados corresponden a otro grado. [Valores válidos: 100/50/0 únicamente, nunca 75/25]
-Notas: hizo=lista los beneficios concretos mencionados y el grado al que corresponden; no_hizo=cuántos faltaron y cuáles del grado correcto no mencionó; ejemplo=dos beneficios concretos del grado del prospecto que debió mencionar.
+- Modalidad 100% en línea (solo OnAliat): el asesor transmite la idea de que el prospecto puede estudiar sin conectarse en horarios fijos ni asistir en vivo — por ejemplo, mencionando que las clases son asíncronas, que quedan grabadas para verlas después, que no hay necesidad de trasladarse, o que el horario es totalmente flexible. No se requiere una frase textual exacta ni mencionar los cuatro ejemplos — cualquier forma de comunicar esa idea de flexibilidad/asincronía cuenta como un beneficio válido de esta categoría (no cuentes lo mismo dos veces si el asesor solo repite la misma idea con distintas palabras).
+Si el asesor menciona beneficios que no corresponden al grado del prospecto (ej: habla de certificaciones intermedias a alguien de bachillerato), no los cuentes. Si menciona beneficios genéricos no identificables con certeza ("es muy completa", "aprenderás mucho", "tenemos buenas instalaciones", "tenemos online"), no los cuentes.
+${esTrad ? '' : '⚠️ SOLO PARA ONALIAT: dado que la modalidad en línea ES el producto que se está ofertando en esta llamada, al menos 1 de los 2 beneficios mencionados debe ser específicamente de la modalidad en línea (de la categoría de arriba) — no basta con mencionar 2 beneficios de grado académico sin tocar nada de la modalidad.\n'}Puntuación (${esTrad ? 'Tradicional/CORBUSÉ' : 'OnAliat'}): ${esTrad
+  ? '100=identificaste con certeza ≥2 beneficios concretos del grado correcto. 50=solo 1 beneficio concreto del grado correcto. 0=ningún beneficio concreto identificado con certeza o todos los mencionados corresponden a otro grado.'
+  : '100=≥2 beneficios concretos, de los cuales al menos 1 es de la modalidad en línea. 50=mencionó ≥2 beneficios de grado pero ninguno de modalidad en línea, O mencionó solo 1 beneficio concreto en total (sea de grado o de modalidad). 0=ningún beneficio concreto identificado con certeza.'} [Valores válidos: 100/50/0 únicamente, nunca 75/25]
+Notas: hizo=lista los beneficios concretos mencionados (indicando si son de grado o de modalidad); no_hizo=cuántos faltaron${esTrad?'':' y, si es OnAliat, si faltó el de modalidad'}; ejemplo=dos beneficios concretos que debió mencionar según el grado${esTrad?'':' y/o modalidad'} del prospecto.
 
 demo_economico (3.2) — Costos, promociones o descuentos.
 Acción esperada: Mencionar solo diferenciadores económicos autorizados.
