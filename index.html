@@ -6225,14 +6225,21 @@ function renderEtapaAnalysis(data) {
   const modeloActivo = sharedFiltros.modelo;
   const dataF = modeloActivo === '__todos__' ? data : data.filter(h=>(h.modelo||'tradicional')===modeloActivo);
   if (!dataF.length) { el.innerHTML='<div class="empty-state" style="padding:24px"><p>Sin datos</p></div>'; return; }
-  const etapas = [
-    {key:'apertura',      emoji:'👋', label:'Apertura',             keys:['ap_presentacion','ap_datos','ap_parentesco','ap_nombre']},
-    {key:'investigacion', emoji:'🔍', label:'Investigación',        keys:['inv_estudios','inv_sondeo','inv_edad']},
-    {key:'demostracion',  emoji:'🎯', label:'Demostración',         keys:['demo_beneficios','demo_economico','demo_ventaja','demo_precio','demo_empleabilidad']},
-    {key:'objeciones',    emoji:'🛡', label:'Manejo de Objeciones', keys:['obj_objeciones','obj_referidos']},
-    {key:'cierre',        emoji:'🏁', label:'Cierre',               keys:['cre_cita','cre_matricula','cre_seguimiento','cre_crm']},
-    {key:'etiqueta',      emoji:'💬', label:'Etiqueta',             keys:['etq_personalizacion','etq_plantillas','etq_respuesta','etq_conflicto','etq_control']},
-  ];
+
+  // Construcción genérica de etapas según el modelo (en vez de lista fija) — así cualquier
+  // modelo nuevo (Titulación, Campus, etc.) queda cubierto automáticamente.
+  // Si el filtro es "Todos los modelos", se usa como referencia el modelo del primer registro
+  // (mezclar rúbricas distintas en una sola gráfica de etapas no es del todo comparable).
+  const modeloRef = modeloActivo !== '__todos__' ? modeloActivo : (dataF[0]?.modelo || 'tradicional');
+  const criteriosRef = getCriterios(modeloRef);
+  const etapasMetaRef = getEtapasMeta(modeloRef);
+  const etapasKeysOrden = [...new Set(criteriosRef.map(c => c.etapa))];
+  const etapas = etapasKeysOrden.map(k => ({
+    key: k,
+    emoji: (etapasMetaRef[k] && etapasMetaRef[k].emoji) || '📋',
+    label: (etapasMetaRef[k] && etapasMetaRef[k].label) || k,
+    keys: criteriosRef.filter(c => c.etapa === k).map(c => c.key)
+  }));
   el.innerHTML = etapas.map(etapa => {
     // Solo promediar sobre criterios habilitados de cada llamada (excluir criterios_na e ignorar N/A dinámico)
     // El denominador es la cantidad de criterios habilitados, no el total de la etapa
@@ -6267,24 +6274,27 @@ function renderCriteriosRanking(data) {
   const el = document.getElementById('rep-criterios-ranking');
   if (!el || !data || !data.length) return;
 
-  const ETAPAS_MAP = {
-    apertura:     { label: 'Apertura',             keys: ['ap_presentacion','ap_datos','ap_parentesco','ap_nombre'] },
-    investigacion:{ label: 'Investigación',        keys: ['inv_estudios','inv_sondeo','inv_edad'] },
-    demostracion: { label: 'Demostración',         keys: ['demo_beneficios','demo_economico','demo_ventaja','demo_precio','demo_empleabilidad'] },
-    objeciones:   { label: 'Manejo de Objeciones', keys: ['obj_objeciones','obj_referidos'] },
-    cierre:       { label: 'Cierre',               keys: ['cre_cita','cre_matricula','cre_seguimiento','cre_crm'] },
-    etiqueta:     { label: 'Etiqueta',             keys: ['etq_personalizacion','etq_plantillas','etq_respuesta','etq_conflicto','etq_control'] },
-  };
+  // Obtener criterios inhabilitados ÚNICAMENTE desde Calibrar (fuente de verdad)
+  const modeloCfgRanking = sharedFiltros.modelo !== '__todos__' ? sharedFiltros.modelo : (data[0]?.modelo || 'tradicional');
+  const cfgRanking = cargarConfig(modeloCfgRanking);
+  const naGlobalRanking = new Set((cfgRanking.na_criterios||[]).map(String));
+
+  // Construcción genérica de etapas según el modelo (cubre Tradicional/OnAliat/Titulación/Campus)
+  const etapasMetaRanking = getEtapasMeta(modeloCfgRanking);
+  const criteriosRanking = getCriterios(modeloCfgRanking);
+  const etapasKeysRanking = [...new Set(criteriosRanking.map(c => c.etapa))];
+  const ETAPAS_MAP = {};
+  etapasKeysRanking.forEach(k => {
+    ETAPAS_MAP[k] = {
+      label: (etapasMetaRanking[k] && etapasMetaRanking[k].label) || k,
+      keys: criteriosRanking.filter(c => c.etapa === k).map(c => c.key)
+    };
+  });
 
   const filtroEtapa = document.getElementById('rep-criterios-etapa')?.value || '__todas__';
   const etapasActivas = filtroEtapa === '__todas__'
     ? Object.values(ETAPAS_MAP)
     : [ETAPAS_MAP[filtroEtapa]].filter(Boolean);
-
-  // Obtener criterios inhabilitados ÚNICAMENTE desde Calibrar (fuente de verdad)
-  const modeloCfgRanking = sharedFiltros.modelo !== '__todos__' ? sharedFiltros.modelo : (data[0]?.modelo || 'tradicional');
-  const cfgRanking = cargarConfig(modeloCfgRanking);
-  const naGlobalRanking = new Set((cfgRanking.na_criterios||[]).map(String));
 
   // Calcular promedio por criterio sobre data filtrada (respeta criterios_na por llamada y los de Calibrar)
   const criteriosMap = {};
@@ -6604,14 +6614,13 @@ async function generarPlanIA() {
 
   // Calcular scores por etapa con EXACTAMENTE la misma lógica que la gráfica "Rendimiento por etapa"
   // N/A dinámico (IA marcó N/A en criterio habilitado) cuenta como 100; null/undefined se ignora
-  const ETAPAS_GRAFICA = [
-    {label:'Apertura',             keys:['ap_presentacion','ap_datos','ap_parentesco','ap_nombre']},
-    {label:'Investigación',        keys:['inv_estudios','inv_sondeo','inv_edad']},
-    {label:'Demostración',         keys:['demo_beneficios','demo_economico','demo_ventaja','demo_precio','demo_empleabilidad']},
-    {label:'Manejo de Objeciones', keys:['obj_objeciones','obj_referidos']},
-    {label:'Cierre',               keys:['cre_cita','cre_matricula','cre_seguimiento','cre_crm']},
-    {label:'Etiqueta',             keys:['etq_personalizacion','etq_plantillas','etq_respuesta','etq_conflicto','etq_control']},
-  ];
+  // Construcción genérica por modelo (cubre Tradicional/OnAliat/Titulación/Campus y cualquier modelo futuro)
+  const etapasMetaActivo = getEtapasMeta(modeloActivo);
+  const etapasKeysOrdenActivo = [...new Set(criteriosTodos.map(c => c.etapa))];
+  const ETAPAS_GRAFICA = etapasKeysOrdenActivo.map(k => ({
+    label: (etapasMetaActivo[k] && etapasMetaActivo[k].label) || k,
+    keys: criteriosTodos.filter(c => c.etapa === k).map(c => c.key)
+  }));
 
   // Aplicar el mismo filtro de modelo que usa la gráfica (sharedFiltros.modelo, no repModelo)
   // filtrarPorPeriodo() ya filtra por sharedFiltros.modelo; este paso es por si hay mezcla residual
@@ -8048,6 +8057,26 @@ function exportarCSV() {
     {key:'tit_etq_tono',        label:'[Tit] Tono y profesionalismo'},
     {key:'tit_etq_respuesta',   label:'[Tit] Tiempo de respuesta'},
     {key:'tit_etq_conflicto',   label:'[Tit] Manejo emocional'},
+    // Campus
+    {key:'cam_pres_saludo',            label:'[Campus] Saludo cordial'},
+    {key:'cam_pres_confirma_prospecto',label:'[Campus] Confirma identidad prospecto'},
+    {key:'cam_pres_nombre_asesor',     label:'[Campus] Se presenta con su nombre'},
+    {key:'cam_pres_rol_universidad',   label:'[Campus] Menciona rol y universidad'},
+    {key:'cam_obj_procedencia',        label:'[Campus] Procedencia del dato'},
+    {key:'cam_obj_pregunta_interes',   label:'[Campus] Pregunta interés en estudiar'},
+    {key:'cam_pv_intro',               label:'[Campus] Introduce plática institucional'},
+    {key:'cam_pv_beneficio',           label:'[Campus] Menciona un beneficio'},
+    {key:'cam_inv_invitacion',         label:'[Campus] Invita a conocer el campus'},
+    {key:'cam_inv_plan_estudios',      label:'[Campus] Menciona plan de estudios'},
+    {key:'cam_inv_instalaciones',      label:'[Campus] Menciona instalaciones'},
+    {key:'cam_inv_beneficio_economico',label:'[Campus] Menciona beneficio económico'},
+    {key:'cam_inv_pregunta_dia',       label:'[Campus] Pregunta día de preferencia'},
+    {key:'cam_conf_confirma',          label:'[Campus] Confirma la cita'},
+    {key:'cam_conf_dia_hora',          label:'[Campus] Confirma día y hora'},
+    {key:'cam_conf_whatsapp',          label:'[Campus] Envía WhatsApp de la cita'},
+    {key:'cam_conf_ubicacion',         label:'[Campus] Envía ubicación del campus'},
+    {key:'cam_cierre_despedida',       label:'[Campus] Despedida cordial'},
+    {key:'cam_cierre_nombre_final',    label:'[Campus] Recuerda su nombre al cierre'},
   ];
 
   const encabezadosFijos = [
