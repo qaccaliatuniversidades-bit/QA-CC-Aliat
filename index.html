@@ -1179,14 +1179,36 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
   <div class="hist-stats" id="rep-kpis" style="grid-template-columns:repeat(5,1fr)"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
     <div class="card">
-      <div class="card-head"><span>📉</span><h3>Tendencia de calidad</h3></div>
+      <div class="card-head">
+        <span>📉</span><h3>Tendencia de calidad (diaria)</h3>
+        <div class="period-tabs" style="margin-left:auto">
+          <button class="period-tab active" id="btn-trend-diaria-linea" onclick="setModoTrend('diaria','linea')">Línea</button>
+          <button class="period-tab" id="btn-trend-diaria-dispersion" onclick="setModoTrend('diaria','dispersion')">Dispersión</button>
+        </div>
+      </div>
       <div class="card-body" style="padding:16px">
         <div class="chart-wrap" id="rep-trend-wrap"><div class="chart-tooltip" id="rep-tooltip"></div></div>
       </div>
     </div>
     <div class="card">
+      <div class="card-head">
+        <span>📉</span><h3>Tendencia de calidad (semanal)</h3>
+        <div class="period-tabs" style="margin-left:auto">
+          <button class="period-tab active" id="btn-trend-semanal-linea" onclick="setModoTrend('semanal','linea')">Línea</button>
+          <button class="period-tab" id="btn-trend-semanal-dispersion" onclick="setModoTrend('semanal','dispersion')">Dispersión</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:16px">
+        <div class="chart-wrap" id="rep-trend-semanal-wrap"><div class="chart-tooltip" id="rep-tooltip-semanal"></div></div>
+      </div>
+    </div>
+    <div class="card">
       <div class="card-head"><span>📊</span><h3>Rendimiento por etapa</h3></div>
       <div class="card-body" id="rep-etapas"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span>🎯</span><h3>Motivos principales de los prospectos</h3></div>
+      <div class="card-body" id="rep-necesidades"></div>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
@@ -1799,6 +1821,27 @@ function cargarHistorialFirestore() {
           if (tablaEl) tablaEl.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p style="color:var(--red)">Error al cargar el historial desde Firestore.<br><small style="color:var(--muted)">${err2.message}</small></p><p style="margin-top:8px;font-size:12px;color:var(--muted)">Verifica tu conexión o contacta al administrador.</p></div>`;
         });
     });
+}
+
+// Helper reutilizable: actualiza campos de una evaluación YA EXISTENTE en Firestore, buscando
+// por el campo 'id' (timestamp numérico interno) ya que los docs se crean con .add() y Firestore
+// les asigna su propio ID automático — mismo patrón que ya usa eliminarEvaluacion().
+async function actualizarCamposEvaluacionFirestore(id, campos) {
+  if (!db) return false;
+  try {
+    const idNum = typeof id === 'number' ? id : parseInt(id);
+    const idStr = String(id);
+    let snap = await db.collection('evaluaciones').where('id', '==', idNum).get();
+    if (snap.empty) snap = await db.collection('evaluaciones').where('id', '==', idStr).get();
+    if (snap.empty) return false;
+    const batch = db.batch();
+    snap.forEach(doc => batch.update(doc.ref, campos));
+    await batch.commit();
+    return true;
+  } catch(e) {
+    console.warn('Error actualizando evaluación en Firestore:', id, e.message);
+    return false;
+  }
 }
 
 async function guardarEvaluacionFirestore(entrada) {
@@ -4366,6 +4409,7 @@ ${scoresSchemaTrad}
   "areas_mejora": ["Mejora 1 de criterio habilitado (Etapa)", "Mejora 2 (Etapa)"],
   "palabras_riesgo": [],
   "objeciones_detectadas": [{"tipo":"...","frase_prospecto":"...","respuesta_asesor":"...","evaluacion":"adecuada|vaga|ignorada"}],
+  "necesidad_prospecto": {"categoria":"<ver catálogo abajo>","cita_textual":"...","detalle_otro":"<solo si categoria='otro'>"},
   "sin_objeciones": true,
   "oferta_onaliat_indebida": false,
   "sentimiento_cliente": "positivo|neutral|negativo",
@@ -4376,6 +4420,21 @@ ${scoresSchemaTrad}
   "probabilidad_inscripcion": 0,
   "razon_probabilidad": "Explicación breve en una oración"
 }
+
+CATÁLOGO PARA "necesidad_prospecto" (clasifica la respuesta del prospecto a la pregunta de sondeo — inv_sondeo — en UNA de estas categorías; usa "otro" solo si de verdad no encaja en ninguna, y en ese caso llena "detalle_otro" con una descripción breve de la motivación real):
+1. crecimiento_profesional — quiere ascender o crecer en su empresa/puesto actual.
+2. requisito_empleador — su trabajo le exige el título/cédula para quedarse o ascender.
+3. mejora_economica — busca mejor sueldo o estabilidad económica.
+4. cambio_carrera — quiere reencauzarse, no le gustó lo que estudió antes o hace algo distinto.
+5. retomar_estudios — dejó de estudiar hace tiempo y quiere terminar/retomar.
+6. flexibilidad_tiempo — trabaja y necesita horarios/modalidad que se adapten a su tiempo.
+7. vocacion — interés genuino en el tema, sin relación con necesidad laboral.
+8. superacion_personal — meta propia, "algo pendiente conmigo mismo".
+9. apoyo_familiar — familia o pareja lo motiva/pide que estudie.
+10. emprendimiento — quiere poner su propio negocio y busca conocimientos formales.
+11. trayectoria_natural — recién egresado de bachillerato, sigue su curso natural sin motivo de cambio particular.
+12. otro — no encaja claramente en ninguna anterior (usa "detalle_otro").
+Si el asesor no hizo la pregunta de sondeo o el prospecto no respondió con información suficiente, deja "categoria":"otro" y "detalle_otro":"sin información suficiente".
 
 REGLAS DE CALIBRACIÓN:
 1. DURACIÓN CORTA (<2min): probabilidad_inscripcion máx 25.
@@ -4430,6 +4489,7 @@ Evalúa del 0 al 100 cada criterio según la Cédula QA Aliat v4.0 y responde SO
     }
   ],
   "sin_objeciones":<true si el prospecto no presentó ninguna negativa, duda ni resistencia; false si hubo al menos una>,
+  "necesidad_prospecto":{"categoria":"<ver catálogo abajo>","cita_textual":"...","detalle_otro":"<solo si categoria='otro'>"},
   ${esTrad ? '"oferta_onaliat_indebida":<true|false — ver REGLA 6>,\n  ' : ''}"sentimiento_cliente":"<positivo|neutral|negativo>",
   "logro_objetivo":<true|false>,
   "nivel_urgencia":"<critica si score<60% pts activos | revisar si 60-80% | normal si >80%>",
@@ -4438,6 +4498,21 @@ Evalúa del 0 al 100 cada criterio según la Cédula QA Aliat v4.0 y responde SO
   "probabilidad_inscripcion":<0-100>,
   "razon_probabilidad":"<explicación breve en una oración de por qué se estima esa probabilidad>"
 }
+
+CATÁLOGO PARA "necesidad_prospecto" (clasifica la respuesta del prospecto a la pregunta de sondeo — inv_sondeo — en UNA de estas categorías; usa "otro" solo si de verdad no encaja en ninguna, y en ese caso llena "detalle_otro" con una descripción breve de la motivación real):
+1. crecimiento_profesional — quiere ascender o crecer en su empresa/puesto actual.
+2. requisito_empleador — su trabajo le exige el título/cédula para quedarse o ascender.
+3. mejora_economica — busca mejor sueldo o estabilidad económica.
+4. cambio_carrera — quiere reencauzarse, no le gustó lo que estudió antes o hace algo distinto.
+5. retomar_estudios — dejó de estudiar hace tiempo y quiere terminar/retomar.
+6. flexibilidad_tiempo — trabaja y necesita horarios/modalidad que se adapten a su tiempo.
+7. vocacion — interés genuino en el tema, sin relación con necesidad laboral.
+8. superacion_personal — meta propia, "algo pendiente conmigo mismo".
+9. apoyo_familiar — familia o pareja lo motiva/pide que estudie.
+10. emprendimiento — quiere poner su propio negocio y busca conocimientos formales.
+11. trayectoria_natural — recién egresado de bachillerato, sigue su curso natural sin motivo de cambio particular.
+12. otro — no encaja claramente en ninguna anterior (usa "detalle_otro").
+Si el asesor no hizo la pregunta de sondeo o el prospecto no respondió con información suficiente, deja "categoria":"otro" y "detalle_otro":"sin información suficiente".
 
 REGLAS DE CALIBRACIÓN (aplica antes de puntuar cada criterio):
 
@@ -6111,6 +6186,7 @@ function _renderReportesBody(data, kpiEl, esFiltradoAgente) {
       : `<div class="stat-card"><div class="stat-val">${agentesCount}</div><div class="stat-lbl">Agentes evaluados</div></div>`}`;
 
   renderTrendChart(data);
+  renderTrendChartSemanal(data);
 
   // Ranking — ocultar si se filtró por agente individual (no tiene sentido un ranking de 1)
   const rankCard = document.getElementById('rep-ranking').closest('.card');
@@ -6213,9 +6289,173 @@ function _renderReportesBody(data, kpiEl, esFiltradoAgente) {
 
   // Stage analysis
   renderEtapaAnalysis(data);
+  renderNecesidadesProspecto(data);
   // Scatter plots
   renderScatterPlot(data);
   renderAntiguedadScatter(data);
+}
+
+// ══════════════════════════════════════════
+// ANÁLISIS RETROACTIVO DE NECESIDADES DEL PROSPECTO (sobre historial ya guardado)
+// ══════════════════════════════════════════
+const CATALOGO_NECESIDADES = [
+  {key:'crecimiento_profesional', label:'Crecimiento / ascenso profesional'},
+  {key:'requisito_empleador',     label:'Requisito de su empleador'},
+  {key:'mejora_economica',        label:'Mejora salarial / estabilidad económica'},
+  {key:'cambio_carrera',          label:'Cambio de carrera / reencauzamiento'},
+  {key:'retomar_estudios',        label:'Retomar estudios interrumpidos'},
+  {key:'flexibilidad_tiempo',     label:'Flexibilidad por trabajo/tiempo'},
+  {key:'vocacion',                label:'Vocación / interés genuino'},
+  {key:'superacion_personal',     label:'Superación personal'},
+  {key:'apoyo_familiar',          label:'Apoyo o presión familiar'},
+  {key:'emprendimiento',          label:'Emprendimiento'},
+  {key:'trayectoria_natural',     label:'Trayectoria natural (recién egresado)'},
+  {key:'otro',                    label:'Otro'},
+];
+
+function construirPromptNecesidad(transcripcion) {
+  return `Lee esta transcripción de una llamada de call center de admisiones educativas en México y clasifica ÚNICAMENTE la necesidad/motivación que expresó el PROSPECTO respecto a por qué busca estudiar o continuar sus estudios ahora (normalmente surge cuando el asesor hace una pregunta de sondeo tipo "¿qué te motivó a buscar esta carrera?").
+
+TRANSCRIPCIÓN:
+---
+${(transcripcion||'').slice(0,15000)}
+---
+
+CATÁLOGO (usa exactamente una de estas 12 llaves en "categoria"):
+1. crecimiento_profesional — quiere ascender o crecer en su empresa/puesto actual.
+2. requisito_empleador — su trabajo le exige el título/cédula para quedarse o ascender.
+3. mejora_economica — busca mejor sueldo o estabilidad económica.
+4. cambio_carrera — quiere reencauzarse, no le gustó lo que estudió antes o hace algo distinto.
+5. retomar_estudios — dejó de estudiar hace tiempo y quiere terminar/retomar.
+6. flexibilidad_tiempo — trabaja y necesita horarios/modalidad que se adapten a su tiempo.
+7. vocacion — interés genuino en el tema, sin relación con necesidad laboral.
+8. superacion_personal — meta propia, "algo pendiente conmigo mismo".
+9. apoyo_familiar — familia o pareja lo motiva/pide que estudie.
+10. emprendimiento — quiere poner su propio negocio y busca conocimientos formales.
+11. trayectoria_natural — recién egresado de bachillerato, sigue su curso natural sin motivo de cambio particular.
+12. otro — no encaja claramente en ninguna anterior (usa "detalle_otro").
+
+Si el asesor no hizo la pregunta de sondeo o el prospecto no respondió con información suficiente, usa "categoria":"otro" y "detalle_otro":"sin información suficiente".
+
+Responde ÚNICAMENTE con este JSON, sin texto adicional ni markdown:
+{"categoria":"<una llave del catálogo>","cita_textual":"<frase exacta o paráfrasis breve del prospecto>","detalle_otro":"<solo si categoria='otro', si no, cadena vacía>"}`;
+}
+
+let _analisisNecesidadesEnCurso = false;
+
+async function analizarNecesidadesHistorial() {
+  if (_analisisNecesidadesEnCurso) return;
+  // Usa SOLO los datos ya filtrados por período/modelo que muestra Reportes ahora mismo —
+  // no todo el historial completo.
+  const dataFiltrada = window._lastDataNecesidades || [];
+  if (!dataFiltrada.length) { alert('No hay datos en el período/filtro actual de Reportes.'); return; }
+  // Solo modelos donde existe la pregunta de sondeo (inv_sondeo)
+  const candidatos = dataFiltrada.filter(h =>
+    ['tradicional','onaliat','corbuse'].includes(h.modelo||'tradicional') &&
+    !h.necesidad_prospecto &&
+    h.transcripcion && h.transcripcion.trim().length > 0
+  );
+  if (!candidatos.length) {
+    alert('No hay llamadas pendientes de analizar en el período/filtro actual — o todas las de Tradicional/OnAliat/CORBUSÉ de este período ya tienen esta clasificación.');
+    return;
+  }
+  if (!confirm(`Se van a analizar ${candidatos.length} llamada(s) del período/filtro ACTUAL de Reportes con IA (proveedor activo: ${getProveedorActivo()}). Esto puede tardar varios minutos y consume cuota de tu proveedor. ¿Continuar?`)) return;
+
+  _analisisNecesidadesEnCurso = true;
+  const btn = document.getElementById('btn-analizar-necesidades');
+  const statusEl = document.getElementById('status-analizar-necesidades');
+  if (btn) btn.disabled = true;
+
+  let hechos = 0, errores = 0;
+  const concurrencia = getProveedorActivo() === 'gemini' ? 2 : 1;
+  const pausaMs = 3000;
+
+  const procesarUno = async (h) => {
+    try {
+      const prompt = construirPromptNecesidad(h.transcripcion);
+      const texto = await llamarIA(prompt, { temperature: 0.2, maxTokens: 300 });
+      const resultado = limpiarYParsearJSON(texto);
+      if (!resultado.categoria || !CATALOGO_NECESIDADES.some(c => c.key === resultado.categoria)) {
+        resultado.categoria = 'otro';
+        resultado.detalle_otro = resultado.detalle_otro || 'Respuesta de IA fuera de catálogo';
+      }
+      h.necesidad_prospecto = resultado;
+      await actualizarCamposEvaluacionFirestore(h.id, { necesidad_prospecto: resultado });
+      hechos++;
+    } catch(e) {
+      errores++;
+      console.warn('Error analizando necesidad de llamada', h.id, e.message);
+    }
+    if (statusEl) statusEl.textContent = `Procesando... ${hechos+errores}/${candidatos.length} (${errores} error${errores===1?'':'es'})`;
+  };
+
+  for (let i = 0; i < candidatos.length; i += concurrencia) {
+    const tanda = candidatos.slice(i, i+concurrencia);
+    await Promise.all(tanda.map(procesarUno));
+    if (i + concurrencia < candidatos.length) await new Promise(r => setTimeout(r, pausaMs));
+  }
+
+  if (statusEl) statusEl.textContent = `Listo: ${hechos} analizada(s), ${errores} con error.`;
+  if (btn) btn.disabled = false;
+  _analisisNecesidadesEnCurso = false;
+  // Refresca SOLO esta gráfica con los datos ya mutados en memoria — más robusto que
+  // renderReportes() completo (que toca muchas otras cosas y podría fallar por algo ajeno).
+  renderNecesidadesProspecto(dataFiltrada);
+}
+
+// Renderiza la gráfica "Motivos principales de los prospectos" en Reportes.
+// Respeta los mismos datos ya filtrados (fecha/modelo) que el resto de Reportes.
+function renderNecesidadesProspecto(data) {
+  window._lastDataNecesidades = data; // para que analizarNecesidadesHistorial() respete el filtro de período/modelo activo
+  const el = document.getElementById('rep-necesidades');
+  if (!el) return;
+  const dataConNecesidad = data.filter(h => h.necesidad_prospecto && h.necesidad_prospecto.categoria);
+  const totalElegible = data.filter(h => ['tradicional','onaliat','corbuse'].includes(h.modelo||'tradicional')).length;
+
+  if (!dataConNecesidad.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:24px">
+      <p>Ninguna llamada en este período/filtro tiene clasificada la necesidad del prospecto todavía.</p>
+      ${totalElegible ? `<button class="btn-gen-plan" id="btn-analizar-necesidades" onclick="analizarNecesidadesHistorial()" style="margin-top:10px">🔄 Analizar necesidades de este período (${totalElegible} llamada${totalElegible===1?'':'s'})</button>
+      <div id="status-analizar-necesidades" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>` : ''}
+    </div>`;
+    return;
+  }
+
+  const conteo = {};
+  CATALOGO_NECESIDADES.forEach(c => conteo[c.key] = []);
+  dataConNecesidad.forEach(h => {
+    const cat = CATALOGO_NECESIDADES.some(c=>c.key===h.necesidad_prospecto.categoria) ? h.necesidad_prospecto.categoria : 'otro';
+    conteo[cat].push(h.necesidad_prospecto);
+  });
+  const total = dataConNecesidad.length;
+  const filas = CATALOGO_NECESIDADES
+    .map(c => ({ ...c, items: conteo[c.key], pct: total ? Math.round(conteo[c.key].length/total*100) : 0 }))
+    .filter(c => c.items.length > 0)
+    .sort((a,b) => b.items.length - a.items.length);
+
+  el.innerHTML = `
+    <p style="color:var(--muted);font-size:12px;margin-bottom:10px">
+      ${total} de ${totalElegible} llamada(s) elegibles ya clasificadas.
+      ${totalElegible > total ? `<button class="btn-gen-plan" id="btn-analizar-necesidades" onclick="analizarNecesidadesHistorial()" style="margin-left:8px;font-size:11px;padding:3px 8px">🔄 Analizar las ${totalElegible-total} restantes de este período</button>` : ''}
+    </p>
+    <div id="status-analizar-necesidades" style="margin-bottom:8px;font-size:12px;color:var(--muted)"></div>
+    ${filas.map(f => `
+      <div class="stage-bar-row" ${f.key==='otro' ? `style="cursor:pointer" onclick="toggleDetalleOtroNecesidad(this)"` : ''}>
+        <span class="stage-bar-label">${f.label}${f.key==='otro'?' ▾':''}</span>
+        <div class="stage-bar-track"><div class="stage-bar-fill" style="width:${f.pct}%;background:var(--blue)"></div></div>
+        <span class="stage-bar-val">${f.items.length} (${f.pct}%)</span>
+      </div>
+      ${f.key==='otro' ? `<div class="detalle-otro-necesidad" style="display:none;margin:4px 0 10px 0;padding:8px 12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted)">
+        ${f.items.map(it => `• ${it.detalle_otro || it.cita_textual || 'Sin detalle'}`).join('<br>')}
+      </div>` : ''}
+    `).join('')}
+  `;
+}
+function toggleDetalleOtroNecesidad(row) {
+  const det = row.nextElementSibling;
+  if (det && det.classList.contains('detalle-otro-necesidad')) {
+    det.style.display = det.style.display === 'none' ? 'block' : 'none';
+  }
 }
 
 function renderEtapaAnalysis(data) {
@@ -6528,23 +6768,152 @@ function renderAntiguedadScatter(data) {
     </div>
     ${rows}`;
 }
+// Fecha efectiva para las gráficas de tendencia: SIEMPRE la fecha de la llamada, no la de evaluación.
+// Si no hay fecha_llamada capturada (registros antiguos sin ese dato), cae de vuelta a la de evaluación.
+function fechaEfectivaLlamada(h) {
+  return parseFechaLlamada(h.fecha_llamada) || new Date(h.id);
+}
+function _bucketsPorDia(data) {
+  const byDay = {};
+  data.forEach(h => {
+    const f = fechaEfectivaLlamada(h);
+    const key = f.toISOString().slice(0,10);
+    const label = f.toLocaleDateString('es-MX', {day:'2-digit', month:'short'});
+    if (!byDay[key]) byDay[key] = {label, calls:[]};
+    byDay[key].calls.push(h);
+  });
+  return byDay;
+}
+function _bucketsPorSemana(data) {
+  const bySemana = {};
+  data.forEach(h => {
+    const f = fechaEfectivaLlamada(h);
+    const {week,year} = getISOWeek(f);
+    const key = `${year}-${String(week).padStart(2,'0')}`;
+    if (!bySemana[key]) bySemana[key] = {label:semanaLabel(f), calls:[]};
+    bySemana[key].calls.push(h);
+  });
+  return bySemana;
+}
+function calcularRegresionLineal(puntos) {
+  const n = puntos.length;
+  if (n < 2) return null;
+  const sumX=puntos.reduce((a,p)=>a+p.x,0), sumY=puntos.reduce((a,p)=>a+p.y,0);
+  const sumXY=puntos.reduce((a,p)=>a+p.x*p.y,0), sumXX=puntos.reduce((a,p)=>a+p.x*p.x,0);
+  const denom=(n*sumXX-sumX*sumX);
+  if (denom===0) return null;
+  const m=(n*sumXY-sumX*sumY)/denom, b=(sumY-m*sumX)/n;
+  return {m,b};
+}
+
+let _modoTrendDiaria = 'linea';
+let _modoTrendSemanal = 'linea';
+
+function setModoTrend(cual, modo) {
+  if (cual==='diaria') { _modoTrendDiaria = modo; renderTrendChart(window._lastDataTrendDiaria||[]); }
+  else { _modoTrendSemanal = modo; renderTrendChartSemanal(window._lastDataTrendSemanal||[]); }
+  ['diaria','semanal'].forEach(c => ['linea','dispersion'].forEach(m => {
+    const el = document.getElementById(`btn-trend-${c}-${m}`);
+    if (el) el.classList.toggle('active', (c==='diaria'?_modoTrendDiaria:_modoTrendSemanal)===m);
+  }));
+}
+
+// Función genérica: dibuja la gráfica (línea o dispersión) a partir de buckets ya agrupados por día/semana.
+function _renderTrendGenerico(wrapId, tooltipId, buckets, modo, gradId, tipFn, hideFn) {
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  const keysOrdenadas = Object.keys(buckets).sort();
+  if (keysOrdenadas.length < 2) {
+    wrap.innerHTML = `<div class="chart-tooltip" id="${tooltipId}"></div><div style="padding:40px;text-align:center;color:var(--muted);font-size:12px">Necesitas al menos 2 periodos distintos para ver la tendencia</div>`;
+    return;
+  }
+  const labels = keysOrdenadas.map(k => buckets[k].label);
+  const promedios = keysOrdenadas.map(k => {
+    const vals = buckets[k].calls.map(h => normScore(h.score_total||0, h.pts_activos));
+    return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+  });
+
+  const W=420, H=175, PADL=26, PADR=10, PADT=16, PADB = labels.length>8 ? 50 : 24;
+  const plotW=W-PADL-PADR, plotH=H-PADT-PADB;
+  const allVals = modo==='dispersion' ? keysOrdenadas.flatMap(k=>buckets[k].calls.map(h=>normScore(h.score_total||0,h.pts_activos))) : promedios;
+  const minV=Math.max(0,Math.min(...allVals)-10), maxV=Math.min(100,Math.max(...allVals)+10);
+  const xStep=plotW/Math.max(labels.length-1,1);
+  const xOf = i => PADL + i*xStep;
+  const yOf = v => PADT + (1-(v-minV)/(maxV-minV))*plotH;
+
+  const grids=[0,25,50,75,100].filter(v=>v>=minV&&v<=maxV).map(v=>{
+    const y=yOf(v);
+    return `<line x1="${PADL}" y1="${y.toFixed(1)}" x2="${W-PADR}" y2="${y.toFixed(1)}" stroke="rgba(26,95,168,.10)" stroke-width="1"/><text x="${(PADL-4).toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="8" fill="#3a4a6a" text-anchor="end">${v}</text>`;
+  }).join('');
+
+  // Etiquetas del eje X (día/semana) — diagonales si hay muchos puntos, para que no se encimen
+  const rotar = labels.length > 8;
+  const xLabels = labels.map((lab,i) => {
+    const x=xOf(i), y=H-PADB+11;
+    return rotar
+      ? `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="8" fill="#3a4a6a" text-anchor="end" transform="rotate(-55 ${x.toFixed(1)} ${y.toFixed(1)})">${lab}</text>`
+      : `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="8" fill="#3a4a6a" text-anchor="middle">${lab}</text>`;
+  }).join('');
+
+  let content;
+  if (modo === 'dispersion') {
+    // Puntos individuales reales (no promediados) — dispersión genuina, no una línea promedio disfrazada
+    const puntosInd = [];
+    keysOrdenadas.forEach((k,i) => buckets[k].calls.forEach(h => {
+      puntosInd.push({x:i, y:normScore(h.score_total||0, h.pts_activos), label:labels[i]});
+    }));
+    const dots = puntosInd.map(p => {
+      const col = p.y>=80?'#34d399':p.y>=60?'#fbbf24':'#f87171';
+      return `<circle cx="${xOf(p.x).toFixed(1)}" cy="${yOf(p.y).toFixed(1)}" r="3.2" fill="${col}" stroke="var(--surface)" stroke-width="1.3" data-v="${p.y}" data-d="${p.label}" style="cursor:pointer" onmouseenter="${tipFn}(event,this)" onmouseleave="${hideFn}()"/>`;
+    }).join('');
+    const reg = calcularRegresionLineal(puntosInd);
+    let trendLine = '';
+    if (reg) {
+      const x0=0, x1=labels.length-1;
+      const y0=Math.max(minV,Math.min(maxV, reg.m*x0+reg.b));
+      const y1=Math.max(minV,Math.min(maxV, reg.m*x1+reg.b));
+      trendLine = `<line x1="${xOf(x0).toFixed(1)}" y1="${yOf(y0).toFixed(1)}" x2="${xOf(x1).toFixed(1)}" y2="${yOf(y1).toFixed(1)}" stroke="#a78bfa" stroke-width="2" stroke-dasharray="6,5" stroke-linecap="round"/>`;
+    }
+    content = `${trendLine}${dots}`;
+  } else {
+    const pts = promedios.map((v,i)=>({x:xOf(i), y:yOf(v), v, d:labels[i]}));
+    const pathD = pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const fillD = `${pathD} L${pts[pts.length-1].x.toFixed(1)},${H-PADB} L${pts[0].x.toFixed(1)},${H-PADB} Z`;
+    const circles = pts.map(p=>{
+      const col=p.v>=80?'#34d399':p.v>=60?'#fbbf24':'#f87171';
+      return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="${col}" stroke="var(--surface)" stroke-width="2" data-v="${p.v}" data-d="${p.d}" style="cursor:pointer" onmouseenter="${tipFn}(event,this)" onmouseleave="${hideFn}()"/>`;
+    }).join('');
+    const valLabels = pts.map(p=>{
+      const col=p.v>=80?'#34d399':p.v>=60?'#fbbf24':'#f87171';
+      return `<text x="${p.x.toFixed(1)}" y="${(p.y-9).toFixed(1)}" font-size="9" font-weight="700" fill="${col}" text-anchor="middle">${p.v}</text>`;
+    }).join('');
+    content = `<path d="${fillD}" fill="url(#${gradId})"/><path d="${pathD}" fill="none" stroke="#638cff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${circles}${valLabels}`;
+  }
+
+  wrap.innerHTML = `<div class="chart-tooltip" id="${tooltipId}"></div><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+    <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#638cff" stop-opacity=".18"/><stop offset="100%" stop-color="#638cff" stop-opacity="0"/></linearGradient></defs>
+    ${grids}${xLabels}${content}
+  </svg>`;
+}
+
 function renderTrendChart(data) {
-  const wrap=document.getElementById('rep-trend-wrap');
-  if (data.length<2){wrap.innerHTML=`<div class="chart-tooltip" id="rep-tooltip"></div><div style="padding:40px;text-align:center;color:var(--muted);font-size:12px">Necesitas al menos 2 evaluaciones para ver la tendencia</div>`;return;}
-  const byDay={};
-  [...data].reverse().forEach(h=>{const d=h.fecha?h.fecha.split(',')[0]:new Date(h.id).toLocaleDateString('es-MX');if(!byDay[d])byDay[d]=[];byDay[d].push(h.score_total||0);});
-  const labels=Object.keys(byDay),values=labels.map(d=>{const v=byDay[d];return Math.round(v.reduce((a,b)=>a+b,0)/v.length);});
-  const W=400,H=140,PAD=20,minV=Math.max(0,Math.min(...values)-10),maxV=Math.min(100,Math.max(...values)+10);
-  const xStep=(W-PAD*2)/Math.max(labels.length-1,1);
-  const pts=values.map((v,i)=>({x:PAD+i*xStep,y:PAD+(1-(v-minV)/(maxV-minV))*(H-PAD*2),v,d:labels[i]}));
-  const pathD=pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-  const fillD=`${pathD} L${pts[pts.length-1].x.toFixed(1)},${H-PAD} L${pts[0].x.toFixed(1)},${H-PAD} Z`;
-  const circles=pts.map(p=>{const col=p.v>=80?'#34d399':p.v>=60?'#fbbf24':'#f87171';return`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="${col}" stroke="var(--surface)" stroke-width="2" data-v="${p.v}" data-d="${p.d}" style="cursor:pointer" onmouseenter="showChartTip(event,this)" onmouseleave="hideChartTip()"/>`;}).join('');
-  const grids=[0,25,50,75,100].filter(v=>v>=minV&&v<=maxV).map(v=>{const y=PAD+(1-(v-minV)/(maxV-minV))*(H-PAD*2);return`<line x1="${PAD}" y1="${y.toFixed(1)}" x2="${W-PAD}" y2="${y.toFixed(1)}" stroke="rgba(26,95,168,.10)" stroke-width="1"/><text x="${(PAD-4).toFixed(1)}" y="${(y+4).toFixed(1)}" font-size="9" fill="#3a4a6a" text-anchor="end">${v}</text>`;}).join('');
-  wrap.innerHTML=`<div class="chart-tooltip" id="rep-tooltip"></div><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">${grids}<defs><linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#638cff" stop-opacity=".18"/><stop offset="100%" stop-color="#638cff" stop-opacity="0"/></linearGradient></defs><path d="${fillD}" fill="url(#trendGrad)"/><path d="${pathD}" fill="none" stroke="#638cff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${circles}</svg>`;
+  window._lastDataTrendDiaria = data;
+  if (data.length<2){const wrap=document.getElementById('rep-trend-wrap');if(wrap)wrap.innerHTML=`<div class="chart-tooltip" id="rep-tooltip"></div><div style="padding:40px;text-align:center;color:var(--muted);font-size:12px">Necesitas al menos 2 evaluaciones para ver la tendencia</div>`;return;}
+  _renderTrendGenerico('rep-trend-wrap','rep-tooltip', _bucketsPorDia(data), _modoTrendDiaria, 'trendGrad', 'showChartTip', 'hideChartTip');
+}
+// Misma gráfica pero agrupada por semana ISO, usando EXACTAMENTE la misma convención "S{semana}-{año}"
+// (getISOWeek/semanaLabel) que ya usan los filtros de semana en Historial/Reportes.
+function renderTrendChartSemanal(data) {
+  window._lastDataTrendSemanal = data;
+  const wrap=document.getElementById('rep-trend-semanal-wrap');
+  if (!wrap) return;
+  if (data.length<2){wrap.innerHTML=`<div class="chart-tooltip" id="rep-tooltip-semanal"></div><div style="padding:40px;text-align:center;color:var(--muted);font-size:12px">Necesitas al menos 2 evaluaciones para ver la tendencia</div>`;return;}
+  _renderTrendGenerico('rep-trend-semanal-wrap','rep-tooltip-semanal', _bucketsPorSemana(data), _modoTrendSemanal, 'trendGradSemanal', 'showChartTipSemanal', 'hideChartTipSemanal');
 }
 function showChartTip(e,el){const tip=document.getElementById('rep-tooltip');if(!tip)return;const v=el.getAttribute('data-v'),d=el.getAttribute('data-d'),col=v>=80?'#34d399':v>=60?'#fbbf24':'#f87171';tip.innerHTML=`<strong style="color:${col}">${v}</strong> · ${d}`;tip.style.display='block';const rect=el.closest('.chart-wrap').getBoundingClientRect();tip.style.left=Math.min(e.clientX-rect.left+10,rect.width-140)+'px';tip.style.top=Math.max(e.clientY-rect.top-36,0)+'px';}
 function hideChartTip(){const tip=document.getElementById('rep-tooltip');if(tip)tip.style.display='none';}
+function showChartTipSemanal(e,el){const tip=document.getElementById('rep-tooltip-semanal');if(!tip)return;const v=el.getAttribute('data-v'),d=el.getAttribute('data-d'),col=v>=80?'#34d399':v>=60?'#fbbf24':'#f87171';tip.innerHTML=`<strong style="color:${col}">${v}</strong> · ${d}`;tip.style.display='block';const rect=el.closest('.chart-wrap').getBoundingClientRect();tip.style.left=Math.min(e.clientX-rect.left+10,rect.width-140)+'px';tip.style.top=Math.max(e.clientY-rect.top-36,0)+'px';}
+function hideChartTipSemanal(){const tip=document.getElementById('rep-tooltip-semanal');if(tip)tip.style.display='none';}
 
 async function generarPlanIA() {
   if (!localStorage.getItem('qa_groq_key') && !getGeminiKeyActiva()) { abrirConfig(); return; }
