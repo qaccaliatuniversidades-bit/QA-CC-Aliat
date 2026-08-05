@@ -679,7 +679,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
 
     <!-- Vista: Actualizar -->
     <div id="hc-view-upload" style="overflow-y:auto">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Sube el archivo Excel de Headcount. Se leerán las columnas: Nomenclatura Inconcert, Nombre completo, Status, Fecha de ingreso a operación, ID Proyecto, Turno, ID Posición y Jefe Directo.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Sube el archivo Excel de Headcount. Se leerán las columnas: Nomenclatura Inconcert, Nombre completo, Status, Fecha de ingreso a operación, ID Proyecto, Turno, ID Posición, Jefe Directo y Grupo de Antigüedad.</p>
       <div id="hc-drop-zone" style="border:2px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border .18s;margin-bottom:16px" onclick="document.getElementById('hc-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--blue)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="hcOnDrop(event)">
         <div style="font-size:28px;margin-bottom:8px">📁</div>
         <div style="font-size:13px;color:var(--muted)">Arrastra el archivo .xlsx aquí o <span style="color:var(--blue)">haz clic para seleccionar</span></div>
@@ -722,6 +722,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
               <th style="padding:8px 12px;text-align:left;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--border)">Turno</th>
               <th style="padding:8px 12px;text-align:left;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--border)">ID Posición</th>
               <th style="padding:8px 12px;text-align:left;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--border)">Jefe Directo</th>
+              <th style="padding:8px 12px;text-align:left;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--border)">Grupo Antigüedad</th>
             </tr>
           </thead>
           <tbody id="hc-list-tbody"></tbody>
@@ -1184,6 +1185,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <div class="period-tabs" style="margin-left:auto">
           <button class="period-tab active" id="btn-trend-diaria-linea" onclick="setModoTrend('diaria','linea')">Línea</button>
           <button class="period-tab" id="btn-trend-diaria-dispersion" onclick="setModoTrend('diaria','dispersion')">Dispersión</button>
+          <button class="period-tab" id="btn-trend-diaria-antiguedad" onclick="setModoTrend('diaria','antiguedad')">Por antigüedad</button>
         </div>
       </div>
       <div class="card-body" style="padding:16px">
@@ -1196,6 +1198,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(7,9,15,0.95);backdrop-f
         <div class="period-tabs" style="margin-left:auto">
           <button class="period-tab active" id="btn-trend-semanal-linea" onclick="setModoTrend('semanal','linea')">Línea</button>
           <button class="period-tab" id="btn-trend-semanal-dispersion" onclick="setModoTrend('semanal','dispersion')">Dispersión</button>
+          <button class="period-tab" id="btn-trend-semanal-antiguedad" onclick="setModoTrend('semanal','antiguedad')">Por antigüedad</button>
         </div>
       </div>
       <div class="card-body" style="padding:16px">
@@ -3270,7 +3273,7 @@ function hcRenderListado() {
   if (!tbody) return;
 
   if (Object.keys(data).length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--muted)">No hay headcount cargado aún</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--muted)">No hay headcount cargado aún</td></tr>`;
     if (countEl) countEl.textContent = '';
     return;
   }
@@ -3294,6 +3297,7 @@ function hcRenderListado() {
       <td style="padding:8px 12px;color:var(--muted)">${d.turno||'—'}</td>
       <td style="padding:8px 12px;color:var(--muted);font-family:var(--mono);font-size:10px">${d.idPosicion||'—'}</td>
       <td style="padding:8px 12px;color:var(--muted)">${d.jefeDirecto||'—'}</td>
+      <td style="padding:8px 12px;color:var(--muted)">${d.grupoAntiguedad||'—'}</td>
     </tr>`).join('');
 }
 function hcOnDrop(e) {
@@ -3326,8 +3330,12 @@ function hcOnFileSelect(file) {
       }
       if (headerRow === -1) { hcSetStatus('❌ No se encontró la columna "Nomenclatura Inconcert" en el archivo', 'var(--red)'); return; }
       const headers = raw[headerRow].map(c => String(c).trim());
-      // Mapear columnas por nombre (tolerante a variaciones)
-      const findCol = (...terms) => headers.findIndex(h => terms.some(t => h.toLowerCase().includes(t.toLowerCase())));
+      // Mapear columnas por nombre (tolerante a variaciones, acentos y espacios raros)
+      const normalizar = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+      const findCol = (...terms) => headers.findIndex(h => terms.some(t => normalizar(h).includes(normalizar(t))));
+      const COL_AO = 40; // columna AO (índice 0-based) — respaldo directo si la búsqueda por texto no encuentra el encabezado
+      let idxGrupoAntiguedad = findCol('grupo de antig', 'grupo antig');
+      if (idxGrupoAntiguedad === -1 && headers[COL_AO] !== undefined) idxGrupoAntiguedad = COL_AO;
       const colMap = {
         nomenclatura: findCol('nomenclatura inconcert', 'inconcert'),
         nombre:       findCol('nombre completo'),
@@ -3337,9 +3345,15 @@ function hcOnFileSelect(file) {
         turno:        findCol('turno'),
         idPosicion:   findCol('id posici'),
         jefeDirecto:  findCol('jefe directo'),
+        grupoAntiguedad: idxGrupoAntiguedad,
       };
       if (colMap.nomenclatura === -1 || colMap.nombre === -1) {
         hcSetStatus('❌ No se encontraron las columnas requeridas. Verifica que el archivo sea el correcto.', 'var(--red)'); return;
+      }
+      if (colMap.grupoAntiguedad === -1) {
+        console.warn('Headcount: no se encontró la columna "Grupo de antigüedad" (ni por texto ni en la columna AO). Encabezados detectados:', headers);
+      } else {
+        console.info(`Headcount: "Grupo de antigüedad" detectada en columna "${headers[colMap.grupoAntiguedad]}" (índice ${colMap.grupoAntiguedad})`);
       }
       // Parsear filas de datos
       const resultado = {};
@@ -3357,6 +3371,7 @@ function hcOnFileSelect(file) {
           turno:        colMap.turno        !== -1 ? String(row[colMap.turno]       || '').trim() : '',
           idPosicion:   colMap.idPosicion   !== -1 ? String(row[colMap.idPosicion]  || '').trim() : '',
           jefeDirecto:  colMap.jefeDirecto  !== -1 ? String(row[colMap.jefeDirecto] || '').trim() : '',
+          grupoAntiguedad: colMap.grupoAntiguedad !== -1 ? String(row[colMap.grupoAntiguedad] || '').trim() : '',
         };
         count++;
       }
@@ -6805,6 +6820,12 @@ function calcularRegresionLineal(puntos) {
   const m=(n*sumXY-sumX*sumY)/denom, b=(sumY-m*sumX)/n;
   return {m,b};
 }
+// Grupo de antigüedad real, tal como viene en la columna del Excel de Headcount (no calculado)
+function grupoAntiguedadDe(h) {
+  const hc = buscarAgenteEnHC(h.agente);
+  return (hc && hc.grupoAntiguedad) ? hc.grupoAntiguedad : 'Sin grupo';
+}
+const PALETA_GRUPOS_ANTIGUEDAD = ['#638cff','#34d399','#fbbf24','#f87171','#a78bfa','#22d3ee','#f472b6','#fb923c'];
 
 let _modoTrendDiaria = 'linea';
 let _modoTrendSemanal = 'linea';
@@ -6812,16 +6833,20 @@ let _modoTrendSemanal = 'linea';
 function setModoTrend(cual, modo) {
   if (cual==='diaria') { _modoTrendDiaria = modo; renderTrendChart(window._lastDataTrendDiaria||[]); }
   else { _modoTrendSemanal = modo; renderTrendChartSemanal(window._lastDataTrendSemanal||[]); }
-  ['diaria','semanal'].forEach(c => ['linea','dispersion'].forEach(m => {
+  ['diaria','semanal'].forEach(c => ['linea','dispersion','antiguedad'].forEach(m => {
     const el = document.getElementById(`btn-trend-${c}-${m}`);
     if (el) el.classList.toggle('active', (c==='diaria'?_modoTrendDiaria:_modoTrendSemanal)===m);
   }));
 }
 
-// Función genérica: dibuja la gráfica (línea o dispersión) a partir de buckets ya agrupados por día/semana.
-function _renderTrendGenerico(wrapId, tooltipId, buckets, modo, gradId, tipFn, hideFn) {
+// Función genérica: dibuja la gráfica (línea / dispersión / por grupo de antigüedad).
+// Recibe los DATOS CRUDOS (no pre-agrupados) porque el modo "antigüedad" necesita agrupar
+// por (bucket, grupo) y el modo "dispersión" necesita promedios DIARIOS incluso dentro de la
+// vista semanal (para no mostrar cientos de llamadas individuales sueltas).
+function _renderTrendGenerico(wrapId, tooltipId, data, porSemana, modo, gradId, tipFn, hideFn) {
   const wrap = document.getElementById(wrapId);
   if (!wrap) return;
+  const buckets = porSemana ? _bucketsPorSemana(data) : _bucketsPorDia(data);
   const keysOrdenadas = Object.keys(buckets).sort();
   if (keysOrdenadas.length < 2) {
     wrap.innerHTML = `<div class="chart-tooltip" id="${tooltipId}"></div><div style="padding:40px;text-align:center;color:var(--muted);font-size:12px">Necesitas al menos 2 periodos distintos para ver la tendencia</div>`;
@@ -6833,9 +6858,34 @@ function _renderTrendGenerico(wrapId, tooltipId, buckets, modo, gradId, tipFn, h
     return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
   });
 
+  // Promedios DIARIOS (siempre por día, incluso en la vista semanal) — usados por el modo dispersión
+  // para no amontonar cada llamada individual, sino un punto por día.
+  const byDiaSiempre = _bucketsPorDia(data);
+  const diaKeysOrdenadas = Object.keys(byDiaSiempre).sort();
+  const puntosDiarios = diaKeysOrdenadas.map(dk => {
+    const vals = byDiaSiempre[dk].calls.map(h => normScore(h.score_total||0, h.pts_activos));
+    const prom = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+    // ¿A qué bucket (día o semana, según la vista activa) pertenece este día?
+    const fechaDia = new Date(dk+'T00:00:00');
+    const bucketKey = porSemana ? (()=>{const {week,year}=getISOWeek(fechaDia);return `${year}-${String(week).padStart(2,'0')}`;})() : dk;
+    const idx = keysOrdenadas.indexOf(bucketKey);
+    return idx===-1 ? null : {x:idx, y:prom, label:byDiaSiempre[dk].label};
+  }).filter(Boolean);
+
   const W=420, H=175, PADL=26, PADR=10, PADT=16, PADB = labels.length>8 ? 50 : 24;
   const plotW=W-PADL-PADR, plotH=H-PADT-PADB;
-  const allVals = modo==='dispersion' ? keysOrdenadas.flatMap(k=>buckets[k].calls.map(h=>normScore(h.score_total||0,h.pts_activos))) : promedios;
+
+  let allVals = promedios;
+  if (modo==='dispersion') allVals = puntosDiarios.map(p=>p.y);
+  if (modo==='antiguedad') {
+    const gruposTmp = {};
+    data.forEach(h => { const g=grupoAntiguedadDe(h); (gruposTmp[g]=gruposTmp[g]||[]).push(h); });
+    allVals = Object.values(gruposTmp).flatMap(calls => {
+      const bk = porSemana ? _bucketsPorSemana(calls) : _bucketsPorDia(calls);
+      return Object.values(bk).map(b => { const v=b.calls.map(h=>normScore(h.score_total||0,h.pts_activos)); return Math.round(v.reduce((a,c)=>a+c,0)/v.length); });
+    });
+    if (!allVals.length) allVals = promedios;
+  }
   const minV=Math.max(0,Math.min(...allVals)-10), maxV=Math.min(100,Math.max(...allVals)+10);
   const xStep=plotW/Math.max(labels.length-1,1);
   const xOf = i => PADL + i*xStep;
@@ -6846,7 +6896,6 @@ function _renderTrendGenerico(wrapId, tooltipId, buckets, modo, gradId, tipFn, h
     return `<line x1="${PADL}" y1="${y.toFixed(1)}" x2="${W-PADR}" y2="${y.toFixed(1)}" stroke="rgba(26,95,168,.10)" stroke-width="1"/><text x="${(PADL-4).toFixed(1)}" y="${(y+3).toFixed(1)}" font-size="8" fill="#3a4a6a" text-anchor="end">${v}</text>`;
   }).join('');
 
-  // Etiquetas del eje X (día/semana) — diagonales si hay muchos puntos, para que no se encimen
   const rotar = labels.length > 8;
   const xLabels = labels.map((lab,i) => {
     const x=xOf(i), y=H-PADB+11;
@@ -6855,18 +6904,15 @@ function _renderTrendGenerico(wrapId, tooltipId, buckets, modo, gradId, tipFn, h
       : `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="8" fill="#3a4a6a" text-anchor="middle">${lab}</text>`;
   }).join('');
 
-  let content;
+  let content, leyenda = '';
   if (modo === 'dispersion') {
-    // Puntos individuales reales (no promediados) — dispersión genuina, no una línea promedio disfrazada
-    const puntosInd = [];
-    keysOrdenadas.forEach((k,i) => buckets[k].calls.forEach(h => {
-      puntosInd.push({x:i, y:normScore(h.score_total||0, h.pts_activos), label:labels[i]});
-    }));
-    const dots = puntosInd.map(p => {
+    // Un punto por DÍA (no por llamada individual) — así en la vista semanal no se amontonan
+    // decenas de llamadas sueltas, solo los promedios diarios dentro de cada semana.
+    const dots = puntosDiarios.map(p => {
       const col = p.y>=80?'#34d399':p.y>=60?'#fbbf24':'#f87171';
-      return `<circle cx="${xOf(p.x).toFixed(1)}" cy="${yOf(p.y).toFixed(1)}" r="3.2" fill="${col}" stroke="var(--surface)" stroke-width="1.3" data-v="${p.y}" data-d="${p.label}" style="cursor:pointer" onmouseenter="${tipFn}(event,this)" onmouseleave="${hideFn}()"/>`;
+      return `<circle cx="${xOf(p.x).toFixed(1)}" cy="${yOf(p.y).toFixed(1)}" r="3.4" fill="${col}" stroke="var(--surface)" stroke-width="1.3" data-v="${p.y}" data-d="${p.label}" style="cursor:pointer" onmouseenter="${tipFn}(event,this)" onmouseleave="${hideFn}()"/>`;
     }).join('');
-    const reg = calcularRegresionLineal(puntosInd);
+    const reg = calcularRegresionLineal(puntosDiarios);
     let trendLine = '';
     if (reg) {
       const x0=0, x1=labels.length-1;
@@ -6875,6 +6921,50 @@ function _renderTrendGenerico(wrapId, tooltipId, buckets, modo, gradId, tipFn, h
       trendLine = `<line x1="${xOf(x0).toFixed(1)}" y1="${yOf(y0).toFixed(1)}" x2="${xOf(x1).toFixed(1)}" y2="${yOf(y1).toFixed(1)}" stroke="#a78bfa" stroke-width="2" stroke-dasharray="6,5" stroke-linecap="round"/>`;
     }
     content = `${trendLine}${dots}`;
+  } else if (modo === 'antiguedad') {
+    // Una línea por cada grupo de antigüedad real (columna del Excel de Headcount)
+    const gruposMap = {};
+    data.forEach(h => { const g=grupoAntiguedadDe(h); (gruposMap[g]=gruposMap[g]||[]).push(h); });
+    const nombresGrupos = Object.keys(gruposMap).sort();
+    const lineas = nombresGrupos.map((g,gi) => {
+      const col = PALETA_GRUPOS_ANTIGUEDAD[gi % PALETA_GRUPOS_ANTIGUEDAD.length];
+      const bk = porSemana ? _bucketsPorSemana(gruposMap[g]) : _bucketsPorDia(gruposMap[g]);
+      const pts = keysOrdenadas.map((k,i) => {
+        if (!bk[k]) return null;
+        const vals = bk[k].calls.map(h=>normScore(h.score_total||0,h.pts_activos));
+        const v = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+        return {x:xOf(i), y:yOf(v), v, d:labels[i]};
+      }).filter(Boolean);
+      if (pts.length < 2) return {col, g, svg:'', dotsOnly: pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${col}" stroke="var(--surface)" stroke-width="1.5" data-v="${p.v}" data-d="${g+' · '+p.d}" style="cursor:pointer" onmouseenter="${tipFn}(event,this)" onmouseleave="${hideFn}()"/>`).join('')};
+      const pathD = pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+      const dots = pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${col}" stroke="var(--surface)" stroke-width="1.5" data-v="${p.v}" data-d="${g+' · '+p.d}" style="cursor:pointer" onmouseenter="${tipFn}(event,this)" onmouseleave="${hideFn}()"/>`).join('');
+      return {col, g, svg:`<path d="${pathD}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}`};
+    });
+    content = lineas.map(l => l.svg || l.dotsOnly).join('');
+    leyenda = `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;justify-content:center">${lineas.map(l=>`<span style="font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:${l.col};display:inline-block"></span>${l.g}</span>`).join('')}</div>`;
+
+    // Tabla comparativa debajo: filas = día/semana, columnas = grupo de antigüedad
+    const filasTabla = keysOrdenadas.map((k,i) => {
+      const celdas = nombresGrupos.map(g => {
+        const bk = porSemana ? _bucketsPorSemana(gruposMap[g]) : _bucketsPorDia(gruposMap[g]);
+        if (!bk[k]) return '<td style="padding:4px 8px;color:var(--muted);text-align:center">—</td>';
+        const vals = bk[k].calls.map(h=>normScore(h.score_total||0,h.pts_activos));
+        const v = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+        const col = v>=80?'#34d399':v>=60?'#fbbf24':'#f87171';
+        return `<td style="padding:4px 8px;text-align:center;font-weight:600;color:${col}">${v}</td>`;
+      }).join('');
+      return `<tr><td style="padding:4px 8px;color:var(--muted);white-space:nowrap">${labels[i]}</td>${celdas}</tr>`;
+    }).join('');
+    const tablaComparativa = `<div style="overflow-x:auto;margin-top:10px">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="padding:4px 8px;text-align:left;color:var(--muted)">${porSemana?'Semana':'Día'}</th>
+          ${nombresGrupos.map((g,gi)=>`<th style="padding:4px 8px;text-align:center;color:${PALETA_GRUPOS_ANTIGUEDAD[gi%PALETA_GRUPOS_ANTIGUEDAD.length]}">${g}</th>`).join('')}
+        </tr></thead>
+        <tbody>${filasTabla}</tbody>
+      </table>
+    </div>`;
+    leyenda += tablaComparativa;
   } else {
     const pts = promedios.map((v,i)=>({x:xOf(i), y:yOf(v), v, d:labels[i]}));
     const pathD = pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
@@ -6893,13 +6983,13 @@ function _renderTrendGenerico(wrapId, tooltipId, buckets, modo, gradId, tipFn, h
   wrap.innerHTML = `<div class="chart-tooltip" id="${tooltipId}"></div><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
     <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#638cff" stop-opacity=".18"/><stop offset="100%" stop-color="#638cff" stop-opacity="0"/></linearGradient></defs>
     ${grids}${xLabels}${content}
-  </svg>`;
+  </svg>${leyenda}`;
 }
 
 function renderTrendChart(data) {
   window._lastDataTrendDiaria = data;
   if (data.length<2){const wrap=document.getElementById('rep-trend-wrap');if(wrap)wrap.innerHTML=`<div class="chart-tooltip" id="rep-tooltip"></div><div style="padding:40px;text-align:center;color:var(--muted);font-size:12px">Necesitas al menos 2 evaluaciones para ver la tendencia</div>`;return;}
-  _renderTrendGenerico('rep-trend-wrap','rep-tooltip', _bucketsPorDia(data), _modoTrendDiaria, 'trendGrad', 'showChartTip', 'hideChartTip');
+  _renderTrendGenerico('rep-trend-wrap','rep-tooltip', data, false, _modoTrendDiaria, 'trendGrad', 'showChartTip', 'hideChartTip');
 }
 // Misma gráfica pero agrupada por semana ISO, usando EXACTAMENTE la misma convención "S{semana}-{año}"
 // (getISOWeek/semanaLabel) que ya usan los filtros de semana en Historial/Reportes.
@@ -6908,11 +6998,31 @@ function renderTrendChartSemanal(data) {
   const wrap=document.getElementById('rep-trend-semanal-wrap');
   if (!wrap) return;
   if (data.length<2){wrap.innerHTML=`<div class="chart-tooltip" id="rep-tooltip-semanal"></div><div style="padding:40px;text-align:center;color:var(--muted);font-size:12px">Necesitas al menos 2 evaluaciones para ver la tendencia</div>`;return;}
-  _renderTrendGenerico('rep-trend-semanal-wrap','rep-tooltip-semanal', _bucketsPorSemana(data), _modoTrendSemanal, 'trendGradSemanal', 'showChartTipSemanal', 'hideChartTipSemanal');
+  _renderTrendGenerico('rep-trend-semanal-wrap','rep-tooltip-semanal', data, true, _modoTrendSemanal, 'trendGradSemanal', 'showChartTipSemanal', 'hideChartTipSemanal');
 }
-function showChartTip(e,el){const tip=document.getElementById('rep-tooltip');if(!tip)return;const v=el.getAttribute('data-v'),d=el.getAttribute('data-d'),col=v>=80?'#34d399':v>=60?'#fbbf24':'#f87171';tip.innerHTML=`<strong style="color:${col}">${v}</strong> · ${d}`;tip.style.display='block';const rect=el.closest('.chart-wrap').getBoundingClientRect();tip.style.left=Math.min(e.clientX-rect.left+10,rect.width-140)+'px';tip.style.top=Math.max(e.clientY-rect.top-36,0)+'px';}
+function showChartTip(e,el){
+  const tip=document.getElementById('rep-tooltip');if(!tip)return;
+  const v=el.getAttribute('data-v'),d=el.getAttribute('data-d'),col=v>=80?'#34d399':v>=60?'#fbbf24':'#f87171';
+  tip.innerHTML=`<strong style="color:${col}">${v}</strong> · ${d}`;
+  tip.style.display='block';
+  const rect=el.closest('.chart-wrap').getBoundingClientRect();
+  const mouseX=e.clientX-rect.left, mouseY=e.clientY-rect.top;
+  const tipWidth=tip.offsetWidth||140;
+  tip.style.left=(mouseX>rect.width/2 ? Math.max(mouseX-tipWidth-10,0) : Math.min(mouseX+10,rect.width-tipWidth))+'px';
+  tip.style.top=Math.max(mouseY-36,0)+'px';
+}
 function hideChartTip(){const tip=document.getElementById('rep-tooltip');if(tip)tip.style.display='none';}
-function showChartTipSemanal(e,el){const tip=document.getElementById('rep-tooltip-semanal');if(!tip)return;const v=el.getAttribute('data-v'),d=el.getAttribute('data-d'),col=v>=80?'#34d399':v>=60?'#fbbf24':'#f87171';tip.innerHTML=`<strong style="color:${col}">${v}</strong> · ${d}`;tip.style.display='block';const rect=el.closest('.chart-wrap').getBoundingClientRect();tip.style.left=Math.min(e.clientX-rect.left+10,rect.width-140)+'px';tip.style.top=Math.max(e.clientY-rect.top-36,0)+'px';}
+function showChartTipSemanal(e,el){
+  const tip=document.getElementById('rep-tooltip-semanal');if(!tip)return;
+  const v=el.getAttribute('data-v'),d=el.getAttribute('data-d'),col=v>=80?'#34d399':v>=60?'#fbbf24':'#f87171';
+  tip.innerHTML=`<strong style="color:${col}">${v}</strong> · ${d}`;
+  tip.style.display='block';
+  const rect=el.closest('.chart-wrap').getBoundingClientRect();
+  const mouseX=e.clientX-rect.left, mouseY=e.clientY-rect.top;
+  const tipWidth=tip.offsetWidth||140;
+  tip.style.left=(mouseX>rect.width/2 ? Math.max(mouseX-tipWidth-10,0) : Math.min(mouseX+10,rect.width-tipWidth))+'px';
+  tip.style.top=Math.max(mouseY-36,0)+'px';
+}
 function hideChartTipSemanal(){const tip=document.getElementById('rep-tooltip-semanal');if(tip)tip.style.display='none';}
 
 async function generarPlanIA() {
