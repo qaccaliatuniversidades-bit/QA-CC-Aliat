@@ -54,23 +54,15 @@ html[data-theme="light"] {
    texto se mantiene claro en los dos temas, para no perder contraste. */
 html[data-theme="light"] header,
 html[data-theme="light"] .nav-pill,
-html[data-theme="light"] .logo-text {
+html[data-theme="light"] .logo-text,
+html[data-theme="light"] .header-user-name,
+html[data-theme="light"] .header-user-role {
   color:#e8eef7;
 }
 html[data-theme="light"] .nav-pill:hover { color:#fff; background:rgba(255,255,255,.08); }
 html[data-theme="light"] .nav-pill.active { color:#8fc4ff; background:rgba(143,196,255,.15); }
 html[data-theme="light"] .logo-text span { color:#8fc4ff; }
-/* El badge de usuario (header-user) tiene SU PROPIO fondo claro (--surface2), no el oscuro del
-   header — su texto se queda con los colores normales (oscuro sobre claro), sin forzar nada. */
-/* .btn-sm (ej. "Exportar HTML/CSV") y los pasos de evaluación viven directo sobre --bg (oscuro
-   incluso en tema claro), sin tarjeta de por medio — necesitan texto claro para contraste. */
-html[data-theme="light"] .btn-sm { color:#c7d4e6; border-color:rgba(255,255,255,.22); }
-html[data-theme="light"] .btn-sm:hover { color:#fff; border-color:#8fc4ff; background:rgba(255,255,255,.06); }
-html[data-theme="light"] .step-label { color:#93a5c2; }
-html[data-theme="light"] .step-label.active { color:#fff; }
-html[data-theme="light"] .step-label.done { color:var(--green); }
-html[data-theme="light"] .step-circle { color:#93a5c2; }
-html[data-theme="light"] .step-line { background:rgba(255,255,255,.15); }
+html[data-theme="light"] .header-user-role { color:#b8c6dc; }
 html[data-theme="light"] .btn-config { color:#c7d4e6; border-color:rgba(255,255,255,.25); }
 html[data-theme="light"] .btn-config:hover { color:#fff; border-color:#8fc4ff; }
 /* Los títulos de página (h2) y su descripción (.sub) viven fuera de las tarjetas, directo sobre
@@ -783,7 +775,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
   <div class="logo" style="gap:12px">
     <img src="data:image/webp;base64,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" alt="Aliat Universidades" style="height:40px;object-fit:contain" />
     <div style="width:1px;height:24px;background:rgba(26,95,168,0.3)"></div>
-    <div class="logo-text" id="header-logo-sub" style="font-size:13px;color:#93a5c2">QA <span style="color:var(--blue)">Callcenter</span></div>
+    <div class="logo-text" style="font-size:13px;color:var(--muted)">QA <span style="color:var(--blue)">Callcenter</span></div>
   </div>
   <nav class="nav-pills">
     <button class="nav-pill active" onclick="showPage('evaluar',this)">📞 Evaluar llamada</button>
