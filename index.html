@@ -2475,7 +2475,7 @@ async function obtenerModelosDisponiblesGemini() {
 
 // Wrapper de rotación para Gemini — misma filosofía que fetchGroqConRotacion pero adaptado
 // al formato de Gemini (key por query param, generationConfig con JSON forzado)
-async function fetchGeminiConRotacion(modeloNombre, prompt, temperature, maxTokens, jsonMode = true) {
+async function fetchGeminiConRotacion(modeloNombre, prompt, temperature, maxTokens, jsonMode = true, thinkingBudget = 0) {
   if (geminiKeys.length === 0 && db) await cargarGeminiKeys();
 
   const debeRotar = (status, txt) =>
@@ -2488,7 +2488,7 @@ async function fetchGeminiConRotacion(modeloNombre, prompt, temperature, maxToke
     const keyActiva = getGeminiKeyActiva();
     if (!keyActiva) return { ok:false, status:401, text: async()=>'Sin API key de Gemini configurada', json: async()=>({error:{message:'Sin API key'}}) };
     try {
-      const generationConfig = { temperature, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 800 } };
+      const generationConfig = { temperature, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget } };
       if (jsonMode) generationConfig.responseMimeType = 'application/json';
       const resp = await fetch(`${GEMINI_API_BASE}models/${modeloNombre}:generateContent?key=${encodeURIComponent(keyActiva)}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2522,6 +2522,16 @@ async function fetchGeminiConRotacion(modeloNombre, prompt, temperature, maxToke
 function getProveedorActivo() { return localStorage.getItem('qa_proveedor_ia') || 'groq'; }
 function setProveedorActivo(p) { localStorage.setItem('qa_proveedor_ia', p); }
 
+// Extrae el texto de respuesta REAL de un candidate de Gemini, descartando cualquier part de
+// razonamiento (part.thought===true) que pueda venir antes que la respuesta cuando thinkingConfig
+// está activo — tomar ciegamente parts[0] a veces agarra el razonamiento en vez de la respuesta
+// (bug confirmado: "JSON inválido" intermitente con finishReason STOP, agosto 2026).
+function extraerTextoGemini(candidate) {
+  const partes = (candidate?.content?.parts || []).filter(p => !p.thought);
+  const texto = partes.map(p => p.text || '').join('');
+  return texto || undefined;
+}
+
 // Repara JSON casi-válido (comas colgantes, respuesta cortada) — misma lógica validada con Gemini
 function limpiarYParsearJSON(texto) {
   let raw = texto.trim().replace(/```json/g,'').replace(/```/g,'').trim();
@@ -2535,7 +2545,13 @@ function limpiarYParsearJSON(texto) {
       try { return JSON.parse(recortado); } catch(e) {}
     }
   }
-  throw new Error('JSON inválido incluso tras reparación');
+  // Si llegamos aquí, ninguna reparación funcionó — antes de tirar el error, dejamos el texto
+  // crudo completo en consola para poder diagnosticar la causa real (agosto 2026: el mensaje
+  // genérico no daba ninguna pista de qué venía mal formado).
+  console.error('❌ JSON inválido incluso tras reparación — texto crudo recibido de la IA:');
+  console.error(raw);
+  console.error(`(longitud total: ${raw.length} caracteres)`);
+  throw new Error('JSON inválido incluso tras reparación — revisa la consola (F12) para ver el texto crudo recibido, buscar el log que empieza con "❌ JSON inválido"');
 }
 
 // Si la IA detectó que la llamada es un buzón de voz (contestadora automática, sin conversación
@@ -2558,11 +2574,11 @@ async function llamarIA(prompt, opts = {}) {
     let lastErr = '';
     for (const m of modelos) {
       try {
-        const resp = await fetchGeminiConRotacion(m, prompt, temperature, maxTokens, jsonMode);
+        const resp = await fetchGeminiConRotacion(m, prompt, temperature, maxTokens, jsonMode, opts.thinkingBudget ?? 0);
         const respText = await resp.text();
         if (!resp.ok) { lastErr = respText; continue; }
         const d = JSON.parse(respText);
-        const texto = d.candidates?.[0]?.content?.parts?.[0]?.text;
+        const texto = extraerTextoGemini(d.candidates?.[0]);
         if (!texto) { lastErr = `Sin contenido (finishReason: ${d.candidates?.[0]?.finishReason||'?'})`; continue; }
         return texto;
       } catch(e) { lastErr = e.message; continue; }
@@ -4193,7 +4209,7 @@ async function transcribirAudioGemini(file) {
       let resp = await intentarUnaVez(m, key, false);
       if (!resp.ok) { lastErr = await resp.text(); console.warn(`Transcripción: modelo ${m} falló (${resp.status})`); continue; }
       let data = await resp.json();
-      let texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      let texto = extraerTextoGemini(data.candidates?.[0]);
       let finishReason = data.candidates?.[0]?.finishReason;
       // Síntoma real del problema que veníamos arrastrando: se cortó por límite de tokens Y el
       // texto salió sospechosamente corto para una llamada — probablemente un modelo "pesado"
@@ -4204,7 +4220,7 @@ async function transcribirAudioGemini(file) {
         const resp2 = await intentarUnaVez(m, key, true);
         if (resp2.ok) {
           const data2 = await resp2.json();
-          const texto2 = data2.candidates?.[0]?.content?.parts?.[0]?.text;
+          const texto2 = extraerTextoGemini(data2.candidates?.[0]);
           if (texto2 && texto2.length > (texto?.length||0)) { texto = texto2; finishReason = data2.candidates?.[0]?.finishReason; }
         }
       }
@@ -4497,7 +4513,7 @@ ${G('cam_cierre_nombre_final', 'cam_cierre_nombre_final (6.2) — Recuerda su no
 
     let resultadoCam;
     try {
-      const textoIA = await llamarIA(promptCampus, { temperature: 0.2, maxTokens: 2500 });
+      const textoIA = await llamarIA(promptCampus, { temperature: 0.2, maxTokens: 4000 });
       resultadoCam = limpiarYParsearJSON(textoIA);
       verificarBuzonVoz(resultadoCam);
     } catch(e) {
@@ -4951,7 +4967,7 @@ ${naKeys.has('etq_control')?'':'etq_control (6.5) — Mute, tiempos de espera y 
 
   let resultado;
   try {
-    const textoIA = await llamarIA(prompt, { temperature: 0.2, maxTokens: 2500 });
+    const textoIA = await llamarIA(prompt, { temperature: 0.2, maxTokens: 4000 });
     resultado = limpiarYParsearJSON(textoIA);
     verificarBuzonVoz(resultado);
   } catch(e) {
