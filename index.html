@@ -1455,13 +1455,26 @@ const CRITERIOS_COMUNES_PRE = [
   {etapa:'investigacion', key:'inv_estudios',         num:'2.1', label:'Verifica estudios previos del prospecto'},
   {etapa:'investigacion', key:'inv_sondeo',           num:'2.2', label:'Realiza pregunta principal de sondeo'},
   {etapa:'investigacion', key:'inv_edad',             num:'2.3', label:'Pregunta edad (aplica bachillerato)'},
+  {etapa:'objeciones',    key:'obj_objeciones',      num:'4.1', label:'Utiliza argumento del objecionario'},
+  {etapa:'objeciones',    key:'obj_referidos',       num:'4.2', label:'Solicita referidos con beneficio del 5%'},
+];
+// Demostración diverge por modelo desde la cédula QA Aliat Tradicional (agosto 2026):
+// Tradicional/CORBUSÉ reestructuraron sus 5 criterios (empleabilidad se fusionó a demo_ventaja,
+// demo_beneficios se dividió en demo_grado + demo_modalidad, y se agregó demo_promociones).
+// OnAliat NO cambia — conserva la cédula anterior tal cual.
+const CRITERIOS_DEMO_TRADICIONAL = [
+  {etapa:'demostracion',  key:'demo_ventaja',      num:'3.1', label:'Menciona ≥2 ventajas competitivas, 1 de empleabilidad'},
+  {etapa:'demostracion',  key:'demo_grado',        num:'3.2', label:'Menciona ≥2 características del grado académico'},
+  {etapa:'demostracion',  key:'demo_modalidad',    num:'3.3', label:'Beneficio de la modalidad de estudio'},
+  {etapa:'demostracion',  key:'demo_promociones',  num:'3.4', label:'Menciona ≥1 promoción vigente'},
+  {etapa:'demostracion',  key:'demo_precio',       num:'3.5', label:'Manejo de precio (pago inicial, parcialidades, desglose)'},
+];
+const CRITERIOS_DEMO_ONALIAT = [
   {etapa:'demostracion',  key:'demo_beneficios',     num:'3.1', label:'Menciona ≥2 beneficios del programa o modalidad'},
   {etapa:'demostracion',  key:'demo_economico',      num:'3.2', label:'Indica ≥1 diferenciador económico'},
   {etapa:'demostracion',  key:'demo_ventaja',        num:'3.3', label:'Menciona ≥1 ventaja competitiva de Aliat'},
   {etapa:'demostracion',  key:'demo_precio',         num:'3.4', label:'Manejo de precios'},
   {etapa:'demostracion',  key:'demo_empleabilidad',  num:'3.5', label:'Menciona ≥1 argumento de empleabilidad'},
-  {etapa:'objeciones',    key:'obj_objeciones',      num:'4.1', label:'Utiliza argumento del objecionario'},
-  {etapa:'objeciones',    key:'obj_referidos',       num:'4.2', label:'Solicita referidos con beneficio del 5%'},
 ];
 const CRITERIOS_COMUNES_POST = [
   {etapa:'cierre',        key:'cre_seguimiento',     num:'5.2', label:'Ofrece seguimiento con fecha y hora'},
@@ -1528,11 +1541,13 @@ const CRITERIOS_CAMPUS = [
 const CRITERIOS_POR_MODELO = {
   tradicional: [
     ...CRITERIOS_COMUNES_PRE,
+    ...CRITERIOS_DEMO_TRADICIONAL,
     {etapa:'cierre', key:'cre_cita',      num:'5.1', label:'Ofrece cita ≤3 días con hora específica'},
     ...CRITERIOS_COMUNES_POST
   ],
   onaliat: [
     ...CRITERIOS_COMUNES_PRE,
+    ...CRITERIOS_DEMO_ONALIAT,
     {etapa:'cierre', key:'cre_matricula', num:'5.1', label:'Ofrece matrícula en ≤24h'},
     ...CRITERIOS_COMUNES_POST
   ],
@@ -1570,11 +1585,11 @@ function getEtapasMeta(modelo) {
 
 const DEFAULT_PESOS_POR_MODELO = {
   tradicional: {
-    // Pesos exactos Cédula QA Aliat Tradicional v4.0 — los 22 criterios (incluyendo 5.3 CRM)
+    // Pesos exactos Cédula QA Aliat Tradicional vTRD5 (agosto 2026) — los 22 criterios (incluyendo 5.3 CRM)
     // Suma=100; usar botón N/A en Calibración para excluir CRM en evaluaciones de audio
     ap_presentacion:3, ap_datos:2, ap_parentesco:2, ap_nombre:3,
     inv_estudios:7, inv_sondeo:7, inv_edad:6,
-    demo_beneficios:6, demo_economico:2, demo_ventaja:3, demo_precio:7, demo_empleabilidad:2,
+    demo_ventaja:6, demo_grado:2, demo_modalidad:2, demo_promociones:5, demo_precio:5,
     obj_objeciones:7, obj_referidos:3,
     cre_cita:10, cre_seguimiento:5, cre_crm:10,
     etq_personalizacion:1, etq_plantillas:4, etq_respuesta:4, etq_conflicto:4, etq_control:2
@@ -1614,8 +1629,14 @@ function getCriterios(modelo) { return CRITERIOS_POR_MODELO[modelo] || CRITERIOS
 function getDefaultPesos(modelo) { return Object.assign({}, DEFAULT_PESOS_POR_MODELO[modelo] || DEFAULT_PESOS_POR_MODELO.tradicional); }
 
 // Versión del esquema de pesos — incrementar cuando cambie cualquier valor de DEFAULT_PESOS_POR_MODELO
-// Esto fuerza un reset de localStorage si el usuario tiene una versión anterior guardada
+// Esto fuerza un reset de localStorage si el usuario tiene una versión anterior guardada.
+// Es específica por modelo: cambiar la cédula de Tradicional/CORBUSÉ no debe resetear
+// la calibración ya afinada de OnAliat/Titulación/Campus, que no cambiaron.
 const PESOS_SCHEMA_VERSION = '4.1.2025-05';
+const PESOS_SCHEMA_VERSION_TRADICIONAL = '5.0.2026-08'; // cédula vTRD5: Demostración reestructurada (empleabilidad→demo_ventaja, demo_beneficios dividido en demo_grado/demo_modalidad, +demo_promociones)
+function pesosSchemaVersionDe(modelo) {
+  return (modelo === 'tradicional' || modelo === 'corbuse') ? PESOS_SCHEMA_VERSION_TRADICIONAL : PESOS_SCHEMA_VERSION;
+}
 
 
 
@@ -2344,7 +2365,7 @@ async function fetchGroqConRotacion(url, opciones) {
         }
         // Espera progresiva: 3s en primer intento, 6s en segundo, 10s en tercero
         const espera = [3000, 6000, 10000][intentosRotacion] || 10000;
-        await new Promise(r => setTimeout(r, espera));
+        await esperar(espera);
         intentosRotacion++;
         continue;
       }
@@ -2353,7 +2374,7 @@ async function fetchGroqConRotacion(url, opciones) {
     } catch(netErr) {
       // Error de red — reintentar con misma key después de 2s
       console.warn('Error de red en Groq, reintentando...', netErr.message);
-      await new Promise(r => setTimeout(r, 2000));
+      await esperar(2000);
       intentosRotacion++;
       continue;
     }
@@ -2368,7 +2389,12 @@ let geminiKeys = [];
 let geminiKeyIndex = 0;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/';
 // Modelos "lite" validados como rápidos y confiables para evaluación (ver bitácora de pruebas Gemini)
-const GEMINI_MODELOS_PRIORIDAD = ['gemini-flash-lite-latest','gemini-3.5-flash-lite','gemini-3.1-flash-lite','gemini-3.1-flash-lite-preview'];
+const GEMINI_MODELOS_PRIORIDAD = ['gemini-3.1-flash-lite','gemini-flash-lite-latest','gemini-3.5-flash-lite','gemini-3.1-flash-lite-preview','gemini-flash-latest','gemini-pro-latest'];
+// gemini-3.1-flash-lite va primero: en la práctica (agosto 2026) resultó más estable que el
+// alias "latest", que empezó a dar 503 con más frecuencia — posiblemente porque Google movió
+// "latest" a apuntar a un modelo más nuevo con menos capacidad de servicio provisionada aún.
+// Si en el futuro Google retira gemini-3.1-flash-lite, el filtro contra modelos disponibles
+// (más abajo) lo descarta solo, sin romper nada — cae al siguiente candidato de la lista.
 let _geminiModelosCache = null, _geminiModelosCacheTs = 0;
 
 async function cargarGeminiKeys() {
@@ -2427,7 +2453,11 @@ async function obtenerModelosDisponiblesGemini() {
     const data = await resp.json();
     const disponibles = (data.models || [])
       .filter(m => (m.supportedGenerationMethods||[]).includes('generateContent'))
-      .map(m => m.name.replace('models/',''));
+      .map(m => m.name.replace('models/',''))
+      // Excluye por patrón de nombre modelos que NUNCA sirven para transcribir/evaluar texto:
+      // -image (generación/edición de imágenes), -tts (texto a voz), omni (siempre limit:0 en
+      // el nivel gratuito, confirmado en el panel de cuotas de Google).
+      .filter(m => !/-image|-tts|omni/i.test(m));
     if (!disponibles.length) throw new Error('Sin modelos válidos en respuesta');
     const ordenados = [
       ...GEMINI_MODELOS_PRIORIDAD.filter(m => disponibles.includes(m)),
@@ -2458,7 +2488,7 @@ async function fetchGeminiConRotacion(modeloNombre, prompt, temperature, maxToke
     const keyActiva = getGeminiKeyActiva();
     if (!keyActiva) return { ok:false, status:401, text: async()=>'Sin API key de Gemini configurada', json: async()=>({error:{message:'Sin API key'}}) };
     try {
-      const generationConfig = { temperature, maxOutputTokens: maxTokens };
+      const generationConfig = { temperature, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 800 } };
       if (jsonMode) generationConfig.responseMimeType = 'application/json';
       const resp = await fetch(`${GEMINI_API_BASE}models/${modeloNombre}:generateContent?key=${encodeURIComponent(keyActiva)}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2472,13 +2502,13 @@ async function fetchGeminiConRotacion(modeloNombre, prompt, temperature, maxToke
           return { ok:false, status:resp.status, text: async()=>errTxt, json: async()=>({error:{message:errTxt}}) };
         }
         const espera = [3000, 6000][intentosRotacion] || 6000;
-        await new Promise(r => setTimeout(r, espera));
+        await esperar(espera);
         intentosRotacion++;
         continue;
       }
       return { ok:false, status:resp.status, text: async()=>errTxt, json: async()=>({error:{message:errTxt}}) };
     } catch(netErr) {
-      await new Promise(r => setTimeout(r, 2000));
+      await esperar(2000);
       intentosRotacion++;
       continue;
     }
@@ -3594,6 +3624,38 @@ function liberarWakeLock() {
 }
 
 // ═══════════════════════════════════════════════
+// ESPERA NO THROTTLEADA — Chrome retrasa (throttlea) los setTimeout del hilo
+// principal cuando la pestaña/ventana no está activa (hasta 1 vez por minuto
+// tras ~5min en segundo plano), lo que hace que el batch "se pause". Un Worker
+// dedicado no sufre ese throttling, así que las esperas entre llamadas y los
+// reintentos con backoff se delegan a un Worker para que el proceso siga
+// avanzando aunque la ventana esté en segundo plano.
+// ═══════════════════════════════════════════════
+let _timerWorker = null;
+let _timerWorkerSeq = 0;
+function _getTimerWorker() {
+  if (_timerWorker) return _timerWorker;
+  try {
+    const codigo = 'self.onmessage = function(e) { var id = e.data.id, ms = e.data.ms; setTimeout(function(){ self.postMessage({ id: id }); }, ms); };';
+    const blob = new Blob([codigo], { type: 'application/javascript' });
+    _timerWorker = new Worker(URL.createObjectURL(blob));
+  } catch(e) { _timerWorker = null; }
+  return _timerWorker;
+}
+function esperar(ms) {
+  const worker = _getTimerWorker();
+  if (!worker) return new Promise(r => setTimeout(r, ms)); // fallback si Worker no está disponible
+  return new Promise(resolve => {
+    const id = ++_timerWorkerSeq;
+    const onMsg = (e) => {
+      if (e.data.id === id) { worker.removeEventListener('message', onMsg); resolve(); }
+    };
+    worker.addEventListener('message', onMsg);
+    worker.postMessage({ id, ms });
+  });
+}
+
+// ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
 window.onload = () => {
@@ -3901,26 +3963,27 @@ function abrirConfig() {
 
 function cargarConfig(modelo) {
   modelo = modelo || 'tradicional';
+  const version = pesosSchemaVersionDe(modelo);
   try {
     const s = localStorage.getItem('qa_calibracion_'+modelo);
     if (s) {
       const stored = JSON.parse(s);
       // Si la versión del schema no coincide, descartar pesos guardados y usar defaults
       // (preserva frases y criterios N/A, solo resetea los pesos numéricos)
-      if (stored._pesos_version !== PESOS_SCHEMA_VERSION) {
-        console.info('QA: esquema de pesos actualizado (' + (stored._pesos_version||'legacy') + ' → ' + PESOS_SCHEMA_VERSION + '), reseteando pesos a defaults del Excel.');
+      if (stored._pesos_version !== version) {
+        console.info('QA: esquema de pesos actualizado (' + (stored._pesos_version||'legacy') + ' → ' + version + '), reseteando pesos a defaults del Excel.');
         stored.pesos = getDefaultPesos(modelo);
-        stored._pesos_version = PESOS_SCHEMA_VERSION;
+        stored._pesos_version = version;
         localStorage.setItem('qa_calibracion_'+modelo, JSON.stringify(stored));
       }
       return stored;
     }
   } catch(e) {}
-  return { pesos: getDefaultPesos(modelo), frases_obligatorias: [], frases_prohibidas: [], na_criterios: [], _pesos_version: PESOS_SCHEMA_VERSION };
+  return { pesos: getDefaultPesos(modelo), frases_obligatorias: [], frases_prohibidas: [], na_criterios: [], _pesos_version: version };
 }
 function persistirConfig(cfg, modelo) {
   modelo = modelo || 'tradicional';
-  cfg._pesos_version = PESOS_SCHEMA_VERSION; // stamp version on every save
+  cfg._pesos_version = pesosSchemaVersionDe(modelo); // stamp version on every save
   localStorage.setItem('qa_calibracion_'+modelo, JSON.stringify(cfg));
   persistirConfigFirestore(cfg, modelo); // sync to Firestore
 }
@@ -4096,68 +4159,7 @@ function limpiarTranscripcionGemini(texto) {
   return limpio;
 }
 
-// Comprime un audio pesado (típicamente WAV sin comprimir) reduciendo su sample rate y
-// profundidad de bits, PRESERVANDO el número de canales original — mono se queda mono, estéreo
-// se queda estéreo. Esto importa porque Tradicional/OnAliat a veces traen 2 canales que ayudan
-// a distinguir asesor/prospecto, y no queremos perder esa separación al comprimir.
-// Solo se usa antes de mandar audio a Gemini (que tiene límite de tamaño al mandarlo "inline"
-// dentro del request); Groq no lo necesita porque usa un endpoint distinto (multipart).
-async function comprimirAudioParaGemini(file) {
-  const LIMITE_SIN_COMPRIMIR = 8 * 1024 * 1024; // 8MB — si ya es ligero, no vale la pena tocarlo
-  if (file.size <= LIMITE_SIN_COMPRIMIR) return file;
-  try {
-    const arrayBuffer = await file.arrayBuffer();
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return file; // sin soporte del navegador, se manda el original tal cual
-    const ctx = new AudioCtx();
-    const audioBuffer = await new Promise((resolve, reject) => ctx.decodeAudioData(arrayBuffer, resolve, reject));
-    ctx.close().catch(()=>{});
-    const canales = audioBuffer.numberOfChannels; // preserva mono/estéreo tal cual venía
-    const SAMPLE_RATE_DESTINO = 16000; // de sobra para voz telefónica
-    const offlineCtx = new OfflineAudioContext(canales, Math.ceil(audioBuffer.duration * SAMPLE_RATE_DESTINO), SAMPLE_RATE_DESTINO);
-    const source = offlineCtx.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(offlineCtx.destination);
-    source.start();
-    const resampled = await offlineCtx.startRendering();
-    const wavBlob = audioBufferToWav16(resampled);
-    console.info(`Audio comprimido para Gemini: ${(file.size/1024/1024).toFixed(1)}MB → ${(wavBlob.size/1024/1024).toFixed(1)}MB (${canales} canal${canales>1?'es':''})`);
-    return new File([wavBlob], file.name.replace(/\.[^.]+$/, '') + '_comprimido.wav', { type: 'audio/wav' });
-  } catch(e) {
-    console.warn('No se pudo comprimir el audio, se manda el original sin comprimir:', e.message);
-    return file; // si algo falla, seguimos con el archivo original — nunca bloquea el flujo
-  }
-}
-
-// Codifica un AudioBuffer a WAV PCM de 16 bits — formato simple, universal, sin dependencias externas.
-function audioBufferToWav16(buffer) {
-  const numChannels = buffer.numberOfChannels;
-  const sampleRate = buffer.sampleRate;
-  const numFrames = buffer.length;
-  const blockAlign = numChannels * 2;
-  const dataSize = numFrames * blockAlign;
-  const arrayBuffer = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(arrayBuffer);
-  const writeString = (offset, str) => { for (let i=0;i<str.length;i++) view.setUint8(offset+i, str.charCodeAt(i)); };
-  writeString(0,'RIFF'); view.setUint32(4, 36+dataSize, true); writeString(8,'WAVE');
-  writeString(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,1,true);
-  view.setUint16(22,numChannels,true); view.setUint32(24,sampleRate,true);
-  view.setUint32(28,sampleRate*blockAlign,true); view.setUint16(32,blockAlign,true); view.setUint16(34,16,true);
-  writeString(36,'data'); view.setUint32(40,dataSize,true);
-  const channelData = []; for (let ch=0; ch<numChannels; ch++) channelData.push(buffer.getChannelData(ch));
-  let offset = 44;
-  for (let i=0; i<numFrames; i++) {
-    for (let ch=0; ch<numChannels; ch++) {
-      let s = Math.max(-1, Math.min(1, channelData[ch][i]));
-      view.setInt16(offset, s < 0 ? s*0x8000 : s*0x7FFF, true);
-      offset += 2;
-    }
-  }
-  return new Blob([arrayBuffer], { type: 'audio/wav' });
-}
-
 async function transcribirAudioGemini(file) {
-  file = await comprimirAudioParaGemini(file);
   const base64 = await new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(r.result.split(',')[1]);
@@ -4166,28 +4168,49 @@ async function transcribirAudioGemini(file) {
   });
   const modelos = await obtenerModelosDisponiblesGemini();
   let lastErr = '';
+  const intentarUnaVez = async (m, key, conThinking) => {
+    const generationConfig = { temperature: 0.1, maxOutputTokens: 4000 };
+    if (conThinking) generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    const resp = await fetch(`${GEMINI_API_BASE}models/${m}:generateContent?key=${encodeURIComponent(key)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [
+          { inlineData: { mimeType: file.type || 'audio/mpeg', data: base64 } },
+          { text: PROMPT_TRANSCRIPCION_GEMINI }
+        ]}],
+        generationConfig
+      })
+    });
+    return resp;
+  };
   for (const m of modelos) {
     const key = getGeminiKeyActiva();
     if (!key) throw new Error('Sin API key de Gemini configurada');
     try {
-      const resp = await fetch(`${GEMINI_API_BASE}models/${m}:generateContent?key=${encodeURIComponent(key)}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [
-            { inlineData: { mimeType: file.type || 'audio/mpeg', data: base64 } },
-            { text: PROMPT_TRANSCRIPCION_GEMINI }
-          ]}],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 8000 }
-        })
-      });
-      if (!resp.ok) { lastErr = await resp.text(); continue; }
-      const data = await resp.json();
-      const texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      const finishReason = data.candidates?.[0]?.finishReason;
-      if (!texto) { lastErr = `Sin contenido (finishReason: ${finishReason||'?'})`; continue; }
-      if (finishReason === 'MAX_TOKENS') {
-        console.warn('⚠️ Transcripción posiblemente incompleta (se alcanzó el límite de tokens de salida).');
+      // Intento normal primero (sin thinkingConfig) — la mayoría de los modelos no lo necesitan,
+      // y dos de los preferidos (gemini-flash-lite-latest, gemini-3.5-flash-lite) lo rechazan
+      // con 400 siempre, así que mandarlo por default solo desperdicia una llamada.
+      let resp = await intentarUnaVez(m, key, false);
+      if (!resp.ok) { lastErr = await resp.text(); console.warn(`Transcripción: modelo ${m} falló (${resp.status})`); continue; }
+      let data = await resp.json();
+      let texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      let finishReason = data.candidates?.[0]?.finishReason;
+      // Síntoma real del problema que veníamos arrastrando: se cortó por límite de tokens Y el
+      // texto salió sospechosamente corto para una llamada — probablemente un modelo "pesado"
+      // que gastó la mayoría de los tokens en razonamiento invisible. Solo AQUÍ vale la pena
+      // reintentar ESE MISMO modelo con thinkingConfig:0 para forzarlo a no razonar.
+      if (finishReason === 'MAX_TOKENS' && (!texto || texto.length < 2000)) {
+        console.warn(`Transcripción: modelo ${m} se cortó por tokens con texto corto (${texto?.length||0} caracteres) — reintentando con thinkingConfig...`);
+        const resp2 = await intentarUnaVez(m, key, true);
+        if (resp2.ok) {
+          const data2 = await resp2.json();
+          const texto2 = data2.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (texto2 && texto2.length > (texto?.length||0)) { texto = texto2; finishReason = data2.candidates?.[0]?.finishReason; }
+        }
       }
+      if (!texto) { lastErr = `Sin contenido (finishReason: ${finishReason||'?'})`; console.warn(`Transcripción: modelo ${m} sin contenido (finishReason: ${finishReason||'?'})`); continue; }
+      console.info(`Transcripción OK con modelo ${m} — ${texto.length} caracteres, finishReason: ${finishReason||'?'}`);
+      if (finishReason === 'MAX_TOKENS') console.warn('⚠️ Transcripción posiblemente incompleta (se alcanzó el límite de tokens de salida).');
       return limpiarTranscripcionGemini(texto);
     } catch(e) { lastErr = e.message; continue; }
   }
@@ -4550,11 +4573,11 @@ cre_seguimiento (5.2): Este criterio SOLO aplica si cre_cita=100 (por cualquiera
       inv_estudios: 'inv_estudios (2.1): grado y certificado previo. 100=ambos. 50=uno. 0=ninguno.',
       inv_sondeo: 'inv_sondeo (2.2): pregunta de motivación/necesidad (no datos básicos). 100=≥1 pregunta válida. 0=ninguna.',
       inv_edad: 'inv_edad (2.3): SOLO Bachillerato. 100=confirmó. 0=no. N/A si es Licenciatura/Maestría.',
-      demo_beneficios: 'demo_beneficios (3.1): ≥2 beneficios del grado correcto. Bachillerato: orientación vocacional, pase directo a licenciatura sin examen, ALEKS con IA, acompañamiento académico, talleres de emprendimiento. Licenciatura: certificaciones intermedias por materia, laboratorios/aulas especializadas por carrera, sin inscripción ni reinscripción, becas por promedio, adelanto de materias. Maestría: casos reales de negocio, networking con profesionales activos, plataforma 24/7, docentes líderes en su sector. 100=≥2 del grado correcto. 50=1. 0=ninguno o de otro grado.',
-      demo_economico: 'demo_economico (3.2): ≥1 diferenciador económico (Brightspace incluido, equivalencias sin costo, sin reinscripción, primera colegiatura más accesible, referidos). 100=sí. 0=no.',
-      demo_ventaja: 'demo_ventaja (3.3): ventaja institucional (RVOE/SEP, docentes activos en el campo laboral/con experiencia en la rama, red nacional de campus con posibilidad de cambiar de plantel, flexibilidad de modalidades con el mismo título, posibilidad de adelantar materias, grupos reducidos). 100=sí. 0=no.',
-      demo_precio: 'demo_precio (3.4): pago inicial Y parcialidades. 100=ambos. 50=uno. 0=ninguno.',
-      demo_empleabilidad: 'demo_empleabilidad (3.5): dato duro de empleabilidad (ej: 84% trabaja en su campo). 100=sí. 0=no.',
+      demo_ventaja: 'demo_ventaja (3.1): ≥2 ideas del catálogo (validez SEP/50 años/170mil egresados; docentes con experiencia real; libertad de modalidad con mismo valor de título; grupos reducidos; [EMP] IA para CV; [EMP] plataforma de empleabilidad/emprendimiento), y al menos 1 debe ser [EMP]. 100=≥2 Y 1 es EMP. 50=≥2 sin EMP, o solo 1 en total. 0=ninguna.',
+      demo_grado: 'demo_grado (3.2): ≥2 características oficiales validadas del grado correcto. Bachillerato: orientación vocacional (Prepa Aliat), pase directo a licenciatura sin examen, habilidades socioemocionales/digitales, talleres de emprendimiento, campus seguros. Licenciatura: modalidades flexibles, Biblioteca Digital sin costo, Office 365 incluido, certificaciones intermedias, sin inscripción, becas por promedio. Maestría: networking con profesionales activos, plataforma 100% online 24/7, docentes líderes en su sector, casos reales de negocio, mejores oportunidades gerenciales. 100=≥2 del grado correcto. 50=1. 0=ninguno o de otro grado.',
+      demo_modalidad: 'demo_modalidad (3.3): identifica primero la modalidad de interés (Presencial/Ejecutiva/Online) por la transcripción; si no hay evidencia, N/A. Presencial=inmersión en laboratorios/talleres, networking presencial, guía directa del docente. Ejecutiva=aplicas en tu trabajo lo aprendido, 1-2 días/semana, networking de negocios. Online=libertad 24/7, red nacional, tutores digitales. 100=≥1 beneficio de la modalidad correcta. 0=ninguno o de otra modalidad. N/A=sin evidencia de la modalidad de interés.',
+      demo_promociones: 'demo_promociones (3.4): ≥1 promoción vigente (kit de apoyo, titulación sin costo según campus, 4ª colegiatura 50% desc., convenio empresarial 10%, seguro/RVOE 1er ciclo incluido, beca hasta 45%, bootcamps, 50% desc. curso de inglés, 30% desc. uniformes). Si mencionó uniformes, marca promo_condicionada=true (promoción condicionada, no aplica en todos los casos). 100=sí. 0=no.',
+      demo_precio: 'demo_precio (3.5): pago inicial + parcialidades (siempre aplican) + desglose (solo si el prospecto preguntó). Si preguntó desglose (aplican 3): 100=los 3. 66=2. 33=1. 0=ninguno. Si NO preguntó (aplican 2): 100=los 2. 50=1. 0=ninguno.',
       obj_objeciones: 'obj_objeciones (4.1): identificar y responder con argumento correspondiente. Catálogo con argumento clave c/u:\n  1.Costo→beca por promedio/costo de oportunidad. 2.Lejanía→ejecutiva/online/campus cercano. 3.Familia→invitar al campus/sondear preocupación. 4."Llámame/manda info"→preguntar qué necesita, ofrecer cita. 5.Otras universidades→sondear qué le atrae, diferenciador Aliat. 6.No existe la carrera→tronco común/carrera afín/test vocacional. 7.Tiempo→horarios flexibles/en línea. 8.Ya estudia en otro lado→equivalencias sin costo. 9.Edad→perfil adultos/grupos reducidos. 10.Prefiere en línea→OnAliat misma validez. 11.Duda calidad en línea→RVOE/docentes con posgrado. 12.Duda bachillerato en línea→validez SEP. 13.Duda del programa→plan de estudios/enfoque práctico. 14.Sin apoyo empresa→beca institucional 40%. 15.Esperar ciclo→urgencia del beneficio vigente. 16.Documentos incompletos→apartar con pago inicial. 17.Deudas/Buró→no se consulta buró. 18.Miedo a no terminar→acompañamiento/grupos reducidos.\n  Puntuación: 100=sin objeción, o respondió con argumento correspondiente. 50=vago/sin estructura. 0=ignoró o argumento no correspondía.',
       obj_referidos: 'obj_referidos (4.2): 100=3 elementos (solicitud+5%+condicionado). 0=incompleto/engañoso.',
       cre_cita: 'cre_cita (5.1): CAMINO A (estándar) 100=fecha+hora+campus Y prospecto confirmó. 75=propuso pero no confirmó. 50=sin fecha/hora. 0=no propuso. CAMINO B (solo si Regla 6 dice que la oferta de OnAliat fue legítima): 100=pregunta de cierre real + transfirió/derivó bien. 75=cerró pero transferencia/derivación vaga. 50=intento débil de cierre. 0=no intentó. Si oferta de OnAliat fue indebida (Regla 6): tope máx 50 sin evaluar Camino A.',
@@ -4606,6 +4629,7 @@ ${scoresSchemaTrad}
   "necesidad_prospecto": {"categoria":"<ver catálogo abajo>","cita_textual":"...","detalle_otro":"<solo si categoria='otro'>"},
   "sin_objeciones": true,
   "oferta_onaliat_indebida": false,
+  "promo_condicionada": false,
   "sentimiento_cliente": "positivo|neutral|negativo",
   "logro_objetivo": false,
   "nivel_urgencia": "critica|revisar|normal",
@@ -4636,7 +4660,7 @@ REGLAS DE CALIBRACIÓN:
 3. SONDEO→DEMOSTRACIÓN: si inv_sondeo <50, todos los demo_* máx 50.
 4. OBJECIONES SIN NEGATIVA: si el prospecto no objetó nada: si cre_cita=100 → obj_objeciones=100 (no había nada que rebatir, y el cierre sí se logró). Si cre_cita≠100 → obj_objeciones=75. En ambos casos: sin_objeciones=true, objeciones_detectadas=[]. Asigna 0 solo si hubo objeción real y el asesor la ignoró.
 5. REFERIDOS COMPLETOS: obj_referidos=100 solo con los 3 elementos (solicitud + 5% + condicionado a inscripción). Si falta uno, 0.
-6. OFERTA DE ONALIAT DENTRO DE TRADICIONAL: el asesor solo puede ofertar OnAliat (100% en línea) si (a) el prospecto lo pidió, o (b) fue último recurso ante objeción real de costo/lejanía. Si cumple esto, la llamada puede cerrar por el Camino B de cre_cita (pregunta de cierre + transferencia/seguimiento, en vez de cita a campus — el asesor no tiene permisos para matricular OnAliat directamente). Si ofertó OnAliat SIN que se cumplan esas condiciones: no cuentes esa mención en demo_beneficios/demo_ventaja, trátala como argumento fuera de lugar en obj_objeciones, y cre_cita queda topado a máx 50 (no se evalúa el Camino A). Marca oferta_onaliat_indebida=true si detectas esto.
+6. OFERTA DE ONALIAT DENTRO DE TRADICIONAL: el asesor solo puede ofertar OnAliat (100% en línea) si (a) el prospecto lo pidió, o (b) fue último recurso ante objeción real de costo/lejanía. Si cumple esto, la llamada puede cerrar por el Camino B de cre_cita (pregunta de cierre + transferencia/seguimiento, en vez de cita a campus — el asesor no tiene permisos para matricular OnAliat directamente). Si ofertó OnAliat SIN que se cumplan esas condiciones: no cuentes esa mención en demo_modalidad/demo_ventaja, trátala como argumento fuera de lugar en obj_objeciones, y cre_cita queda topado a máx 50 (no se evalúa el Camino A). Marca oferta_onaliat_indebida=true si detectas esto.
 
 ESCALA: 100=completo y correcto. 75=incompleto o con errores menores. 50=deficiente o no evaluable por causa externa (regla 2). 25=mención mínima. 0=sin evidencia textual (nunca infieras).
 
@@ -4687,7 +4711,7 @@ Evalúa del 0 al 100 cada criterio según la Cédula QA Aliat v4.0 y responde SO
   ],
   "sin_objeciones":<true si el prospecto no presentó ninguna negativa, duda ni resistencia; false si hubo al menos una>,
   "necesidad_prospecto":{"categoria":"<ver catálogo abajo>","cita_textual":"...","detalle_otro":"<solo si categoria='otro'>"},
-  ${esTrad ? '"oferta_onaliat_indebida":<true|false — ver REGLA 6>,\n  ' : ''}"sentimiento_cliente":"<positivo|neutral|negativo>",
+  ${esTrad ? '"oferta_onaliat_indebida":<true|false — ver REGLA 6>,\n  "promo_condicionada":<true|false — ver demo_promociones>,\n  ' : ''}"sentimiento_cliente":"<positivo|neutral|negativo>",
   "logro_objetivo":<true|false>,
   "nivel_urgencia":"<critica si score<60% pts activos | revisar si 60-80% | normal si >80%>",
   "feedback_agente":"<2-3 oraciones directas al asesor, tono constructivo. NUNCA menciones criterios deshabilitados>",
@@ -4717,7 +4741,7 @@ REGLA 1 — DURACIÓN CORTA: Si la llamada duró menos de 2 minutos, la probabil
 
 REGLA 2 — PROSPECTO HOSTIL O CUELGA: Si el prospecto muestra actitud claramente negativa desde el inicio (interrumpe, cuelga pronto, se niega a escuchar), los criterios que el asesor NO alcanzó a cubrir por el corte de la llamada NO se penalizan con 0. En cambio, asigna 50 (intento incompleto por causa externa). Solo aplica cuando hay evidencia de que el prospecto fue quien cortó o impidió avanzar. NO aplica si el asesor simplemente no intentó el criterio.
 
-REGLA 3 — DEPENDENCIA SONDEO→DEMOSTRACIÓN: Si inv_sondeo recibe menos de 50, todos los criterios de DEMOSTRACIÓN (demo_beneficios, demo_economico, demo_ventaja, demo_precio, demo_empleabilidad) deben recibir como máximo 50, incluso si el asesor mencionó argumentos. Sin sondeo correcto no hay demostración bien orientada.
+REGLA 3 — DEPENDENCIA SONDEO→DEMOSTRACIÓN: Si inv_sondeo recibe menos de 50, todos los criterios de DEMOSTRACIÓN (${esTrad ? 'demo_ventaja, demo_grado, demo_modalidad, demo_promociones, demo_precio' : 'demo_beneficios, demo_economico, demo_ventaja, demo_precio, demo_empleabilidad'}) deben recibir como máximo 50, incluso si el asesor mencionó argumentos. Sin sondeo correcto no hay demostración bien orientada.
 
 REGLA 4 — OBJECIONES SIN NEGATIVA: Si el prospecto NO presentó ninguna negativa, duda, resistencia u objeción durante la llamada, asigna obj_objeciones = 75 (no aplica penalización ni premio — el asesor no tuvo oportunidad de demostrar esta habilidad). Solo asigna 0 si el prospecto SÍ presentó una objeción y el asesor la ignoró o no respondió. IMPORTANTE: peticiones para posponer, aplazar o consultar con pareja/familia/tercero ("quiero pensarlo", "lo hablo con mi esposo", "déjame consultarlo") SÍ cuentan como objeción real — NO actives esta regla de excepción en esos casos. En esos casos usa la escala propia de obj_objeciones (100/50/0 según qué tan bien respondió), nunca 75.
 
@@ -4726,7 +4750,7 @@ Notas: hizo=cuáles de los 3 elementos mencionó (solicitud/5%/condición de ins
 ${esTrad ? `
 REGLA 6 — OFERTA DE MODALIDAD ONALIAT DENTRO DE UNA LLAMADA TRADICIONAL: En llamadas de Tradicional/CORBUSÉ, el asesor puede mencionar u ofertar la modalidad OnAliat (100% en línea) ÚNICAMENTE si: (a) el prospecto la solicitó explícitamente por iniciativa propia, o (b) el prospecto presentó una objeción real de costo/economía o de distancia/lejanía, Y el asesor la ofrece como último recurso para resolver esa objeción específica.
 Si estas condiciones SÍ se cumplen, la llamada puede seguir el "Camino B" descrito en cre_cita (5.1) — el asesor no matricula directamente (no tiene permisos para eso en Tradicional), debe cerrar con una pregunta que induzca a la inscripción y luego transferir o derivar a seguimiento.
-Si el asesor menciona, promueve o vende la modalidad en línea SIN que se cumplan estas condiciones (oferta indebida): no cuentes esa mención como beneficio válido en demo_beneficios, no la cuentes como ventaja institucional en demo_ventaja, trátala en obj_objeciones como un argumento que no corresponde a lo que el prospecto pidió, Y además cre_cita queda topado a un máximo de 50 puntos, sin importar qué tan bien haya ejecutado el resto del cierre — no se le da oportunidad de puntuar por el Camino A (visita a campus) en ese caso, porque la llamada ya se desvió indebidamente.
+Si el asesor menciona, promueve o vende la modalidad en línea SIN que se cumplan estas condiciones (oferta indebida): no cuentes esa mención como beneficio válido en demo_modalidad, no la cuentes como ventaja institucional en demo_ventaja, trátala en obj_objeciones como un argumento que no corresponde a lo que el prospecto pidió, Y además cre_cita queda topado a un máximo de 50 puntos, sin importar qué tan bien haya ejecutado el resto del cierre — no se le da oportunidad de puntuar por el Camino A (visita a campus) en ese caso, porque la llamada ya se desvió indebidamente.
 Marca en el campo "oferta_onaliat_indebida" (true/false) si detectaste este comportamiento, y menciónalo explícitamente en areas_mejora si aplica.` : ''}
 
 ESCALA DE PUNTUACIÓN (aplica a todos los criterios, EXCEPTO cuando la guía de un criterio específico defina su propio conjunto de valores):
@@ -4784,17 +4808,60 @@ Puntuación: 100=preguntó o confirmó edad (y aplica bachillerato). 0=no la pre
 
 DEMOSTRACIÓN — Objetivo: Ofrecer alternativas que cubran necesidades del prospecto resaltando beneficios de Aliat.
 
-demo_beneficios (3.1) — Menciona ≥2 beneficios del programa o modalidad.
+${esTrad ? `demo_ventaja (3.1) — Ventajas competitivas de Aliat.
+Acción esperada: Mencionar al menos 2 ideas del siguiente catálogo, y al menos 1 de las 2 debe ser de empleabilidad (marcadas [EMP]). No se requieren frases exactas — cualquier forma de comunicar la misma idea cuenta.
+- Validez oficial SEP / más de 50 años de experiencia / más de 170 mil egresados
+- Docentes con experiencia real en el campo, no solo teoría
+- Libertad de elegir modalidad (presencial/ejecutiva/online) con el mismo peso y validez oficial de título
+- Grupos reducidos (dudas se resuelven al momento, aprendizaje práctico y profundo)
+- [EMP] Herramientas de inteligencia artificial para crear o mejorar tu CV
+- [EMP] Plataforma de empleabilidad, emprendimiento y desarrollo de habilidades
+Puntuación: 100=≥2 ideas Y al menos 1 es [EMP]. 50=≥2 ideas sin ninguna [EMP], O solo 1 idea en total. 0=ninguna. [Valores válidos: 100/50/0 únicamente, nunca 75/25]
+Notas: hizo=lista las ideas mencionadas marcando cuál es de empleabilidad; no_hizo=qué faltó; ejemplo=idea de empleabilidad concreta que debió mencionar.
+
+demo_grado (3.2) — Características del grado académico.
+Acción esperada: Identificar el grado de interés del prospecto (Bachillerato/Licenciatura/Maestría) y mencionar al menos 2 características oficiales validadas de ese grado:
+- Bachillerato: orientación vocacional activa (Preparatoria Aliat), pase directo a licenciatura sin examen de admisión, habilidades socioemocionales y digitales, talleres de emprendimiento y networking, campus seguros/convivencia sana, desarrollo de comunicación/pensamiento crítico/liderazgo colaborativo.
+- Licenciatura: modalidades que se adaptan al ritmo de vida (presencial/ejecutiva/online), Biblioteca Digital sin costo en libros, Office 365 incluido sin costo adicional, certificaciones intermedias que avalan competencias ante empresas mientras avanza la carrera, sin inscripción (el primer pago va directo a la mensualidad), becas académicas por promedio.
+- Maestría: networking estratégico con profesionales activos, modalidad 100% online con plataforma robusta 24/7, docentes líderes activos en su sector, plan basado en resolución de casos reales de negocio, mejores oportunidades de puestos gerenciales/mejor ingreso salarial, actualización digital profunda (proyectos remotos, colaboración en la nube, análisis de datos).
+Si el asesor menciona características que no corresponden al grado del prospecto, no las cuentes.
+Puntuación: 100=identificaste con certeza ≥2 características válidas del grado correcto. 50=solo 1. 0=ninguna, o todas de otro grado. [Valores válidos: 100/50/0 únicamente, nunca 75/25]
+Notas: hizo=lista las características mencionadas; no_hizo=cuántas faltaron; ejemplo=característica concreta que debió mencionar según el grado del prospecto.
+
+demo_modalidad (3.3) — Beneficios de la modalidad de estudios.
+Primero identifica, a partir de la transcripción, cuál modalidad es la de interés del prospecto: Presencial, Ejecutiva u Online. Puede ser porque el prospecto la mencionó explícitamente, porque el asesor la propuso y el prospecto no la corrigió, o porque el contexto de la llamada lo deja claro (ej. el prospecto dice que trabaja y busca compatibilizar horarios → Ejecutiva; dice que vive lejos o viaja mucho → Online; acaba de terminar la prepa y quiere "vivir la experiencia universitaria" → Presencial).
+Si la transcripción no da evidencia suficiente para determinar la modalidad de interés, marca este criterio como N/A.
+Acción esperada: Mencionar al menos 1 beneficio de la modalidad correcta, de cualquiera de estas ideas (no se requieren frases exactas):
+- Presencial: pensada para jóvenes que buscan vivir el ambiente del campus y la experiencia universitaria; clases diarias de lunes a viernes; inmersión total en laboratorios/talleres/clínicas (pasas de la teoría a la práctica de inmediato); relaciones y red de contactos profesional desde el primer día; guía presencial y directa del docente; campus como centro de operaciones con acceso a herramientas y espacios de estudio; horario establecido que fomenta el hábito de estudio y la convivencia social en un entorno seguro.
+- Ejecutiva: para adultos que trabajan y buscan equilibrio entre estudio y empleo; semipresencial (1-2 días a la semana en campus, resto en plataforma digital); aplicas en tu trabajo lo que aprendes en clase (resolución de casos reales); contactos de negocios — tus compañeros ya están insertos en la industria; mentoría práctica en sesiones de alto impacto semanal; combina la disciplina de asistir al campus con la flexibilidad de acudir solo un día.
+- Online: para perfiles autónomos, que viajan mucho o viven lejos de un campus; 100% digital, sin necesidad de asistir al campus; libertad absoluta de decidir el lugar y la hora de estudio 24/7 (no dependes de transporte ni horario fijo); red nacional de contactos con alumnos y expertos de todo el país; tutores digitales y mentores que guían paso a paso a través de la plataforma; desarrollo de competencias digitales (autogestión, dominio de plataformas) que las empresas exigen hoy.
+Si el asesor menciona un beneficio de una modalidad distinta a la de interés detectada, no lo cuentes.
+Puntuación: 100=mencionó ≥1 beneficio de la modalidad correcta. 0=no mencionó ninguno, o solo mencionó beneficios de otra modalidad. N/A=no hay evidencia suficiente en la transcripción para determinar cuál modalidad es la de interés del prospecto. [Valores válidos: SOLO 100, 0 o "N/A", nunca 50/75/25]
+Notas: hizo=cita el beneficio mencionado y la modalidad detectada; no_hizo=confirma que no mencionó ninguno, o que se marcó N/A por falta de evidencia; ejemplo=beneficio concreto que debió mencionar según la modalidad detectada.
+
+demo_promociones (3.4) — Promociones.
+Acción esperada: Mencionar al menos 1 promoción vigente: kit de apoyo estudiantil sin costo, titulación sin costo (según campus), 4ª colegiatura con 50% de descuento, convenio empresarial/institucional 10%, seguro estudiantil + RVOE del 1er ciclo incluidos, beca hasta 45% por promedio/situación, bootcamps aplicables, 50% de descuento en curso de inglés, o 30% de descuento en uniformes.
+⚠️ La promoción de descuento en uniformes NO aplica en todos los casos (depende de campus/programa/vigencia) — si el asesor la mencionó, marca "promo_condicionada":true. El descuento de inglés no requiere esta marca.
+Puntuación: 100=mencionó ≥1 promoción. 0=no mencionó ninguna. [BINARIO — Valores válidos: SOLO 100 o 0, nunca 50/75/25]
+Notas: hizo=cita la promoción mencionada; no_hizo=confirma que no mencionó ninguna; ejemplo=promoción concreta que debió mencionar.
+
+demo_precio (3.5) — Manejo de precio.
+Acción esperada: El asesor debe explicar, en cualquier orden:
+1. Pago inicial — cuánto es el primer pago para quedar formalmente inscrito.
+2. Parcialidades — el monto de las mensualidades siguientes.
+3. Desglose — SOLO cuenta si el prospecto preguntó explícitamente cómo se compone un descuento/beneficio; en ese caso el asesor debe explicarlo (ej. porcentajes que lo integran).
+Si el prospecto no preguntó por el desglose, ese elemento no aplica y no cuenta como faltante (evalúa solo pago inicial + parcialidades). Los montos varían por programa — no evalúes si el monto es correcto, solo si el asesor explicó los elementos aplicables.
+Puntuación: si el prospecto preguntó por el desglose (aplican 3 elementos: pago inicial, parcialidades, desglose): 100=explicó los 3. 66=explicó 2. 33=explicó 1. 0=ninguno. Si NO preguntó por el desglose (aplican 2 elementos: pago inicial, parcialidades): 100=explicó los 2. 50=explicó 1. 0=ninguno. [Valores válidos: 100/66/50/33/0 según el caso, nunca fuera de esta escala]
+Notas: hizo=qué elementos mencionó con cita textual; no_hizo=cuál faltó; ejemplo=frase para el elemento omitido.` : `demo_beneficios (3.1) — Menciona ≥2 beneficios del programa o modalidad.
 Acción esperada: Identificar el grado académico de interés del prospecto (Bachillerato, Licenciatura o Maestría) y mencionar al menos 2 beneficios concretos y específicos — ya sea del grado, de la modalidad, o una combinación de ambos. Hay beneficios que aplican a cualquier grado (grupos reducidos, modalidades flexibles presencial/ejecutiva/online, RVOE Federal, docentes con experiencia laboral real, Bolsa de Trabajo), beneficios exclusivos de cada grado, y (solo si la modalidad es 100% en línea) beneficios propios de esa modalidad:
 - Bachillerato: orientación vocacional activa, pase directo a licenciatura sin examen de admisión, habilidades socioemocionales y digitales, talleres de emprendimiento y networking, campus seguros, ALEKS con IA, acompañamiento académico.
 - Licenciatura: certificaciones intermedias por materia, Biblioteca Digital, Office 365 incluido sin costo, sin inscripción ni reinscripción, becas académicas por promedio, laboratorios y aulas especializadas por carrera (Cámara de Gesell, Sala de Juicios Orales, taller de Ing. Industrial, Aula MAC, laboratorio de Ing. Civil, etc.), enfoque práctico, adelanto de materias para reducir tiempo total.
 - Maestría: resolución de casos reales de negocio, networking estratégico con profesionales activos, plataforma disponible 24/7, profesores líderes activos en sus sectores, actualización digital profunda, visión estratégica y competencias de alta dirección.
 - Modalidad 100% en línea (solo OnAliat): el asesor transmite la idea de que el prospecto puede estudiar sin conectarse en horarios fijos ni asistir en vivo — por ejemplo, mencionando que las clases son asíncronas, que quedan grabadas para verlas después, que no hay necesidad de trasladarse, o que el horario es totalmente flexible. No se requiere una frase textual exacta ni mencionar los cuatro ejemplos — cualquier forma de comunicar esa idea de flexibilidad/asincronía cuenta como un beneficio válido de esta categoría (no cuentes lo mismo dos veces si el asesor solo repite la misma idea con distintas palabras).
 Si el asesor menciona beneficios que no corresponden al grado del prospecto (ej: habla de certificaciones intermedias a alguien de bachillerato), no los cuentes. Si menciona beneficios genéricos no identificables con certeza ("es muy completa", "aprenderás mucho", "tenemos buenas instalaciones", "tenemos online"), no los cuentes.
-${esTrad ? '' : '⚠️ SOLO PARA ONALIAT: dado que la modalidad en línea ES el producto que se está ofertando en esta llamada, al menos 1 de los 2 beneficios mencionados debe ser específicamente de la modalidad en línea (de la categoría de arriba) — no basta con mencionar 2 beneficios de grado académico sin tocar nada de la modalidad.\n'}Puntuación (${esTrad ? 'Tradicional/CORBUSÉ' : 'OnAliat'}): ${esTrad
-  ? '100=identificaste con certeza ≥2 beneficios concretos del grado correcto. 50=solo 1 beneficio concreto del grado correcto. 0=ningún beneficio concreto identificado con certeza o todos los mencionados corresponden a otro grado.'
-  : '100=≥2 beneficios concretos, de los cuales al menos 1 es de la modalidad en línea. 50=mencionó ≥2 beneficios de grado pero ninguno de modalidad en línea, O mencionó solo 1 beneficio concreto en total (sea de grado o de modalidad). 0=ningún beneficio concreto identificado con certeza.'} [Valores válidos: 100/50/0 únicamente, nunca 75/25]
-Notas: hizo=lista los beneficios concretos mencionados (indicando si son de grado o de modalidad); no_hizo=cuántos faltaron${esTrad?'':' y, si es OnAliat, si faltó el de modalidad'}; ejemplo=dos beneficios concretos que debió mencionar según el grado${esTrad?'':' y/o modalidad'} del prospecto.
+⚠️ SOLO PARA ONALIAT: dado que la modalidad en línea ES el producto que se está ofertando en esta llamada, al menos 1 de los 2 beneficios mencionados debe ser específicamente de la modalidad en línea (de la categoría de arriba) — no basta con mencionar 2 beneficios de grado académico sin tocar nada de la modalidad.
+Puntuación (OnAliat): 100=≥2 beneficios concretos, de los cuales al menos 1 es de la modalidad en línea. 50=mencionó ≥2 beneficios de grado pero ninguno de modalidad en línea, O mencionó solo 1 beneficio concreto en total (sea de grado o de modalidad). 0=ningún beneficio concreto identificado con certeza. [Valores válidos: 100/50/0 únicamente, nunca 75/25]
+Notas: hizo=lista los beneficios concretos mencionados (indicando si son de grado o de modalidad); no_hizo=cuántos faltaron y si faltó el de modalidad; ejemplo=dos beneficios concretos que debió mencionar según el grado y/o modalidad del prospecto.
 
 demo_economico (3.2) — Costos, promociones o descuentos.
 Acción esperada: Mencionar solo diferenciadores económicos autorizados.
@@ -4826,7 +4893,7 @@ demo_empleabilidad (3.5) — Dato duro de empleabilidad.
 Acción esperada: Indicar al menos un dato duro.
 Frases ejemplo: "84% de nuestros estudiantes trabajan en su campo de estudio." / "97% de nuestros egresados consiguen empleo a los 6 meses."
 Puntuación: 100=citó al menos un dato duro de empleabilidad. 0=no lo mencionó. [BINARIO — Valores válidos: SOLO 100 o 0, nunca 50/75/25]
-Notas: hizo=cita textual el dato de empleabilidad mencionado; no_hizo=confirma que no citó ningún dato duro; ejemplo=dato concreto según la carrera (ej: tasa de ocupación IMCO, rango salarial inicial).
+Notas: hizo=cita textual el dato de empleabilidad mencionado; no_hizo=confirma que no citó ningún dato duro; ejemplo=dato concreto según la carrera (ej: tasa de ocupación IMCO, rango salarial inicial).`}
 
 MANEJO DE OBJECIONES — Objetivo: Ofrecer argumentos de valor para cada objeción.
 
@@ -5108,7 +5175,7 @@ function renderResultado(r, transcripcionCompleta) {
   const antiguedad = calcularAntiguedad(hcFechaIng, r.fecha);
   const metaPill = (label, val, mono=false, color=null) =>
     `<div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase">${label}</span><span style="font-size:13px;font-weight:700;${mono?'font-family:var(--mono);':''}color:${color||'var(--text)'}">${val||'—'}</span></div>`;
-  document.getElementById('resultado-container').innerHTML=`${alertHtml}<div class="card" style="margin-top:${alertHtml?'12px':'0'}"><div class="result-hero"><div class="score-donut ${dc}"><span class="score-num">${scoreDisplay}</span></div><div class="result-info"><h2>${nombreCompleto||r.agente} — Calidad ${nivel}</h2><div class="tags">${modeloTag}<span class="tag ${tc}">${nivel}</span><span class="tag ${sc}">Prospecto ${r.sentimiento_cliente}</span><span class="tag ${r.logro_objetivo?'tg':'tr'}">${logroTxt}</span>${durStr}${r.tipo?`<span class="tag tc">${r.tipo}</span>`:''}${r.campana?`<span class="tag tc">${r.campana}</span>`:''}</div></div><div style="margin-left:auto;padding-right:8px">${topBtn}</div></div>
+  document.getElementById('resultado-container').innerHTML=`${alertHtml}<div class="card" style="margin-top:${alertHtml?'12px':'0'}"><div class="result-hero"><div class="score-donut ${dc}"><span class="score-num">${scoreDisplay}</span></div><div class="result-info"><h2>${nombreCompleto||r.agente} — Calidad ${nivel}</h2><div class="tags">${modeloTag}<span class="tag ${tc}">${nivel}</span><span class="tag ${sc}">Prospecto ${r.sentimiento_cliente}</span><span class="tag ${r.logro_objetivo?'tg':'tr'}">${logroTxt}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${durStr}${r.tipo?`<span class="tag tc">${r.tipo}</span>`:''}${r.campana?`<span class="tag tc">${r.campana}</span>`:''}</div></div><div style="margin-left:auto;padding-right:8px">${topBtn}</div></div>
 <div style="display:flex;gap:20px;padding:12px 24px;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap">
   ${metaPill('Asesor', nombreCompleto || (hcNoEncontrado ? `${r.agente} ⚠️` : r.agente))}
   ${hcPosicion   ? metaPill('Posición',   hcPosicion)   : ''}
@@ -5644,7 +5711,7 @@ async function iniciarBatch() {
         console.warn(`Batch: ${batchErrConsecutivos} errores consecutivos — rotando key proactivamente`);
         await rotarGroqKey();
         batchErrConsecutivos = 0;
-        await new Promise(r => setTimeout(r, 5000));
+        await esperar(5000);
       }
     }
 
@@ -5661,7 +5728,7 @@ async function iniciarBatch() {
     const tanda = pendientesIdx.slice(k, k+concurrencia);
     await Promise.all(tanda.map(idx => procesarItem(batchQueue[idx], idx)));
     if (k+concurrencia < pendientesIdx.length && !batchStop) {
-      await new Promise(r => setTimeout(r, delay));
+      await esperar(delay);
     }
   }
 
@@ -5793,7 +5860,7 @@ function agregarResultadoBatch(item) {
         <div class="tags" style="flex-shrink:0">
           <span class="tag ${s>=80?'tg':s>=60?'ty':'tr'}">${niv}</span>
           <span class="tag ${r.sentimiento_cliente==='positivo'?'tg':r.sentimiento_cliente==='negativo'?'tr':'tb'}">Cliente ${r.sentimiento_cliente}</span>
-          <span class="tag ${r.logro_objetivo?'tg':'tr'}">${r.logro_objetivo?'✅ Cerró':'❌ Sin cierre'}</span>
+          <span class="tag ${r.logro_objetivo?'tg':'tr'}">${r.logro_objetivo?'✅ Cerró':'❌ Sin cierre'}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}
           ${urgBadge}
         </div>
         <button class="btn-sm" onclick="verDetalle(${r.id})">Ver detalle</button>
@@ -6592,7 +6659,7 @@ async function analizarNecesidadesHistorial() {
   for (let i = 0; i < candidatos.length; i += concurrencia) {
     const tanda = candidatos.slice(i, i+concurrencia);
     await Promise.all(tanda.map(procesarUno));
-    if (i + concurrencia < candidatos.length) await new Promise(r => setTimeout(r, pausaMs));
+    if (i + concurrencia < candidatos.length) await esperar(pausaMs);
   }
 
   if (statusEl) statusEl.textContent = `Listo: ${hechos} analizada(s), ${errores} con error.`;
@@ -6922,7 +6989,7 @@ function renderAntiguedadScatter(data) {
   const ETAPAS_REP = [
     { label: 'Apertura',             keys: ['ap_presentacion','ap_datos','ap_parentesco','ap_nombre'] },
     { label: 'Investigación',        keys: ['inv_estudios','inv_sondeo','inv_edad'] },
-    { label: 'Demostración',         keys: ['demo_beneficios','demo_economico','demo_ventaja','demo_precio','demo_empleabilidad'] },
+    { label: 'Demostración',         keys: ['demo_beneficios','demo_economico','demo_ventaja','demo_precio','demo_empleabilidad','demo_grado','demo_modalidad','demo_promociones'] },
     { label: 'Manejo de Objeciones', keys: ['obj_objeciones','obj_referidos'] },
     { label: 'Cierre',               keys: ['cre_cita','cre_matricula','cre_seguimiento','cre_crm'] },
     { label: 'Etiqueta',             keys: ['etq_personalizacion','etq_plantillas','etq_respuesta','etq_conflicto','etq_control'] },
@@ -7420,7 +7487,7 @@ async function generarPlanIA() {
   const ETAPAS_KEYS_MAP = {
     'Apertura':             ['ap_presentacion','ap_datos','ap_parentesco','ap_nombre'],
     'Investigación':        ['inv_estudios','inv_sondeo','inv_edad'],
-    'Demostración':         ['demo_beneficios','demo_economico','demo_ventaja','demo_precio','demo_empleabilidad'],
+    'Demostración':         ['demo_beneficios','demo_economico','demo_ventaja','demo_precio','demo_empleabilidad','demo_grado','demo_modalidad','demo_promociones'],
     'Manejo de Objeciones': ['obj_objeciones','obj_referidos'],
     'Cierre':               ['cre_cita','cre_matricula','cre_seguimiento','cre_crm'],
     'Etiqueta':             ['etq_personalizacion','etq_plantillas','etq_respuesta','etq_conflicto','etq_control'],
@@ -7632,11 +7699,11 @@ function _renderSliders() {
           {key:'inv_edad',     num:'2.3', label:'Pregunta edad (aplica bachillerato)'},
         ]},
         {etapa:'demostracion',  emoji:'🎯', label:'Demostración (20 pts)',  items:[
-          {key:'demo_beneficios',   num:'3.1', label:'Menciona ≥2 beneficios del programa o modalidad'},
-          {key:'demo_economico',    num:'3.2', label:'Indica ≥1 diferenciador económico'},
-          {key:'demo_ventaja',      num:'3.3', label:'Menciona ≥1 ventaja competitiva de Aliat'},
-          {key:'demo_precio',       num:'3.4', label:'Manejo de precios'},
-          {key:'demo_empleabilidad',num:'3.5', label:'Menciona ≥1 argumento de empleabilidad'},
+          {key:'demo_ventaja',     num:'3.1', label:'Menciona ≥2 ventajas competitivas, 1 de empleabilidad'},
+          {key:'demo_grado',       num:'3.2', label:'Menciona ≥2 características del grado académico'},
+          {key:'demo_modalidad',   num:'3.3', label:'Beneficio de la modalidad de estudio'},
+          {key:'demo_promociones', num:'3.4', label:'Menciona ≥1 promoción vigente'},
+          {key:'demo_precio',      num:'3.5', label:'Manejo de precio (pago inicial, parcialidades, desglose)'},
         ]},
         {etapa:'objeciones',    emoji:'🛡', label:'Manejo de Objeciones (10 pts)', items:[
           {key:'obj_objeciones', num:'4.1', label:'Utiliza argumento del objecionario'},
@@ -7961,7 +8028,7 @@ function renderTopCalls() {
       <span style="font-size:22px">⭐</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;margin-bottom:4px">${h.agente} <span style="color:var(--muted);font-size:11px">· ${h.fecha}</span></div>
-        <div class="tags">${modeloTag}${prob}${dur}<span class="tag ${h.logro_objetivo?'tg':'tr'}">${h.logro_objetivo?'✅ Cerró':'Sin cierre'}</span></div>
+        <div class="tags">${modeloTag}${prob}${dur}<span class="tag ${h.logro_objetivo?'tg':'tr'}">${h.logro_objetivo?'✅ Cerró':'Sin cierre'}</span>${h.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">✓ ${(h.fortalezas||'').slice(0,80)}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
@@ -8211,7 +8278,7 @@ const CORTES_DEF = [
 const ETAPAS_PQ = [
   {label:'Apertura',     keys:['ap_presentacion','ap_datos','ap_parentesco','ap_nombre']},
   {label:'Investigación',keys:['inv_estudios','inv_sondeo','inv_edad']},
-  {label:'Demostración', keys:['demo_beneficios','demo_economico','demo_ventaja','demo_precio','demo_empleabilidad']},
+  {label:'Demostración', keys:['demo_beneficios','demo_economico','demo_ventaja','demo_precio','demo_empleabilidad','demo_grado','demo_modalidad','demo_promociones']},
   {label:'Objeciones',   keys:['obj_objeciones','obj_referidos']},
   {label:'Cierre',       keys:['cre_cita','cre_matricula','cre_seguimiento','cre_crm']},
   {label:'Etiqueta',     keys:['etq_personalizacion','etq_plantillas','etq_respuesta','etq_conflicto','etq_control']},
@@ -8688,6 +8755,9 @@ function exportarCSV() {
     {key:'demo_ventaja',      label:'Ventaja competitiva'},
     {key:'demo_precio',       label:'Manejo de precio (5 puntos)'},
     {key:'demo_empleabilidad',label:'Argumento empleabilidad'},
+    {key:'demo_grado',        label:'Características del grado académico'},
+    {key:'demo_modalidad',    label:'Beneficio de la modalidad de estudio'},
+    {key:'demo_promociones',  label:'Promociones'},
     {key:'obj_objeciones',    label:'Manejo de objeciones'},
     {key:'obj_referidos',     label:'Solicitud de referidos'},
     {key:'cre_cita',          label:'Agenda cita (≤3 días)'},
