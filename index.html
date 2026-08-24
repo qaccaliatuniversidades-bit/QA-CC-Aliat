@@ -581,43 +581,20 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
   </div>
 </div>
 
-<!-- SETUP OVERLAY (Groq API Key) -->
+<!-- SETUP OVERLAY (Gemini API Key) -->
 <div class="setup-overlay hidden" id="setup-overlay">
   <div class="setup-box">
     <div style="text-align:center;margin-bottom:24px;padding:12px 0;border-bottom:1px solid var(--border2)">
       <img src="data:image/webp;base64,UklGRnYNAABXRUJQVlA4TGoNAAAv/UEREAekKACaiFrrZRmj3V/9rQSwCgohWaHuIYQfQjY/hSaCABS1kQKNgzWHCnzDDwWnQbaRanCn8P5y/wQvIEloQO7ozwOWA5wMYgqgHCAyeN5K17dQuvJe6RqRStddV7pSUrpa2hiHQIAi/d+NCRExAaCa8rCGgrXtaRsrXG63ECiTtxAuN1yG0IQ5nSmDth59kmHmgi/+iui/Q8lW6uZcyJPYpHUyFvkCWrbtVpGkKfiJMcZmCv3V82PqIF0JR1V9yxH9lyjZbt02h7ITpa8LEAQpkO4HwI5su23TEnJgAGpT6+RLACmHP7yI/jtwG0lSUnsBvagQvVdv7wfYfw8qdZiIhrliySP7zWkyLFVkP2Wv2Q/rKmKnA1LxsBEl7bPHwgLRuFIR8SbiKXvt0cNTHHrsR8LRxP7hsR1m+EAJHGAcSPvhCes0uFpde3vk8f3z8Qj/Xp50+hLa34qiSjXbemDw9KnUxyAKYalasdRAOuWijqo9W8r4/XPC4yGsT2rFiSo9Rv1aUV+lpoWkrOp5jF7KlwJtpu4anyKWp3kZIuYr+dX2N1C+mOeJd35lSvyj+P4JGsI1+22hf3X7laIh1SzD9Usbh++EdpLjNpKe+levp0UZIuYr7dX2N7C+mBeJd35lSvkDX2+n0EKqXhRM9Eqj3VGtetlqqyC57ABsfq7jr84Y/f3hQEgo9Rsl+TuGDzEurs8L6U4V76RhDaYB8oddTIcADzinEPdbf0sGH8DzgPY4kE3uSdopdeDmzu8nKrAm3oyypoN0eS5tPBZQp5CBw78lz+hEFOcI6aSacJXwlzPHOWfUAsqWgHYtKwiwgrfj/dq8j3/Jb/mXMRRchARVYLvHdBCtpY80tWCwQDvPsimYzwv5h7R/Gc9wxcAAvdKENtOHalatyrUWHKwcVn904PyYGYAaRaoyI/RhJNo1zxWN3kz/GsbwgUzGCUfoXh0JBQlUt6aR2FdFX3r+a3jk/JCWkxxKbqlWJgmXnDzQhUyzHrLE8riqoKM4VHSM3AnIBq5U256tAI80Axef9rK2Nq7R9oAqfNEsPIRXmhPjwcw4K9d2rdVqdiaIXtQcZHYoRzsvaztWGKh5yIrjvJYdWQDpHq+Jy4JMeo3vbXMq3HY8okarSUEqbY3XkKjlRbZPMLcUl9CqybjjZPAeYBhqOhruauDHdQwvKzvZ2kkVGloziOw5r4yLteZgsmoP9VWzCYRrrc56dL9AG0XIdPYI7Gtx0gkVVvANiViqV7C/JwlX+gVbE75JQNPYZFyF9hL/CVYCOzPT0mpzgFcO3MFxEgtITyW7uvt0VQAg12Q6Gp5mKMwOM51wx2v0ulDaPg/smDWCRHg5BfYHI0TUb0SeFwjjYlDTsHVRhWtYWkaQ+BVbwn6ArUok0TMoovx5aSTFOnqpCo7hCK4MKH0LEN2dW0WDlxgGBY+9sKGyhNsFPP6YAxrnOHaoeVQaCIuNPidgpL89ZjyQ2Mysv4rtJ9XuIK5fDPA621o8ahQ4pr2VRRRXRBhM0l6YqDU8BdjU9oMIr5jMNL2ekS7ulbaWoavEbkEmlQjLtC8gPy/RTdYSIiov4ODhkAhhStOJNnGyb6OQaSSScN1tnqbgKrHLt4knoUC7jXb/OkhyghiNyBQd7fxRqMLcaYDK7HBSiDw4DUVI4+6LJIAO6Ia1dkeM56mtYE0H80wj6nmsgnkGOLyRBcheD4mB3JU6MuByFbol82x9Bfp44oZX22gic5Qp0PizdBJocGw7AQ9uYX9tIBaqoGcVwD4ek5jFJEyCpLCKRDzfmVXIBgzE2clTDcRVmUtaDEGTYAsLNGn+8SdPjqucXioyjRFeOUjJeDhyokPh/vrinC5vJNYpUtmS6EUFD5NpMrMH8vDlo5DFg9BpScBO8XYwGQWOfBBBw3EG6tVFokZWKLLEVURFnGB5y79F4VOY48AFqVgTMEBwMLgGc6LHnfSD83QIs4piZzveP5WTZajM+R1avln8ZjoboIgEaGYqgSlMO0B+mCYqKhIb6Tvpng/o4eRY2Ji1RBQWVGSFJuBlD7iBxD0SsuHWgSEK6xvA0+WTMloLzoJgoNxiG0GCORUJx46ZBcpcYfOZatMcJyorU8FxDvR9qUYcpF6BiX12SDjSeYr7zAa0OKQNkW7MfstNYBeTgBn8Lebiuk3nnqQwKQM2zUNyB26lZn5v75BmOohZVSp+CXbdI1MEOqU22DEyF5NV7edNdEUUSNjBxycY5E6hxkDkAE6UzulS4iOnYsxnWmOcEqwB4wlwqpQjeYCIbLOKjB9DRmSp5UxHRyoFUfAcZIpvoH5Ezi6Jj1oyIZjARuzhbHCokyu7T2iiIM5haawHiENKmGgCfbhMkw6VvA2ss2tYmZ5T9pQarBM+hC2tv4HyER5gHY7azIf2KkKj9UjVbF54JecoyWsAHvhI2GoDlSEhWLVEQhFaExY6RHQt0X1g+/HTUpvyZGGVMUPuIrUnsKD37BXYBCqS5/h9vNStcLA5Qj2v7WkK2grzVNJSNZ4MQQGUV7aCjp2A9oY2toIlr4Pm4dCZGU4ZK85A9M6Z3BcgTUyZ3P8Ad4gV5jIPVCieT/ngGWXR+owaNvwrQywoVM8jscxooPOamRNYnHY6iHx5mGowQejryLRAji2di4deq/us9R1YB0vBgy/RIx2rmpZ1mCVFOX8qme8BtWIWn3bOo+s8o05ju4JVv1obCabeXx6JXj+e9V40Lodnalr53A6Qk3FuLYqm64x25mpo6XL6HQiPgY6EH+HDYl2Lmd+Ojq+ZRJqndrRUafOwz5+xaTiZmcyyX6nN0TuiDA49FpwOuRYh2FR0M7JDUJkCeUephc+aSNLhpuLJLRv89WdQuXnnyWebSOcblzNBD1Lfm4ul8tHgVSgavJhxonkp7gVmkizpI1AYPA9FLchTMdnRJCjmAaoAjt0j7ed0eKonA71jwqe/KLFaoY6h/ouQKZNaOAhVCdH4TWTEDGhaxDnDCDEVHaRtxWEWDn6KLZlhNt1EGuchyc/gHiSCn4AW+l5IHl+qTPtacoUZBNRSV5mQKV+b5NmuhW88w2fIgrRtyS244Ih3lpGImegmfqRgm0XhEkuHiYrUwLqxTca/HPDebIlzGT+gtiT4oTTRcm5w+xI+FWhTTAYZUBRV5EXRVkE9c0GEB9k+jaIVjtC93vXWm6sSZjhTwk3AFINhdtmzQBEFD0O//szDLuE3olrBPhPQg+6A3ZhoQlfEiVdQNb1fBJTJ0V8CguyTojzy1AFZnES4CUycSTQV65wNYACNSP+GBCQscjzCVKOpJKMVPjRkUKnopRzSFzQWZwJ6cBP6qgtf0ASvIElb0GhbAOMucZOwUXS5Y4Nbol10XVkEuDvJAQtQ7SR2quanbU4Ii8p19wN+3V3kAorKjbIJnhqhW4vMTDwmiSiCnfNqTiz4NJsK2EfWnEEYQTzrEVU/7rSPZSsMY1WKzXpRVIdK8gXJdCmqPFVSqGfkZQ7e75KHhtgCsCvhUf42WpbgkZC+42TNTAUZAv4WUx3koDN04w5WlfkBzQn2pGvskTp+X0RHmAw8Dhpkiwrr8Uhia79VRHSwixpP4rMgUIaoDp1PGwwPHkyBUUiunfAx1L2a0JkDO4UTxGmggNwFn5nloSzIrHKCmgF2eXfcMsKliSSTgSeKhxu45bAZ6mpieb4SEemiVL0t2u1KMdqk7XBI/tL//LQMqqKDOl++55NYlQ9nDnaus+aYCjusqf1j+6KqSH1wO6gFTsISHx6W6WGgV1NEslv2t8XtNbYWCtwoqCmmfRDjEGFAz3ThYZIdXT22aEST8ivtctSqAUL+CYFdfQpYVGYAm7eOdVaNlB/dWye05Vga9pDcbcyjGvRaCowQLvRKxhZRN/oBW4eV7SQX91HQ6wdYRyMf5g6pHQ7/RZpLOrEuYlksQQOcojr9SjSlX4cn6H1eb+HYuuKYufKLIoEnnbtRIQ1xc8ANr31ntIv9SNxlxgjVPY73X+akk0xFmG+id8P9E3ZVFc5VocO3L3WG2BXxqcDyEIQRVJtT1YFKCdsnEnzKUSkeSf0hkg/FaC2ApsEs0yu+iGAbNmEosgTpRUZn98aLStzOqIj9SNxFgV2jeN8VwV5rhyYK+h04QeN/sM8r8vCRbvsNQVlUDMCic3Mfq0z5QJ1f420qzHMrznwbxCwC1YfdRgm3iftEVm6TMIuSZ4SPlp2Arv9/qbaxfwU32cPjM0dbD/hlWp1EzXK8mWv0c/bLy4Ssuhxx1PKqdlEuUva6ePmYi1kM9x/YQiq2RT/n86BbeVoK37VpjXgdt6Le+PXJoEg847SbC2bE0A9tU3y/rG5sE62viLchhofwzOwF+iWzm9r0G1JgRxNsDaeXlm5tqhPtBA0Q2mWkrcIdfLk4vhyklgvMjkpb1z26IYxFgpNGvLJ6gqsMI7KpG0FZxKYmG4t+oU/l7u8uM8zOandrnYu0RZKWlLjA1VIuy2yw5uemfZN+5ltA5jxCOQm/DzvMlEOUh8jtIJvtPKEkkw13IuXWx7vEbLVmXXI888x2a2HKg217ZhbZf8rLAA==" alt="Aliat Universidades" style="height:52px;object-fit:contain" />
     </div>
     <h2>⚙️ Configuración inicial</h2>
-    <p class="sub">Configura las API keys del proveedor(es) que quieras usar. Puedes tener solo uno, o ambos.</p>
+    <p class="sub">Configura tu API key de Gemini para transcribir y evaluar llamadas.</p>
 
     <div class="setup-field" style="background:rgba(91,156,246,.06);border:1px solid rgba(91,156,246,.25);border-radius:10px;padding:12px 14px">
-      <label>Proveedor activo para evaluaciones</label>
-      <select id="select-proveedor-ia" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:13px;padding:8px 10px;margin-top:6px">
-        <option value="groq">Groq</option>
-        <option value="gemini">Gemini</option>
-      </select>
-      <p class="hint" style="margin-top:6px">Determina cuál de los dos usa la evaluación de llamadas. Cámbialo aquí cuando quieras — no requiere borrar las keys del otro.</p>
-      <label style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer;">
-        <input type="checkbox" id="chk-transcripcion-fallback" checked style="width:auto;">
-        <span style="font-size:12px; color:var(--muted);">Al transcribir audio: si el proveedor activo falla, intentar automáticamente con el otro (si tiene key configurada)</span>
-      </label>
+      <p style="color:var(--muted);font-size:12px">🔒 Por política de seguridad de la información, este sistema usa exclusivamente <b>Google Gemini</b> como proveedor de IA — no se envían audios ni transcripciones a ningún otro proveedor.</p>
     </div>
 
     <div class="setup-field">
-      <label>Groq API Key principal</label>
-      <input type="password" id="key-groq" placeholder="gsk_..." />
-      <div class="hint">Entra a <a href="https://console.groq.com" target="_blank">console.groq.com</a> → Cuenta gratis → API Keys → Create API Key</div>
-    </div>
-    <div class="setup-field" id="keys-adicionales-wrap" style="display:none">
-      <label>Groq — keys adicionales (rotación automática al llegar al límite)</label>
-      <div id="keys-adicionales-list"></div>
-      <button onclick="agregarKeyAdicional()" style="margin-top:6px;padding:5px 12px;background:transparent;border:1px dashed var(--border2);border-radius:6px;color:var(--muted);font-family:var(--font);font-size:11px;cursor:pointer">+ Agregar key</button>
-    </div>
-    <div style="margin-bottom:12px">
-      <button onclick="toggleKeysAdicionales()" style="padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--muted);font-family:var(--font);font-size:11px;cursor:pointer" id="btn-toggle-keys">+ Agregar más keys de Groq (rotación automática)</button>
-    </div>
-
-    <div class="setup-field" style="border-top:1px solid var(--border2);padding-top:16px;margin-top:4px">
       <label>Gemini API Key principal</label>
       <input type="password" id="key-gemini" placeholder="AIza..." />
       <div class="hint">Entra a <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com</a> → Create API Key (nivel gratuito)</div>
@@ -632,8 +609,8 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
     </div>
 
     <div class="setup-field" style="background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:10px;padding:12px 14px">
-      <p style="color:#34d399;font-size:12px;font-weight:600">✅ Con 5 keys de cualquiera de los dos proveedores: rotación automática en caso de límite</p>
-      <p style="color:var(--muted);font-size:11px;margin-top:6px">💡 Solo necesitas llenar UNO de los dos proveedores para que la app funcione. Si eres evaluador, el Administrador ya configuró las keys — intenta recargar la página.</p>
+      <p style="color:#34d399;font-size:12px;font-weight:600">✅ Con 5 keys de Gemini: rotación automática en caso de límite</p>
+      <p style="color:var(--muted);font-size:11px;margin-top:6px">💡 Si eres evaluador, el Administrador ya configuró las keys — intenta recargar la página.</p>
     </div>
     <button class="btn-save" onclick="guardarKeys()">Guardar y comenzar →</button>
   </div>
@@ -776,6 +753,38 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
     </div>
   </div>
 </div>
+
+<!-- CITAS (KPIs de negocio) MODAL -->
+<div id="citas-overlay" class="hidden" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:28px;width:640px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,.5)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-shrink:0">
+      <div style="font-weight:700;font-size:15px">📈 Cargar reporte de citas (KPIs de negocio)</div>
+      <button onclick="cerrarCitas()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px">×</button>
+    </div>
+    <div style="overflow-y:auto">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Sube el Excel de "Cumplimiento de citas". Lee automáticamente las hojas <code>_modelo_creadas_fcst</code>, <code>_modelo_programadas</code> y <code>_modelo_asistencias_fcst</code> (si el archivo las trae ocultas, no importa) — traen el histórico completo día por día, así que <b>una sola carga guarda todas las semanas que incluya el archivo</b>, no solo una. Se calcula, por agente y por semana: <b>alcance de metas</b> (Real ÷ Objetivo de Citas Programadas) y <b>tasa de asistencia</b> (Asistencias ÷ Citas Creadas). El cruce con el nombre de cada asesor usa el mismo Headcount que ya tienes cargado.</p>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Año que corresponde a este reporte</label>
+        <input id="citas-anio-input" type="number" value="2026" style="width:120px;margin-top:6px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font);font-size:13px">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Las semanas del archivo (S18, S19...) no traen el año explícito — se asume que todo el reporte es de un mismo año.</div>
+      </div>
+      <div id="citas-drop-zone" style="border:2px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border .18s;margin-bottom:16px" onclick="document.getElementById('citas-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--blue)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="citasOnDrop(event)">
+        <div style="font-size:28px;margin-bottom:8px">📁</div>
+        <div style="font-size:13px;color:var(--muted)">Arrastra el archivo .xlsx aquí o <span style="color:var(--blue)">haz clic para seleccionar</span></div>
+        <input type="file" id="citas-file-input" accept=".xlsx,.xls" style="display:none" onchange="citasOnFileSelect(this.files[0])">
+      </div>
+      <div id="citas-status" style="font-size:12px;min-height:20px;margin-bottom:16px"></div>
+      <div id="citas-preview" style="display:none;background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:16px;max-height:200px;overflow-y:auto">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px" id="citas-preview-title"></div>
+        <div id="citas-preview-list" style="font-size:11px;color:var(--text);line-height:1.8"></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-shrink:0">
+        <button onclick="cerrarCitas()" style="padding:8px 20px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-family:var(--font);font-size:13px;cursor:pointer">Cancelar</button>
+        <button id="citas-save-btn" onclick="guardarCitas()" disabled style="padding:8px 20px;background:var(--blue);border:none;border-radius:8px;color:#fff;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;opacity:.5">Guardar en Firestore</button>
+      </div>
+    </div>
+  </div>
+</div>
 <button id="btn-volver" onclick="volverPaginaAnterior()">← Volver</button>
 
 <!-- HEADER -->
@@ -807,6 +816,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
       <button id="menu-admin-btn" onclick="abrirAdmin()" style="display:none;width:100%;padding:9px 14px;background:none;border:none;color:var(--text);font-family:var(--font);font-size:13px;text-align:left;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">👥 Gestión de usuarios</button>
       <button onclick="abrirConfig();toggleUserMenu()" style="width:100%;padding:9px 14px;background:none;border:none;color:var(--text);font-family:var(--font);font-size:13px;text-align:left;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">⚙️ API Keys</button>
       <button id="menu-headcount-btn" onclick="abrirHeadcount();toggleUserMenu()" style="display:none;width:100%;padding:9px 14px;background:none;border:none;color:var(--text);font-family:var(--font);font-size:13px;text-align:left;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">📋 Headcount</button>
+      <button id="menu-citas-btn" onclick="abrirCitas();toggleUserMenu()" style="display:none;width:100%;padding:9px 14px;background:none;border:none;color:var(--text);font-family:var(--font);font-size:13px;text-align:left;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">📈 KPIs de citas</button>
       <button id="menu-cortes-btn" onclick="abrirCortes();toggleUserMenu()" style="display:none;width:100%;padding:9px 14px;background:none;border:none;color:var(--text);font-family:var(--font);font-size:13px;text-align:left;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">📊 Cortes</button>
       <button id="menu-recalc-btn" onclick="recalcularScoresHoy();toggleUserMenu()" style="display:none;width:100%;padding:9px 14px;background:none;border:none;color:var(--text);font-family:var(--font);font-size:13px;text-align:left;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">🔧 Corregir scores incorrectos</button>
       <button id="menu-calibraciones-btn" onclick="abrirPanelCalibraciones();toggleUserMenu()" style="display:none;width:100%;padding:9px 14px;background:none;border:none;color:var(--text);font-family:var(--font);font-size:13px;text-align:left;cursor:pointer;border-radius:6px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">🧠 Modelo adaptativo <span id="menu-calib-badge" style="display:none;background:var(--red);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:6px">0</span></button>
@@ -876,7 +886,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
         <input type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.mp4,.webm" onchange="handleFileSelect(event)" />
         <div class="upload-icon">🎵</div>
         <h3>Arrastra el audio aquí o haz clic para seleccionar</h3>
-        <p>El sistema transcribe automáticamente con Groq Whisper</p>
+        <p>El sistema transcribe automáticamente con Gemini</p>
         <div class="formats"><span class="fmt-pill">MP3</span><span class="fmt-pill">WAV</span><span class="fmt-pill">M4A</span><span class="fmt-pill">OGG</span><span class="fmt-pill">FLAC</span><span class="fmt-pill">MP4</span></div>
       </div>
       <div id="audio-info" style="display:none;margin-top:14px">
@@ -942,7 +952,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
         <div class="field"><label>Campaña</label><input id="b-campana" type="text" placeholder="Ej: Ciclo Ago-Dic 2025" /></div>
         <div class="field"><label>Intervalo entre llamadas</label>
           <select id="b-delay" onchange="actualizarDelayInfo(this.value)">
-            <option value="8000" id="opt-delay-8">8 seg (solo Gemini)</option>
+            <option value="8000" id="opt-delay-8">8 seg</option>
             <option value="12000">12 seg (recomendado)</option>
             <option value="15000">15 seg</option>
             <option value="20000">20 seg (conservador)</option>
@@ -1227,50 +1237,43 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
     </div>
   </div>
   <div class="hist-stats" id="rep-kpis" style="grid-template-columns:repeat(5,1fr)"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+  <div style="margin-bottom:20px">
     <div class="card">
-      <div class="card-head">
-        <span>📉</span><h3>Tendencia de calidad (diaria)</h3>
-        <div class="period-tabs" style="margin-left:auto">
+      <div class="card-head" style="flex-wrap:wrap;gap:8px">
+        <span>📉</span><h3>Tendencia de calidad</h3>
+        <div class="period-tabs" id="trend-freq-tabs" style="margin-left:auto">
+          <button class="period-tab active" id="btn-freq-diaria" onclick="setFreqTrend('diaria')">Diaria</button>
+          <button class="period-tab" id="btn-freq-semanal" onclick="setFreqTrend('semanal')">Semanal</button>
+        </div>
+        <div class="period-tabs" id="trend-modo-diaria">
           <button class="period-tab active" id="btn-trend-diaria-linea" onclick="setModoTrend('diaria','linea')">Línea</button>
           <button class="period-tab" id="btn-trend-diaria-dispersion" onclick="setModoTrend('diaria','dispersion')">Dispersión</button>
           <button class="period-tab" id="btn-trend-diaria-antiguedad" onclick="setModoTrend('diaria','antiguedad')">Por antigüedad</button>
         </div>
-      </div>
-      <div class="card-body" style="padding:16px;max-height:420px;overflow-y:auto">
-        <div class="chart-wrap" id="rep-trend-wrap"><div class="chart-tooltip" id="rep-tooltip"></div></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head">
-        <span>📉</span><h3>Tendencia de calidad (semanal)</h3>
-        <div class="period-tabs" style="margin-left:auto">
+        <div class="period-tabs" id="trend-modo-semanal" style="display:none">
           <button class="period-tab active" id="btn-trend-semanal-linea" onclick="setModoTrend('semanal','linea')">Línea</button>
           <button class="period-tab" id="btn-trend-semanal-dispersion" onclick="setModoTrend('semanal','dispersion')">Dispersión</button>
           <button class="period-tab" id="btn-trend-semanal-antiguedad" onclick="setModoTrend('semanal','antiguedad')">Por antigüedad</button>
         </div>
       </div>
-      <div class="card-body" style="padding:16px;max-height:420px;overflow-y:auto">
-        <div class="chart-wrap" id="rep-trend-semanal-wrap"><div class="chart-tooltip" id="rep-tooltip-semanal"></div></div>
+      <div class="card-body" style="padding:16px;max-height:460px;overflow-y:auto">
+        <p id="trend-freq-note" style="font-size:11px;color:var(--muted);margin:0 0 8px"></p>
+        <div style="display:flex;gap:16px;align-items:flex-start">
+          <div class="chart-wrap" id="rep-trend-wrap" style="flex:1 1 55%;min-width:0"><div class="chart-tooltip" id="rep-tooltip"></div></div>
+          <div id="rep-trend-antig-table" style="flex:1 1 45%;min-width:0;display:none"></div>
+        </div>
+        <div style="display:none;gap:16px;align-items:flex-start" id="rep-trend-semanal-row">
+          <div class="chart-wrap" id="rep-trend-semanal-wrap" style="flex:1 1 55%;min-width:0"><div class="chart-tooltip" id="rep-tooltip-semanal"></div></div>
+          <div id="rep-trend-semanal-antig-table" style="flex:1 1 45%;min-width:0;display:none"></div>
+        </div>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span>📊</span><h3>Rendimiento por etapa</h3></div>
-      <div class="card-body" id="rep-etapas" style="max-height:320px;overflow-y:auto"></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span>🎯</span><h3>Motivos principales de los prospectos</h3></div>
-      <div class="card-body" id="rep-necesidades" style="max-height:320px;overflow-y:auto"></div>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
     <div class="card">
-      <div class="card-head"><span>👤</span><h3>Ranking de supervisores</h3>
-        <span style="margin-left:auto;font-size:11px;color:var(--muted)">Cada punto = 1 llamada</span>
-      </div>
-      <div class="card-body" style="padding:0;max-height:320px;overflow-y:auto">
-        <div class="scatter-wrap" id="rep-antiguedad"><div style="padding:30px;text-align:center;color:var(--muted);font-size:12px">Sin datos de antigüedad aún</div></div>
-      </div>
+      <div class="card-head"><span>📊</span><h3>Rendimiento por etapa</h3></div>
+      <div class="card-body" id="rep-etapas" style="max-height:320px;overflow-y:auto"></div>
+      <div id="evo-etapas" style="padding:0 16px 12px"></div>
     </div>
     <div class="card">
       <div class="card-head"><span>📉</span><h3>Ítems más afectados</h3>
@@ -1286,16 +1289,28 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
       </div>
       <div class="card-body" style="padding:0;max-height:320px;overflow-y:auto">
         <div id="rep-criterios-ranking"><div style="padding:30px;text-align:center;color:var(--muted);font-size:12px">Sin datos aún</div></div>
+        <div id="evo-items" style="padding:0 16px 12px"></div>
       </div>
+    </div>
+  </div>
+  <div style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-head"><span>👤</span><h3>Ranking de supervisores</h3>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted)">Cada punto = 1 llamada</span>
+      </div>
+      <div class="card-body" style="padding:0;max-height:320px;overflow-y:auto">
+        <div class="scatter-wrap" id="rep-antiguedad"><div style="padding:30px;text-align:center;color:var(--muted);font-size:12px">Sin datos de antigüedad aún</div></div>
+      </div>
+      <div id="evo-supervisores" style="padding:0 16px 12px"></div>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
     <div class="card">
-      <div class="card-head"><span>🏆</span><h3>Ranking de asesores</h3></div>
+      <div class="card-head"><span>🏆</span><h3>Asesores — top 10 mejores</h3></div>
       <div class="card-body" id="rep-ranking" style="padding:0 22px;max-height:320px;overflow-y:auto"></div>
     </div>
     <div class="card">
-      <div class="card-head"><span>🚨</span><h3>Asesores críticos</h3></div>
+      <div class="card-head"><span>🚨</span><h3>Asesores — top 10 peores</h3></div>
       <div class="card-body" id="rep-criticas" style="padding:0 22px;max-height:320px;overflow-y:auto"></div>
     </div>
   </div>
@@ -1313,6 +1328,40 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
           <button onclick="preguntarPlanIA()" style="padding:8px 16px;background:rgba(26,95,168,.15);border:1px solid rgba(99,140,255,.3);border-radius:8px;color:var(--blue);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">✦ Preguntar</button>
         </div>
       </div></div>
+  </div>
+
+  <!-- Correlación con KPIs de negocio — colapsada por default, análisis mensual, no forma parte del seguimiento diario -->
+  <div style="border-top:1px solid var(--border2);padding-top:14px;margin-bottom:14px">
+    <div id="corr-toggle" onclick="toggleCorrelacionKPIs()" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--blue);user-select:none">
+      <span id="corr-chevron">▸</span><span>📈 Ver correlación entre calidad y KPIs de negocio</span>
+    </div>
+    <div id="corr-panel" style="display:none;margin-top:12px">
+      <div class="card">
+        <div class="card-head" style="flex-wrap:wrap;gap:8px">
+          <span>📈</span><h3>Score de calidad vs. KPI de citas</h3>
+          <select id="corr-etapa-select" onchange="setEtapaCorrelacion(this.value)" style="background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:11px;padding:4px 8px;outline:none">
+            <option value="__general__">Score general</option>
+          </select>
+          <div class="period-tabs" style="margin-left:auto">
+            <button class="period-tab active" id="btn-corr-metas" onclick="setModoCorrelacion('metas')">Alcance de metas</button>
+            <button class="period-tab" id="btn-corr-asistencia" onclick="setModoCorrelacion('asistencia')">Cita → asistencia</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:16px">
+          <div id="corr-stats" style="display:flex;gap:24px;margin-bottom:10px;font-size:12px;color:var(--muted)"></div>
+          <div class="chart-wrap" id="corr-chart-wrap" style="min-height:280px"></div>
+          <p style="font-size:11px;color:var(--muted);margin-top:8px">Análisis a partir del reporte de citas cargado — se recalcula según el mismo periodo que tengas filtrado arriba. Los criterios inhabilitados en Calibración (N/A) se excluyen del cálculo, igual que en "Rendimiento por etapa".</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Motivos de los prospectos — reporte de Marketing, no de Calidad; al final y atenuado a propósito -->
+  <div style="opacity:.75">
+    <div class="card">
+      <div class="card-head"><span>🎯</span><h3>Motivos principales de los prospectos</h3></div>
+      <div class="card-body" id="rep-necesidades" style="max-height:320px;overflow-y:auto"></div>
+    </div>
   </div>
 </div>
 </div>
@@ -1705,8 +1754,8 @@ async function onAuthChanged(user) {
     cargarHistorialFirestore();
     cargarConfigFirestore();
     cargarHeadcountFirestore();
+    cargarCitasFirestore();
     cargarCalibracionesAprobadas();
-    cargarGroqKeys();
     cargarGeminiKeys();
     setTimeout(actualizarControlesVelocidadBatch, 300); // esperar a que las keys carguen
     // qaIsAdmin is now set — force re-render of any visible page with role-gated UI
@@ -1829,6 +1878,8 @@ function actualizarHeaderUsuario() {
   if (adminBtn) adminBtn.style.display = currentUserData.rol === 'admin' ? 'block' : 'none';
   const hcBtn = document.getElementById('menu-headcount-btn');
   if (hcBtn) hcBtn.style.display = currentUserData.rol === 'admin' ? 'block' : 'none';
+  const citasBtn = document.getElementById('menu-citas-btn');
+  if (citasBtn) citasBtn.style.display = currentUserData.rol === 'admin' ? 'block' : 'none';
   const cortesBtn = document.getElementById('menu-cortes-btn');
   if (cortesBtn) cortesBtn.style.display = currentUserData.rol === 'admin' ? 'block' : 'none';
   const recalcBtn = document.getElementById('menu-recalc-btn');
@@ -1975,17 +2026,8 @@ async function cargarConfigFirestore() {
   try {
     const snap = await db.collection('config').get();
     snap.forEach(doc => {
-      if (doc.id === '_groq_') {
-        // Groq key compartida — solo aplicar si el usuario no tiene la suya propia
-        const localKey = localStorage.getItem('qa_groq_key');
-        const sharedKey = doc.data().groq_key;
-        if (sharedKey && (!localKey || localKey !== sharedKey)) {
-          localStorage.setItem('qa_groq_key', sharedKey);
-          // Pre-fill the config input too
-          const inp = document.getElementById('key-groq');
-          if (inp) inp.value = sharedKey;
-          console.info('Groq key cargada desde configuración compartida.');
-        }
+      if (doc.id === '_groq_' || doc.id === '_gemini_') {
+        // Manejadas por cargarGeminiKeys() — no duplicar aquí
       } else {
         localStorage.setItem('qa_calibracion_' + doc.id, JSON.stringify(doc.data()));
       }
@@ -2158,232 +2200,7 @@ function abrirAdmin() {
 function cerrarAdmin() { document.getElementById('admin-overlay').classList.add('hidden'); }
 
 // ═══════════════════════════════════════════════
-// MODELOS DINÁMICOS — consulta Groq en tiempo real
-// ═══════════════════════════════════════════════
-let _modelosCache = null;
-let _modelosCacheTs = 0;
-// Limpiar caché al cargar para que MODELOS_EXCLUIR actualizado tome efecto
-try { _modelosCache = null; _modelosCacheTs = 0; } catch(e) {}
-
-// Prioridad de modelos: el orden define cuál se intenta primero.
-// Actualizado 2026-07 según avisos oficiales de Groq (developer@groq.co):
-//  - Llama 4 Scout 17B: dado de baja por completo el 17-jul-2026 (ya pasó) → RETIRADO de esta lista.
-//  - Llama 3.3 70B: en proceso de baja, se apaga por completo el 16-ago-2026 → se deja como
-//    respaldo (aún puede responder hasta esa fecha) pero ya no es la primera opción.
-//  - Groq recomienda migrar a GPT OSS 120B / Qwen3.6 27B como reemplazo — GPT OSS 120B se
-//    agrega arriba de todo; el Qwen recomendado no se agrega por nombre exacto (no confirmado
-//    todavía) pero ya no se excluye, así que puede colarse por el "resto alfabético" si aplica.
-// Si Groq agrega un modelo nuevo, basta con añadirlo aquí arriba.
-const MODELOS_PRIORIDAD = [
-  // 2026-07: llama-3.3-70b confirmado como el ÚNICO modelo que hoy acepta el prompt completo
-  // sin recortar (12,000 TPM le da margen suficiente). Se apaga el 16-ago-2026 — hay que
-  // decidir antes de esa fecha si se recorta el prompt o se acepta un modelo con menos margen.
-  'llama-3.3-70b-versatile',
-  // Respaldos (todos con menos margen de tokens; pueden fallar con llamadas largas):
-  'openai/gpt-oss-120b',
-  'openai/gpt-oss-20b',
-  'meta-llama/llama-4-maverick-17b-128e-instruct',
-  'llama-4-maverick-17b-128e-instruct',
-  'llama-3.1-70b-versatile',
-  'gemma2-9b-it',
-  'mixtral-8x7b-32768',
-  // groq/compound y compound-mini SE QUITARON de aquí: tienen buen cupo de tokens/minuto,
-  // pero rechazan la petición por límite de TAMAÑO fijo (413 Request Entity Too Large),
-  // sin importar cuántos tokens de cupo tengan disponibles. Confirmado con prueba manual
-  // en el Playground con el prompt real completo.
-];
-
-// Modelos que NO deben usarse para evaluación (solo audio, embedding, etc.)
-const MODELOS_EXCLUIR = [
-  'whisper', 'tts', 'embed', 'guard', 'tool', 'vision',
-  'distil', '8b', 'instant', 'preview',
-  // 'qwen' ya NO se excluye de forma genérica: Groq ahora recomienda Qwen3.6 27B como
-  // reemplazo de los modelos retirados. Los Qwen chiquitos/malos igual quedan fuera por los
-  // filtros de tamaño (1b/3b/8b/instant) de abajo.
-  'deepseek',   // no optimizado para español ni para este tipo de evaluación
-  '1b', '3b',   // modelos muy pequeños
-  'orpheus', 'canopylabs',  // texto-a-voz (ej. orpheus-arabic-saudi), no sirven para evaluación de texto
-];
-
-
-async function obtenerModelosDisponibles(groqKey) {
-  const ahora = Date.now();
-  const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas
-
-  // Devolver cache si sigue vigente
-  if (_modelosCache && _modelosCache.length > 0 && (ahora - _modelosCacheTs) < CACHE_TTL) {
-    return _modelosCache;
-  }
-
-  const key = groqKey || getGroqKeyActiva();
-  if (!key) return MODELOS_PRIORIDAD.slice(0, 3);
-
-  try {
-    const resp = await fetch('https://api.groq.com/openai/v1/models', {
-      headers: { 'Authorization': 'Bearer ' + key }
-    });
-
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-
-    const data = await resp.json();
-    const disponibles = (data.data || [])
-      .map(m => m.id)
-      .filter(id => {
-        const idLow = id.toLowerCase();
-        // Excluir modelos que no sirven para chat/evaluación
-        return !MODELOS_EXCLUIR.some(ex => idLow.includes(ex));
-      });
-
-    if (disponibles.length === 0) throw new Error('Sin modelos válidos en respuesta');
-
-    // Ordenar según prioridad definida: primero los que están en MODELOS_PRIORIDAD
-    // (en el orden en que aparecen), luego el resto alfabéticamente
-    const ordenados = [
-      ...MODELOS_PRIORIDAD.filter(m => disponibles.includes(m)),
-      ...disponibles.filter(m => !MODELOS_PRIORIDAD.includes(m)).sort(),
-    ];
-
-    _modelosCache = ordenados;
-    _modelosCacheTs = ahora;
-
-    console.log('Groq modelos disponibles:', ordenados);
-    return ordenados;
-
-  } catch (err) {
-    console.warn('No se pudo consultar modelos de Groq, usando fallback:', err.message);
-    // Si hay cache viejo, preferirlo al fallback hardcodeado
-    if (_modelosCache && _modelosCache.length > 0) return _modelosCache;
-    return MODELOS_PRIORIDAD.slice(0, 3);
-  }
-}
-
-// ══════════════════════════════════════════
-// ROTACIÓN DE API KEYS DE GROQ
-// ══════════════════════════════════════════
-let groqKeys = [];        // Array de keys cargadas de Firestore
-let groqKeyIndex = 0;     // Índice de la key activa actual
-
-// Carga las keys desde Firestore al iniciar sesión
-async function cargarGroqKeys() {
-  if (!db) return;
-  try {
-    const doc = await db.collection('config').doc('_groq_').get();
-    if (!doc.exists) return;
-    const data = doc.data();
-    // Soporta tanto array 'groq_keys' como key única 'groq_key'
-    if (data.groq_keys && Array.isArray(data.groq_keys) && data.groq_keys.length > 0) {
-      groqKeys = data.groq_keys.filter(Boolean);
-      groqKeyIndex = data.groq_key_index || 0;
-      if (groqKeyIndex >= groqKeys.length) groqKeyIndex = 0;
-      // Sincronizar localStorage con la key activa
-      localStorage.setItem('qa_groq_key', groqKeys[groqKeyIndex]);
-      const inp = document.getElementById('key-groq');
-      if (inp) inp.value = groqKeys[groqKeyIndex];
-    } else if (data.groq_key) {
-      groqKeys = [data.groq_key];
-      groqKeyIndex = 0;
-      localStorage.setItem('qa_groq_key', data.groq_key);
-    }
-    console.log(`Groq: ${groqKeys.length} key(s) cargada(s), usando índice ${groqKeyIndex}`);
-  } catch(e) {
-    console.warn('Error cargando keys de Groq:', e.message);
-  }
-}
-
-// Obtiene la key activa actual
-function getGroqKeyActiva() {
-  if (groqKeys.length > 0) return groqKeys[groqKeyIndex];
-  return localStorage.getItem('qa_groq_key') || '';
-}
-
-// Rota a la siguiente key cuando hay 429 — devuelve la nueva key o null si todas agotadas
-async function rotarGroqKey() {
-  if (groqKeys.length <= 1) return null;
-  const anterior = groqKeyIndex;
-  groqKeyIndex = (groqKeyIndex + 1) % groqKeys.length;
-  if (groqKeyIndex === anterior) return null; // Ya dio la vuelta completa
-  const nuevaKey = groqKeys[groqKeyIndex];
-  localStorage.setItem('qa_groq_key', nuevaKey);
-  const inp = document.getElementById('key-groq');
-  if (inp) inp.value = nuevaKey;
-  // Guardar índice activo en Firestore para sincronizar entre usuarios
-  try {
-    await db.collection('config').doc('_groq_').update({ groq_key_index: groqKeyIndex });
-  } catch(e) {}
-  console.log(`Groq: rotando a key índice ${groqKeyIndex} de ${groqKeys.length}`);
-  return nuevaKey;
-}
-
-// Wrapper inteligente para fetch a Groq — rota automáticamente en caso de 429
-// Timestamp de última sincronización Firestore para no hacerlo en cada llamada del batch
-let _groqSyncTs = 0;
-
-async function fetchGroqConRotacion(url, opciones) {
-  // Si groqKeys está vacío, intentar cargar de Firestore ahora
-  if (groqKeys.length === 0 && db) {
-    await cargarGroqKeys();
-  }
-
-  // Sincronizar índice desde Firestore solo cada 30s (no en cada llamada del batch)
-  const ahora = Date.now();
-  if (db && groqKeys.length > 1 && (ahora - _groqSyncTs) > 30000) {
-    _groqSyncTs = ahora;
-    try {
-      const doc = await db.collection('config').doc('_groq_').get();
-      if (doc.exists) {
-        const idx = doc.data().groq_key_index || 0;
-        if (idx !== groqKeyIndex && idx < groqKeys.length) {
-          groqKeyIndex = idx;
-          localStorage.setItem('qa_groq_key', groqKeys[groqKeyIndex]);
-        }
-      }
-    } catch(e) {}
-  }
-
-  // Errores que justifican rotar key y reintentar
-  const debeRotar = (status, txt) =>
-    status === 429 ||
-    status === 413 ||  // payload demasiado grande — puede ser límite de la key
-    status === 400 ||  // bad request transitorio
-    txt.includes('rate_limit') || txt.includes('Rate limit') ||
-    txt.includes('Request too large') || txt.includes('overloaded');
-
-  let intentosRotacion = 0;
-  const maxRotaciones = Math.max(groqKeys.length, 1);
-  while (intentosRotacion < maxRotaciones) {
-    const keyActiva = getGroqKeyActiva();
-    const headers = { ...opciones.headers, 'Authorization': 'Bearer ' + keyActiva };
-    try {
-      const resp = await fetch(url, { ...opciones, headers });
-      if (resp.ok) return resp;
-      const errTxt = await resp.text();
-      if (debeRotar(resp.status, errTxt)) {
-        console.warn(`Error ${resp.status} en key ${groqKeyIndex}/${groqKeys.length}, rotando...`);
-        const nuevaKey = await rotarGroqKey();
-        if (!nuevaKey || intentosRotacion >= maxRotaciones - 1) {
-          return { ok: false, status: resp.status, text: async () => errTxt, json: async () => ({error:{message:errTxt}}) };
-        }
-        // Espera progresiva: 3s en primer intento, 6s en segundo, 10s en tercero
-        const espera = [3000, 6000, 10000][intentosRotacion] || 10000;
-        await esperar(espera);
-        intentosRotacion++;
-        continue;
-      }
-      // Error no recuperable (401 auth, 404, etc.) — no rotar
-      return { ok: false, status: resp.status, text: async () => errTxt, json: async () => ({error:{message:errTxt}}) };
-    } catch(netErr) {
-      // Error de red — reintentar con misma key después de 2s
-      console.warn('Error de red en Groq, reintentando...', netErr.message);
-      await esperar(2000);
-      intentosRotacion++;
-      continue;
-    }
-  }
-  return { ok: false, status: 429, text: async () => 'Todas las API keys han alcanzado su límite.', json: async () => ({error:{message:'All keys rate limited'}}) };
-}
-
-// ══════════════════════════════════════════
-// ROTACIÓN DE API KEYS DE GEMINI (misma arquitectura que Groq, independiente)
+// ROTACIÓN DE API KEYS DE GEMINI
 // ══════════════════════════════════════════
 let geminiKeys = [];
 let geminiKeyIndex = 0;
@@ -2473,7 +2290,7 @@ async function obtenerModelosDisponiblesGemini() {
   }
 }
 
-// Wrapper de rotación para Gemini — misma filosofía que fetchGroqConRotacion pero adaptado
+// Wrapper de rotación para Gemini — reintenta con la siguiente key ante error/límite
 // al formato de Gemini (key por query param, generationConfig con JSON forzado)
 async function fetchGeminiConRotacion(modeloNombre, prompt, temperature, maxTokens, jsonMode = true, thinkingBudget = 0) {
   if (geminiKeys.length === 0 && db) await cargarGeminiKeys();
@@ -2516,11 +2333,6 @@ async function fetchGeminiConRotacion(modeloNombre, prompt, temperature, maxToke
   return { ok:false, status:429, text: async()=>'Todas las API keys de Gemini alcanzaron su límite.', json: async()=>({error:{message:'All Gemini keys rate limited'}}) };
 }
 
-// ══════════════════════════════════════════
-// PROVEEDOR DE IA ACTIVO — selector manual entre Groq y Gemini (independientes)
-// ══════════════════════════════════════════
-function getProveedorActivo() { return localStorage.getItem('qa_proveedor_ia') || 'groq'; }
-function setProveedorActivo(p) { localStorage.setItem('qa_proveedor_ia', p); }
 
 // Extrae el texto de respuesta REAL de un candidate de Gemini, descartando cualquier part de
 // razonamiento (part.thought===true) que pueda venir antes que la respuesta cuando thinkingConfig
@@ -2562,49 +2374,27 @@ function verificarBuzonVoz(resultado) {
   }
 }
 
-// Punto único de entrada: llama al proveedor activo (Groq o Gemini) y devuelve el texto crudo de IA.
-// Lanza error si todos los modelos/keys del proveedor fallan.
+// Punto único de entrada: llama a Gemini (único proveedor de IA permitido por política de
+// seguridad de la información) y devuelve el texto crudo de IA. Lanza error si todos los
+// modelos/keys de Gemini fallan.
 async function llamarIA(prompt, opts = {}) {
   const temperature = opts.temperature ?? 0.2;
   const maxTokens = opts.maxTokens ?? 2500;
   const jsonMode = opts.jsonMode ?? true;
-  const proveedor = getProveedorActivo();
-  if (proveedor === 'gemini') {
-    const modelos = await obtenerModelosDisponiblesGemini();
-    let lastErr = '';
-    for (const m of modelos) {
-      try {
-        const resp = await fetchGeminiConRotacion(m, prompt, temperature, maxTokens, jsonMode, opts.thinkingBudget ?? 0);
-        const respText = await resp.text();
-        if (!resp.ok) { lastErr = respText; continue; }
-        const d = JSON.parse(respText);
-        const texto = extraerTextoGemini(d.candidates?.[0]);
-        if (!texto) { lastErr = `Sin contenido (finishReason: ${d.candidates?.[0]?.finishReason||'?'})`; continue; }
-        return texto;
-      } catch(e) { lastErr = e.message; continue; }
-    }
-    throw new Error('Gemini falló: ' + lastErr);
-  }
-  // Groq (default)
-  const groqKey = getGroqKeyActiva();
-  const modelos = await obtenerModelosDisponibles(groqKey);
+  const modelos = await obtenerModelosDisponiblesGemini();
   let lastErr = '';
   for (const m of modelos) {
-    let resp, respText;
     try {
-      resp = await fetchGroqConRotacion('https://api.groq.com/openai/v1/chat/completions', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({model:m, messages:[{role:'user', content:prompt}], temperature, max_tokens:maxTokens})
-      });
-      respText = await resp.text();
-    } catch(e) { lastErr = e.message; continue; }
-    if (!resp.ok) { lastErr = respText; continue; }
-    try {
+      const resp = await fetchGeminiConRotacion(m, prompt, temperature, maxTokens, jsonMode, opts.thinkingBudget ?? 0);
+      const respText = await resp.text();
+      if (!resp.ok) { lastErr = respText; continue; }
       const d = JSON.parse(respText);
-      return d.choices[0].message.content;
-    } catch(e) { lastErr = 'Error procesando respuesta: ' + e.message; continue; }
+      const texto = extraerTextoGemini(d.candidates?.[0]);
+      if (!texto) { lastErr = `Sin contenido (finishReason: ${d.candidates?.[0]?.finishReason||'?'})`; continue; }
+      return texto;
+    } catch(e) { lastErr = e.message; continue; }
   }
-  throw new Error('Groq falló: ' + lastErr);
+  throw new Error('Gemini falló: ' + lastErr);
 }
 
 let audioFile  = null;
@@ -3002,6 +2792,7 @@ function aplicarFiltrosCompartidos() {
 }
 
 function limpiarTodosFiltros() {
+  limpiarFrecuenciaManual();
   // Reset estado
   sharedFiltros = { supervisores: new Set(), turnos: new Set(), proyectos: new Set(), agentes: new Set(), modelo: '__todos__', evaluador: '__todos__' };
   // Reset UI multi-selects en ambos contenedores
@@ -3575,9 +3366,317 @@ async function cargarHeadcountFirestore() {
   } catch(e) {}
 }
 
+// ══════════════════════════════════════════════════════════════════
+// KPIs DE CITAS (alcance de metas y tasa de asistencia, por agente/semana)
+// Se cruza contra Headcount (buscarAgenteEnHC) para resolver el nombre
+// capturado en la evaluación hacia el mismo formato "Apellidos Nombres"
+// que usa el Excel de citas — mismo motor que ya resuelve el supervisor.
+// ══════════════════════════════════════════════════════════════════
+let citasData = {};      // { 'S34-2026': { 'nombre normalizado': {nombre, supervisor, citasCreadas, citasProgramadas, asistencias, alcanceMetas, tasaAsistencia} } }
+let citasPendiente = null;
+let citasSemanaPendiente = null;
+
+function normalizarNombreCitas(s) {
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+}
+// Clave de cruce insensible al ORDEN de las palabras — necesaria porque el Excel de
+// citas usa "Nombre Nombre Apellido Apellido" (agentes) mientras que Headcount usa
+// "Apellido Apellido Nombre Nombre" — mismo set de palabras, distinto orden. Comparar
+// el string completo tal cual nunca cruza; ordenando las palabras sí (agosto 2026).
+function claveNombreCitas(s) {
+  return normalizarNombreCitas(s).split(' ').filter(Boolean).sort().join(' ');
+}
+
+function abrirCitas() {
+  if (!qaIsAdmin) return;
+  const el = document.getElementById('citas-overlay');
+  el.classList.remove('hidden');
+  el.style.display = 'flex';
+  document.getElementById('citas-status').textContent = '';
+  document.getElementById('citas-preview').style.display = 'none';
+  document.getElementById('citas-save-btn').disabled = true;
+  document.getElementById('citas-save-btn').style.opacity = '.5';
+  citasPendiente = null;
+  citasSemanaPendiente = null;
+}
+function cerrarCitas() {
+  const el = document.getElementById('citas-overlay');
+  el.classList.add('hidden');
+  el.style.display = 'none';
+}
+function citasOnDrop(e) {
+  e.preventDefault();
+  document.getElementById('citas-drop-zone').style.borderColor = 'var(--border2)';
+  const file = e.dataTransfer.files[0];
+  if (file) citasOnFileSelect(file);
+}
+function citasSetStatus(msg, color) {
+  const el = document.getElementById('citas-status');
+  el.textContent = msg;
+  el.style.color = color || 'var(--text)';
+}
+
+// Encuentra, dentro de un workbook ya leído, la hoja cuyo nombre coincide
+// (tolerante a acentos/mayúsculas) con alguno de los términos dados. Prioriza
+// las hojas "_modelo_*" (traen histórico día a día, multi-semana) sobre las
+// hojas visibles del dashboard (que solo traen la semana filtrada al momento).
+function citasFindSheet(wb, ...terminos) {
+  const norm = s => normalizarNombreCitas(s);
+  const conModelo = wb.SheetNames.find(n => norm(n).includes('modelo') && terminos.some(t => norm(n).includes(norm(t))));
+  if (conModelo) return conModelo;
+  return wb.SheetNames.find(n => terminos.some(t => norm(n).includes(norm(t))));
+}
+
+// Extrae de una hoja "_modelo_*" (formato largo: 1 fila por agente por día por
+// semana — columnas Mes/SemanaTexto/Semana/Dias/turno/supervisor/Nivel/Nombre/
+// Objetivo/Real/Cumplimiento) un mapa { semana: { claveNombre: {nombre, supervisor,
+// objetivo, real} } }, sumando los 7 días de cada semana. Filtra solo Nivel=Agente.
+// Tolerante a variación de encabezados (busca por texto, no por posición fija).
+function citasParsearHojaModelo(ws, anio) {
+  const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  const norm = s => normalizarNombreCitas(s);
+  let headerRow = -1;
+  for (let i = 0; i < Math.min(10, raw.length); i++) {
+    const row = raw[i].map(c => norm(c));
+    if (row.includes('nombre') && row.includes('nivel') && row.some(h => h.includes('semana'))) { headerRow = i; break; }
+  }
+  if (headerRow === -1) return null;
+  const headers = raw[headerRow].map(c => String(c).trim());
+  const findCol = (...terms) => headers.findIndex(h => terms.every(t => norm(h).includes(norm(t))));
+  const colMap = {
+    semanaTexto: findCol('semanatexto'),
+    supervisor:  findCol('supervisor'),
+    nivel:       findCol('nivel'),
+    nombre:      findCol('nombre'),
+    objetivo:    findCol('objetivo'),
+    real:        findCol('real'),
+  };
+  if (colMap.nombre===-1 || colMap.nivel===-1 || colMap.objetivo===-1 || colMap.real===-1 || colMap.semanaTexto===-1) return null;
+  const resultado = {};
+  for (let i = headerRow + 1; i < raw.length; i++) {
+    const row = raw[i];
+    const nivel = String(row[colMap.nivel] || '').trim().toLowerCase();
+    const nombre = String(row[colMap.nombre] || '').trim();
+    const semanaTexto = String(row[colMap.semanaTexto] || '').trim();
+    if (!nombre || nivel !== 'agente' || !semanaTexto) continue;
+    const semana = `${semanaTexto}-${String(anio).slice(-2)}`;
+    const key = claveNombreCitas(nombre);
+    if (!resultado[semana]) resultado[semana] = {};
+    if (!resultado[semana][key]) resultado[semana][key] = { nombre, supervisor: colMap.supervisor!==-1?String(row[colMap.supervisor]||'').trim():'', objetivo:0, real:0 };
+    resultado[semana][key].objetivo += Number(row[colMap.objetivo]) || 0;
+    resultado[semana][key].real += Number(row[colMap.real]) || 0;
+  }
+  return resultado;
+}
+
+// Fallback: parser de las hojas visibles del dashboard (Citas Creadas FCST,
+// Citas Programadas, Asistencias FCST) — solo trae la semana filtrada al momento
+// de generar el reporte, útil si el archivo no incluye las hojas "_modelo_*".
+function citasParsearHojaVisible(ws) {
+  const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+  const norm = s => normalizarNombreCitas(s);
+  let headerRow = -1, semanaTexto = null;
+  for (let i = 0; i < Math.min(30, raw.length); i++) {
+    const row = raw[i].map(c => norm(c));
+    if (row.includes('nombre') && row.includes('nivel')) { headerRow = i; break; }
+  }
+  for (let i = 0; i < Math.min(10, raw.length); i++) {
+    for (let j = 0; j < raw[i].length; j++) {
+      if (norm(raw[i][j]) === 'semana' && raw[i][j+1]) { semanaTexto = String(raw[i][j+1]).trim(); break; }
+    }
+    if (semanaTexto) break;
+  }
+  if (headerRow === -1 || !semanaTexto) return null;
+  const headers = raw[headerRow].map(c => String(c).trim());
+  const findCol = (...terms) => headers.findIndex(h => terms.every(t => norm(h).includes(norm(t))));
+  const colMap = {
+    supervisor: findCol('supervisor'), nivel: findCol('nivel'), nombre: findCol('nombre'),
+    totalObj: findCol('total semana','objetivo'), totalReal: findCol('total semana','real'),
+  };
+  if (colMap.nombre===-1 || colMap.nivel===-1 || colMap.totalReal===-1) return null;
+  const agentes = {};
+  for (let i = headerRow+1; i < raw.length; i++) {
+    const row = raw[i];
+    const nivel = String(row[colMap.nivel]||'').trim().toLowerCase();
+    const nombre = String(row[colMap.nombre]||'').trim();
+    if (!nombre || nivel !== 'agente') continue;
+    agentes[claveNombreCitas(nombre)] = { nombre, supervisor: colMap.supervisor!==-1?String(row[colMap.supervisor]||'').trim():'',
+      objetivo: colMap.totalObj!==-1?(Number(row[colMap.totalObj])||0):0, real: Number(row[colMap.totalReal])||0 };
+  }
+  return { semanaTexto, agentes };
+}
+
+function citasOnFileSelect(file) {
+  if (!file) return;
+  if (!file.name.match(/\.xlsx?$/i)) {
+    citasSetStatus('❌ Solo se aceptan archivos .xlsx o .xls', 'var(--red)'); return;
+  }
+  const anio = parseInt(document.getElementById('citas-anio-input').value, 10) || new Date().getFullYear();
+  citasSetStatus('⏳ Leyendo archivo...', 'var(--muted)');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const shCreadas     = citasFindSheet(wb, 'creada');
+      const shProgramadas = citasFindSheet(wb, 'programada');
+      const shAsistencias = citasFindSheet(wb, 'asistencia');
+      if (!shCreadas || !shProgramadas || !shAsistencias) {
+        citasSetStatus(`❌ No se encontraron las 3 hojas esperadas (Creadas/Programadas/Asistencias). Hojas detectadas: ${wb.SheetNames.join(', ')}`, 'var(--red)');
+        return;
+      }
+      const esModelo = normalizarNombreCitas(shCreadas).includes('modelo');
+      let porSemana = {}; // { semana: { creadas:{}, programadas:{}, asistencias:{} } }
+
+      if (esModelo) {
+        const creadas     = citasParsearHojaModelo(wb.Sheets[shCreadas], anio);
+        const programadas = citasParsearHojaModelo(wb.Sheets[shProgramadas], anio);
+        const asistencias = citasParsearHojaModelo(wb.Sheets[shAsistencias], anio);
+        if (!creadas || !programadas || !asistencias) {
+          citasSetStatus('❌ No se encontraron las columnas requeridas (Nombre, Nivel, SemanaTexto, Objetivo, Real) en alguna de las hojas _modelo_*.', 'var(--red)');
+          return;
+        }
+        const todasLasSemanas = new Set([...Object.keys(creadas), ...Object.keys(programadas), ...Object.keys(asistencias)]);
+        todasLasSemanas.forEach(sem => { porSemana[sem] = { creadas: creadas[sem]||{}, programadas: programadas[sem]||{}, asistencias: asistencias[sem]||{} }; });
+      } else {
+        const creadas = citasParsearHojaVisible(wb.Sheets[shCreadas]);
+        const programadas = citasParsearHojaVisible(wb.Sheets[shProgramadas]);
+        const asistencias = citasParsearHojaVisible(wb.Sheets[shAsistencias]);
+        if (!creadas || !programadas || !asistencias) {
+          citasSetStatus('❌ No se encontró la etiqueta de "Semana" o las columnas requeridas en alguna hoja visible.', 'var(--red)');
+          return;
+        }
+        const sem = `${programadas.semanaTexto}-${String(anio).slice(-2)}`;
+        porSemana[sem] = { creadas: creadas.agentes, programadas: programadas.agentes, asistencias: asistencias.agentes };
+      }
+
+      // Por cada semana encontrada, unir agentes de las 3 hojas y calcular ambos KPIs
+      const resultadoFinal = {}; // { semana: { key: {...} } }
+      let totalAgentesSemanas = 0;
+      Object.entries(porSemana).forEach(([sem, {creadas, programadas, asistencias}]) => {
+        const todasLasKeys = new Set([...Object.keys(creadas), ...Object.keys(programadas), ...Object.keys(asistencias)]);
+        const resultado = {};
+        todasLasKeys.forEach(key => {
+          const c = creadas[key], p = programadas[key], a = asistencias[key];
+          const nombre = (p||c||a).nombre, supervisor = (p||c||a).supervisor;
+          const citasCreadas = c ? c.real : 0;
+          const citasProgramadas = p ? p.real : 0;
+          const citasProgramadasObjetivo = p ? p.objetivo : 0;
+          const asistenciasReal = a ? a.real : 0;
+          resultado[key] = {
+            nombre, supervisor,
+            citasCreadas, citasProgramadas, citasProgramadasObjetivo, asistencias: asistenciasReal,
+            alcanceMetas: citasProgramadasObjetivo > 0 ? Math.round(citasProgramadas/citasProgramadasObjetivo*1000)/10 : null,
+            tasaAsistencia: citasCreadas > 0 ? Math.round(asistenciasReal/citasCreadas*1000)/10 : null,
+          };
+          totalAgentesSemanas++;
+        });
+        resultadoFinal[sem] = resultado;
+      });
+
+      citasPendiente = resultadoFinal;
+      const semanasOrdenadas = Object.keys(resultadoFinal).sort();
+      const primeraSemana = semanasOrdenadas[0], ultimaSemana = semanasOrdenadas[semanasOrdenadas.length-1];
+      const preview = Object.values(resultadoFinal[ultimaSemana]||{}).slice(0, 6);
+      document.getElementById('citas-preview-title').textContent = `${semanasOrdenadas.length} semana(s) encontradas (${primeraSemana} → ${ultimaSemana}) — muestra de ${ultimaSemana}, primeros ${Math.min(6,preview.length)} agentes:`;
+      document.getElementById('citas-preview-list').innerHTML = preview.map(d =>
+        `<div>${d.nombre} — metas: <span style="color:var(--blue)">${d.alcanceMetas!=null?d.alcanceMetas+'%':'—'}</span>, asistencia: <span style="color:var(--blue)">${d.tasaAsistencia!=null?d.tasaAsistencia+'%':'—'}</span></div>`
+      ).join('');
+      document.getElementById('citas-preview').style.display = 'block';
+      document.getElementById('citas-save-btn').disabled = false;
+      document.getElementById('citas-save-btn').style.opacity = '1';
+      citasSetStatus(`✅ ${semanasOrdenadas.length} semana(s) leídas correctamente (${primeraSemana} → ${ultimaSemana})${esModelo ? ' — histórico completo' : ' — solo la semana filtrada en el archivo (no traía hojas _modelo_*)'}`, 'var(--green)');
+    } catch(err) {
+      citasSetStatus('❌ Error al leer el archivo: ' + err.message, 'var(--red)');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function guardarCitas() {
+  if (!qaIsAdmin || !citasPendiente || !db) return;
+  const btn = document.getElementById('citas-save-btn');
+  btn.textContent = '⏳ Guardando...'; btn.disabled = true;
+  try {
+    const batch = db.batch();
+    Object.entries(citasPendiente).forEach(([semana, data]) => {
+      const ref = db.collection('kpis_citas').doc(semana);
+      batch.set(ref, { data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    });
+    await batch.commit();
+    Object.assign(citasData, citasPendiente);
+    const semanas = Object.keys(citasPendiente);
+    citasSetStatus(`✅ Guardado — ${semanas.length} semana(s) (${semanas.sort().join(', ')})`, 'var(--green)');
+    btn.textContent = '✅ Guardado';
+    setTimeout(() => cerrarCitas(), 1800);
+  } catch(err) {
+    citasSetStatus('❌ Error al guardar: ' + err.message, 'var(--red)');
+    btn.textContent = 'Guardar en Firestore'; btn.disabled = false;
+  }
+}
+
+async function cargarCitasFirestore() {
+  if (!db) return;
+  try {
+    const snap = await db.collection('kpis_citas').get();
+    snap.forEach(doc => {
+      if (doc.data().data) citasData[doc.id] = doc.data().data;
+    });
+  } catch(e) {}
+}
+
+// Resuelve los KPIs de citas de un agente (nombre tal cual capturado en la
+// evaluación) para una semana dada, pasando primero por Headcount para
+// normalizar el nombre al mismo formato "Apellidos Nombres" del Excel de citas.
+function obtenerKpisCitas(nombreAgenteCrudo, semana) {
+  return obtenerKpisCitasRango(nombreAgenteCrudo, [semana]);
+}
+
+// Igual que obtenerKpisCitas, pero agregando varias semanas — pensado para
+// responder al MISMO filtro de fecha activo en Reportes (última semana,
+// últimas N semanas, o todo el histórico cargado). Suma los valores crudos
+// de cada semana antes de calcular el %, en vez de promediar porcentajes ya
+// calculados — así una semana con 50 citas pesa lo que debe pesar frente a
+// una con 5, tanto para alcance de metas como para tasa de asistencia.
+function obtenerKpisCitasRango(nombreAgenteCrudo, semanas) {
+  if (!semanas || !semanas.length) return null;
+  const hc = buscarAgenteEnHC(nombreAgenteCrudo);
+  const nombreParaBuscar = hc ? hc.nombre : nombreAgenteCrudo;
+  const key = claveNombreCitas(nombreParaBuscar);
+  let sumCreadas=0, sumAsistencias=0, sumProgramadas=0, sumProgramadasObj=0, nombreReal=null, supervisor=null, semanasConDato=0;
+  semanas.forEach(sem => {
+    const reg = citasData[sem]?.[key];
+    if (!reg) return;
+    semanasConDato++;
+    sumCreadas += reg.citasCreadas||0;
+    sumAsistencias += reg.asistencias||0;
+    sumProgramadas += reg.citasProgramadas||0;
+    sumProgramadasObj += reg.citasProgramadasObjetivo||0;
+    nombreReal = reg.nombre; supervisor = reg.supervisor;
+  });
+  if (semanasConDato === 0) return null;
+  return {
+    nombre: nombreReal, supervisor,
+    semanasConDato, semanasTotal: semanas.length,
+    citasCreadas: sumCreadas, citasProgramadas: sumProgramadas, asistencias: sumAsistencias,
+    alcanceMetas: sumProgramadasObj > 0 ? Math.round((sumProgramadas / sumProgramadasObj) * 1000) / 10 : null,
+    tasaAsistencia: sumCreadas > 0 ? Math.round((sumAsistencias / sumCreadas) * 1000) / 10 : null,
+  };
+}
+
+// Dado un array de llamadas ya filtradas (lo que sea que Reportes tenga
+// activo — última semana, rango de fechas, todo el histórico), regresa la
+// lista de labels de semana ("S34-26", "S33-26"...) que ese filtro cubre.
+// Reutiliza _bucketsPorSemana, la misma agrupación que ya usa la gráfica de
+// tendencia semanal — así ambas gráficas quedan sincronizadas con un solo
+// filtro, sin lógica de fechas duplicada.
+function semanasDelFiltroActivo(datosFiltrados) {
+  return Object.values(_bucketsPorSemana(datosFiltrados)).map(b => b.label);
+}
+
 // ── Matching de agente por nomenclatura o similitud de nombre ──
 function buscarAgenteEnHC(nomenclaturaONombre) {
   if (!nomenclaturaONombre || Object.keys(hcData).length === 0) return null;
+
   const key = nomenclaturaONombre.toLowerCase().trim();
   // 1. Match exacto por nomenclatura
   if (hcData[key]) return { nomenclatura: key, ...hcData[key] };
@@ -3675,8 +3774,6 @@ function esperar(ms) {
 // INIT
 // ═══════════════════════════════════════════════
 window.onload = () => {
-  const g = localStorage.getItem('qa_groq_key');
-  if (g) { document.getElementById('key-groq').value = g; }
   // Init Firebase
   if (initFirebase()) {
     // Firebase config exists — hide config modal, show login
@@ -3860,30 +3957,6 @@ function formatDuracion(s) {
 // ═══════════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════════
-function toggleKeysAdicionales() {
-  const wrap = document.getElementById('keys-adicionales-wrap');
-  const btn = document.getElementById('btn-toggle-keys');
-  if (wrap.style.display === 'none') {
-    wrap.style.display = 'block';
-    btn.textContent = '− Ocultar keys adicionales';
-    if (!document.querySelectorAll('.key-adicional-input').length) agregarKeyAdicional();
-  } else {
-    wrap.style.display = 'none';
-    btn.textContent = '+ Agregar más keys de Groq (rotación automática)';
-  }
-}
-
-function agregarKeyAdicional() {
-  const list = document.getElementById('keys-adicionales-list');
-  const idx = list.children.length + 2;
-  const div = document.createElement('div');
-  div.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px';
-  div.innerHTML = `<input type="password" class="key-adicional-input" placeholder="gsk_... (key ${idx})"
-    style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font);font-size:12px;padding:7px 10px;outline:none">
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer">×</button>`;
-  list.appendChild(div);
-}
-
 function toggleKeysAdicionalesGemini() {
   const wrap = document.getElementById('keys-adicionales-gemini-wrap');
   const btn = document.getElementById('btn-toggle-keys-gemini');
@@ -3909,60 +3982,26 @@ function agregarKeyAdicionalGemini() {
 }
 
 async function guardarKeys() {
-  const keyGroqPrincipal = document.getElementById('key-groq').value.trim();
   const keyGeminiPrincipal = document.getElementById('key-gemini').value.trim();
-  const proveedorSeleccionado = document.getElementById('select-proveedor-ia').value;
 
-  if (!keyGroqPrincipal && !keyGeminiPrincipal) {
-    alert('Ingresa al menos una API key: de Groq o de Gemini.');
-    return;
-  }
-  // Si el proveedor elegido no tiene key, avisar (pero no bloquear — puede estar configurando el otro por ahora)
-  if (proveedorSeleccionado === 'groq' && !keyGroqPrincipal) {
-    alert('Elegiste Groq como proveedor activo pero no ingresaste su API key.');
-    return;
-  }
-  if (proveedorSeleccionado === 'gemini' && !keyGeminiPrincipal) {
-    alert('Elegiste Gemini como proveedor activo pero no ingresaste su API key.');
+  if (!keyGeminiPrincipal) {
+    alert('Ingresa tu API key de Gemini.');
     return;
   }
 
-  setProveedorActivo(proveedorSeleccionado);
-  setFallbackTranscripcionActivo(document.getElementById('chk-transcripcion-fallback').checked);
-
-  // ── Groq ──
-  if (keyGroqPrincipal) {
-    const keysAdicionales = [...document.querySelectorAll('.key-adicional-input')]
-      .map(inp => inp.value.trim()).filter(Boolean);
-    const todasLasKeys = [keyGroqPrincipal, ...keysAdicionales];
-    localStorage.setItem('qa_groq_key', keyGroqPrincipal);
-    localStorage.setItem('qa_or_key', 'not-needed');
-    groqKeys = todasLasKeys;
-    groqKeyIndex = 0;
-    if (db && qaIsAdmin) {
-      db.collection('config').doc('_groq_').set({
-        groq_key: keyGroqPrincipal, groq_keys: todasLasKeys, groq_key_index: 0,
-        updated: new Date().toISOString()
-      }).then(() => console.info(`Groq: ${todasLasKeys.length} key(s) sincronizada(s) en Firestore.`))
-        .catch(e => console.warn('Error al sincronizar keys de Groq:', e));
-    }
-  }
-
-  // ── Gemini ──
-  if (keyGeminiPrincipal) {
-    const keysAdicionalesGemini = [...document.querySelectorAll('.key-adicional-gemini-input')]
-      .map(inp => inp.value.trim()).filter(Boolean);
-    const todasLasKeysGemini = [keyGeminiPrincipal, ...keysAdicionalesGemini];
-    localStorage.setItem('qa_gemini_key', keyGeminiPrincipal);
-    geminiKeys = todasLasKeysGemini;
-    geminiKeyIndex = 0;
-    if (db && qaIsAdmin) {
-      db.collection('config').doc('_gemini_').set({
-        gemini_key: keyGeminiPrincipal, gemini_keys: todasLasKeysGemini, gemini_key_index: 0,
-        updated: new Date().toISOString()
-      }).then(() => console.info(`Gemini: ${todasLasKeysGemini.length} key(s) sincronizada(s) en Firestore.`))
-        .catch(e => console.warn('Error al sincronizar keys de Gemini:', e));
-    }
+  // ── Gemini (único proveedor permitido) ──
+  const keysAdicionalesGemini = [...document.querySelectorAll('.key-adicional-gemini-input')]
+    .map(inp => inp.value.trim()).filter(Boolean);
+  const todasLasKeysGemini = [keyGeminiPrincipal, ...keysAdicionalesGemini];
+  localStorage.setItem('qa_gemini_key', keyGeminiPrincipal);
+  geminiKeys = todasLasKeysGemini;
+  geminiKeyIndex = 0;
+  if (db && qaIsAdmin) {
+    db.collection('config').doc('_gemini_').set({
+      gemini_key: keyGeminiPrincipal, gemini_keys: todasLasKeysGemini, gemini_key_index: 0,
+      updated: new Date().toISOString()
+    }).then(() => console.info(`Gemini: ${todasLasKeysGemini.length} key(s) sincronizada(s) en Firestore.`))
+      .catch(e => console.warn('Error al sincronizar keys de Gemini:', e));
   }
 
   document.getElementById('setup-overlay').classList.add('hidden');
@@ -3970,10 +4009,6 @@ async function guardarKeys() {
   if (delaySel) actualizarControlesVelocidadBatch();
 }
 function abrirConfig() {
-  const sel = document.getElementById('select-proveedor-ia');
-  if (sel) sel.value = getProveedorActivo();
-  const chk = document.getElementById('chk-transcripcion-fallback');
-  if (chk) chk.checked = getFallbackTranscripcionActivo();
   document.getElementById('setup-overlay').classList.remove('hidden');
 }
 
@@ -4079,10 +4114,10 @@ function setAudio(f) {
   document.getElementById('audio-name').textContent = f.name;
   const sizeMB = f.size/1024/1024;
   const sizeEl = document.getElementById('audio-size');
-  if (sizeMB > 25) {
-    sizeEl.innerHTML = `<span style="color:var(--red);font-weight:600">⚠️ ${sizeMB.toFixed(2)} MB — Supera el límite de 25 MB de Groq Whisper.</span>`;
+  if (sizeMB > 20) {
+    sizeEl.innerHTML = `<span style="color:var(--red);font-weight:600">⚠️ ${sizeMB.toFixed(2)} MB — Supera el límite recomendado de 20 MB para transcripción con Gemini.</span>`;
     document.getElementById('btn-main').disabled = true;
-    document.getElementById('btn-main').innerHTML = '<span>⚠️</span> Archivo demasiado grande (máx 25 MB)';
+    document.getElementById('btn-main').innerHTML = '<span>⚠️</span> Archivo demasiado grande (máx 20 MB)';
   } else if (sizeMB > 20) {
     sizeEl.innerHTML = `<span style="color:var(--yellow)">${sizeMB.toFixed(2)} MB — Cerca del límite (25 MB)</span>`;
     document.getElementById('btn-main').disabled = false;
@@ -4130,35 +4165,6 @@ function setStep(n) {
 // CORE: transcribir + evaluar un archivo
 // (reutilizado por individual y batch)
 // ═══════════════════════════════════════════════
-async function transcribirAudio(file, groqKey) {
-  const arrayBuffer = await new Promise((resolve,reject) => {
-    const r=new FileReader(); r.onload=e=>resolve(e.target.result); r.onerror=()=>reject(new Error('No se pudo leer el archivo')); r.readAsArrayBuffer(file);
-  });
-  const boundary = '----QABoundary' + Date.now();
-  const uint8    = new Uint8Array(arrayBuffer);
-  const mimeType = file.type || 'audio/wav';
-  const fileName = file.name || 'audio.wav';
-  const enc = new TextEncoder();
-  const pre = enc.encode(
-    `--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-large-v3-turbo\r\n`+
-    `--${boundary}\r\nContent-Disposition: form-data; name="language"\r\n\r\nes\r\n`+
-    `--${boundary}\r\nContent-Disposition: form-data; name="response_format"\r\n\r\njson\r\n`+
-    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${fileName}"\r\nContent-Type: ${mimeType}\r\n\r\n`
-  );
-  const post = enc.encode(`\r\n--${boundary}--\r\n`);
-  const body = new Uint8Array(pre.length + uint8.length + post.length);
-  body.set(pre,0); body.set(uint8,pre.length); body.set(post,pre.length+uint8.length);
-  // Usar rotación de keys automática
-  let whisperResp;
-  whisperResp = await fetchGroqConRotacion('https://api.groq.com/openai/v1/audio/transcriptions', {
-    method:'POST',
-    headers:{'Content-Type':`multipart/form-data; boundary=${boundary}`},
-    body: body.buffer
-  });
-  if (!whisperResp.ok) throw new Error('Groq Whisper: ' + await whisperResp.text());
-  return (await whisperResp.json()).text;
-}
-
 const PROMPT_TRANSCRIPCION_GEMINI = `Transcribe esta llamada de un call center de admisiones educativas en México, en español. Sigue estas reglas ESTRICTAMENTE:
 - Identifica y etiqueta cada intervención como "Asesor:" o "Prospecto:" en texto PLANO, sin negritas, sin asteriscos, sin ningún formato Markdown.
 - Transcribe el contenido completo, palabra por palabra, sin resumir ni omitir partes.
@@ -4233,50 +4239,16 @@ async function transcribirAudioGemini(file) {
   throw new Error('Gemini (transcripción) falló: ' + lastErr);
 }
 
-function getFallbackTranscripcionActivo() {
-  return localStorage.getItem('qa_transcripcion_fallback') !== '0'; // activado por default
-}
-function setFallbackTranscripcionActivo(v) {
-  localStorage.setItem('qa_transcripcion_fallback', v ? '1' : '0');
-}
-
 // Punto único de entrada para transcribir: usa el proveedor activo primero; si falla Y el
 // respaldo automático está activado Y el otro proveedor tiene key configurada, lo intenta con ese.
 async function transcribirAudioIA(file) {
-  const proveedor = getProveedorActivo();
-  const hayGroq = !!(localStorage.getItem('qa_groq_key'));
-  const hayGemini = !!(getGeminiKeyActiva());
-  const fallbackOn = getFallbackTranscripcionActivo();
-
-  const intentar = async (prov) => {
-    if (prov === 'gemini') return await transcribirAudioGemini(file);
-    return await transcribirAudio(file, getGroqKeyActiva());
-  };
-
-  const primero = proveedor === 'gemini' ? 'gemini' : 'groq';
-  const segundo  = primero === 'gemini' ? 'groq' : 'gemini';
-  const hayPrimero = primero === 'gemini' ? hayGemini : hayGroq;
-  const haySegundo  = segundo === 'gemini' ? hayGemini : hayGroq;
-
-  if (!hayPrimero && !haySegundo) {
-    throw new Error(`No hay ninguna API key configurada para transcribir (ni Groq ni Gemini).`);
+  if (!getGeminiKeyActiva()) {
+    throw new Error('No hay ninguna API key de Gemini configurada para transcribir.');
   }
-  if (!hayPrimero) {
-    // El proveedor activo no tiene key — usar el otro directo, sin necesidad del toggle de respaldo
-    return await intentar(segundo);
-  }
-  try {
-    return await intentar(primero);
-  } catch(e) {
-    if (fallbackOn && haySegundo) {
-      console.warn(`Transcripción con ${primero} falló (${e.message}), intentando respaldo con ${segundo}...`);
-      return await intentar(segundo);
-    }
-    throw e;
-  }
+  return await transcribirAudioGemini(file);
 }
 
-async function evaluarTranscripcion(transcripcion, agente, tipo, campana, groqKey, modelo, _unused, duracionSegundos) {
+async function evaluarTranscripcion(transcripcion, agente, tipo, campana, modelo, _unused, duracionSegundos) {
   // Validar que la transcripción tenga contenido evaluable
   const palabras = (transcripcion||'').toLowerCase().replace(/[^a-záéíóúüñ\s]/gi,'').split(/\s+/).filter(p=>p.length>1);
   const palabrasUnicas = new Set(palabras);
@@ -4576,117 +4548,6 @@ cre_seguimiento (5.2): Este criterio SOLO aplica si cre_cita=100 (por cualquiera
     : 'modalidad 100% en línea a través de la plataforma Brightspace';
 
   let prompt;
-  if (esTrad && getProveedorActivo() !== 'gemini') {
-    // ═══ Prompt compacto para Tradicional/CORBUSÉ (2026-07) — SOLO cuando el proveedor activo es Groq ═══
-    // Se mantiene compacto para Groq por su límite de tokens (motivo original de la compactación).
-    // Con Gemini (que sí aguanta el prompt completo, validado en pruebas) se usa la rama "else" de abajo,
-    // la misma cédula completa que ya usa OnAliat — más precisa, sin recortes.
-    const GUIA_TEXTO = {
-      ap_presentacion: 'ap_presentacion (1.1): nombre + rol (ej. asesor educativo) + Aliat o alguna de sus marcas/campus (UVG, UNEA, UTAN, Tangamanga, ETAC, CEST, CORBUSÉ). 100=nombre Y (rol o marca/Aliat). 50=solo uno. 0=ninguno.',
-      ap_datos: 'ap_datos (1.2): confirma interés (PROGRAMA específico + modalidad/campus). 100=programa Y modalidad/campus. 50=solo uno. 0=ninguno.',
-      ap_parentesco: 'ap_parentesco (1.3): pregunta si es tutor/familiar o el aspirante. 100=preguntó. 0=no.',
-      ap_nombre: 'ap_nombre (1.4): 100=nombre completo. 50=solo nombre de pila. 0=no pidió.',
-      inv_estudios: 'inv_estudios (2.1): grado y certificado previo. 100=ambos. 50=uno. 0=ninguno.',
-      inv_sondeo: 'inv_sondeo (2.2): pregunta de motivación/necesidad (no datos básicos), por INTENCIÓN no por redacción exacta — cuenta aunque venga entrecortada/informal (ej: "me gustaría saber qué te gustaría conocer de la universidad" = "¿qué te gustaría saber de nosotros?", SÍ cuenta). 100=≥1 pregunta válida. 0=ninguna.',
-      inv_edad: 'inv_edad (2.3): SOLO Bachillerato. 100=confirmó. 0=no. N/A si es Licenciatura/Maestría.',
-      demo_ventaja: 'demo_ventaja (3.1): ≥2 ideas del catálogo (validez SEP/50 años/170mil egresados; docentes con experiencia real; libertad de modalidad con mismo valor de título; grupos reducidos; [EMP] IA para CV; [EMP] plataforma de empleabilidad/emprendimiento), y al menos 1 debe ser [EMP]. 100=≥2 Y 1 es EMP. 50=≥2 sin EMP, o solo 1 en total. 0=ninguna.',
-      demo_grado: 'demo_grado (3.2): ≥2 características oficiales validadas del grado correcto. Bachillerato: orientación vocacional (Prepa Aliat), pase directo a licenciatura sin examen, habilidades socioemocionales/digitales, talleres de emprendimiento, campus seguros. Licenciatura: modalidades flexibles, Biblioteca Digital sin costo, Office 365 incluido, certificaciones intermedias, sin inscripción, becas por promedio. Maestría: networking con profesionales activos, plataforma 100% online 24/7, docentes líderes en su sector, casos reales de negocio, mejores oportunidades gerenciales. 100=≥2 del grado correcto. 50=1. 0=ninguno o de otro grado.',
-      demo_modalidad: 'demo_modalidad (3.3): identifica primero la modalidad de interés (Presencial/Ejecutiva/Online) por la transcripción; si no hay evidencia, N/A. Presencial=inmersión en laboratorios/talleres, networking presencial, guía directa del docente. Ejecutiva=aplicas en tu trabajo lo aprendido, 1-2 días/semana, networking de negocios. Online=libertad 24/7, red nacional, tutores digitales. 100=≥1 beneficio de la modalidad correcta. 0=ninguno o de otra modalidad. N/A=sin evidencia de la modalidad de interés.',
-      demo_promociones: 'demo_promociones (3.4): ≥1 promoción vigente (kit de apoyo, titulación sin costo según campus, 4ª colegiatura 50% desc., convenio empresarial 10%, seguro/RVOE 1er ciclo incluido, beca hasta 45%, bootcamps, 50% desc. curso de inglés, 30% desc. uniformes). Si mencionó uniformes, marca promo_condicionada=true (promoción condicionada, no aplica en todos los casos). 100=sí. 0=no.',
-      demo_precio: 'demo_precio (3.5): pago inicial + parcialidades (siempre aplican) + desglose (solo si el prospecto preguntó). Si preguntó desglose (aplican 3): 100=los 3. 66=2. 33=1. 0=ninguno. Si NO preguntó (aplican 2): 100=los 2. 50=1. 0=ninguno.',
-      obj_objeciones: 'obj_objeciones (4.1): identificar y responder con argumento correspondiente. Catálogo con argumento clave c/u:\n  1.Costo→beca por promedio/costo de oportunidad. 2.Lejanía→ejecutiva/online/campus cercano. 3.Familia→invitar al campus/sondear preocupación. 4."Llámame/manda info"→preguntar qué necesita, ofrecer cita. 5.Otras universidades→sondear qué le atrae, diferenciador Aliat. 6.No existe la carrera→tronco común/carrera afín/test vocacional. 7.Tiempo→horarios flexibles/en línea. 8.Ya estudia en otro lado→equivalencias sin costo. 9.Edad→perfil adultos/grupos reducidos. 10.Prefiere en línea→OnAliat misma validez. 11.Duda calidad en línea→RVOE/docentes con posgrado. 12.Duda bachillerato en línea→validez SEP. 13.Duda del programa→plan de estudios/enfoque práctico. 14.Sin apoyo empresa→beca institucional 40%. 15.Esperar ciclo→urgencia del beneficio vigente. 16.Documentos incompletos→apartar con pago inicial. 17.Deudas/Buró→no se consulta buró. 18.Miedo a no terminar→acompañamiento/grupos reducidos.\n  Puntuación: 100=sin objeción, o respondió con argumento correspondiente. 50=vago/sin estructura. 0=ignoró o argumento no correspondía.',
-      obj_referidos: 'obj_referidos (4.2): 100=3 elementos (solicitud+5%+condicionado). 0=incompleto/engañoso.',
-      cre_cita: 'cre_cita (5.1): CAMINO A (estándar) 100=fecha+hora+campus Y prospecto confirmó. 75=propuso pero no confirmó. 50=sin fecha/hora. 0=no propuso. CAMINO B (solo si Regla 6 dice que la oferta de OnAliat fue legítima): 100=pregunta de cierre real + transfirió/derivó bien. 75=cerró pero transferencia/derivación vaga. 50=intento débil de cierre. 0=no intentó. Si oferta de OnAliat fue indebida (Regla 6): tope máx 50 sin evaluar Camino A.',
-      cre_seguimiento: 'cre_seguimiento (5.2): solo si cre_cita=100 (si no, N/A). Camino A: 100=fecha Y hora Y aceptó. 50=sin fecha/hora concreta. 0=no propuso. Camino B: 100=detalle concreto de a quién transfiere o fecha/hora del siguiente contacto. 50=mencionó transferencia/seguimiento sin detalle. 0=sin ningún detalle.',
-      cre_crm: 'cre_crm (5.3): 100=evidencia de tipificar/CRM. 0/N/A=sin evidencia.',
-      etq_personalizacion: 'etq_personalizacion (6.1): 100=≥3 veces. 50=1-2. 0=ninguna.',
-      etq_plantillas: 'etq_plantillas (6.2): 100=adaptó al caso. 50=rígida. 0=no siguió o N/A.',
-      etq_respuesta: 'etq_respuesta (6.3): 100=rápida/oportuna. 0=tardanza evidente.',
-      etq_conflicto: 'etq_conflicto (6.4): 100=cordial pese a tensión. 50=frialdad sin confrontar. 0=agresivo/cortante.',
-      etq_control: 'etq_control (6.5): 100=controló silencios/mute. 50=silencio manejable. 0=silencios prolongados o mute inadecuado.',
-    };
-    const ETAPA_LABELS = {apertura:'APERTURA', investigacion:'INVESTIGACIÓN', demostracion:'DEMOSTRACIÓN', objeciones:'MANEJO DE OBJECIONES', cierre:'CIERRE', etiqueta:'ETIQUETA'};
-    const etapasOrdenTrad = ['apertura','investigacion','demostracion','objeciones','cierre','etiqueta'];
-    const guiaPorEtapa = etapasOrdenTrad.map(et => {
-      const items = criteriosActivos.filter(c => c.etapa === et);
-      if (!items.length) return '';
-      return `${ETAPA_LABELS[et]}\n${items.map(c => '- ' + (GUIA_TEXTO[c.key]||c.label)).join('\n')}`;
-    }).filter(Boolean).join('\n\n');
-    const scoresSchemaTrad = criteriosActivos.map(c => `    "${c.key}": ${(c.key==='inv_edad'||c.key==='cre_seguimiento'||c.key==='cre_crm')?'"N/A"':'0'}`).join(',\n');
-
-    prompt = `Eres un auditor experto de calidad para callcenter de ADMISIONES EDUCATIVAS de Aliat Universidades en México.
-Modelo educativo evaluado: ${modelo === 'corbuse' ? 'CORBUSÉ' : 'TRADICIONAL'} (presencial/mixto).
-El objetivo del asesor es generar una CITA para que el prospecto visite el campus y el líder de admisiones cierre la inscripción presencialmente.
-Analiza esta llamada con criterio profesional y responde ÚNICAMENTE con JSON válido, sin texto adicional ni markdown.
-
-DATOS:
-- Asesor: ${agente}
-- Programa de interés: ${tipo}
-- Campaña: ${campana}${secDuracion}
-${secOblig}${secProhib}${secNA}${secCalib}
-
-TRANSCRIPCIÓN:
----
-${transcripcion}
----
-
-⚠️ DETECCIÓN DE BUZÓN DE VOZ (revisa esto ANTES que cualquier otra cosa): Si esta transcripción corresponde a un BUZÓN DE VOZ o contestadora automática (no una conversación real con un prospecto) — señales: un solo mensaje largo sin interacción de ida y vuelta, frases típicas de contestadora ("deje su mensaje después del tono", "el número que usted marcó no está disponible", "buzón de [nombre]"), o el asesor deja un mensaje y nunca hay respuesta del prospecto — entonces NO evalúes ningún criterio. Responde ÚNICAMENTE con: {"es_buzon_voz":true,"razon_buzon":"<breve explicación>"}. Si es una conversación real (aunque sea corta, hostil, o de bajo desempeño), continúa con la evaluación normal completa e incluye "es_buzon_voz":false en el JSON de scores.
-
-FORMATO DE SALIDA (Responde ÚNICAMENTE con este JSON estructurado):
-{
-  "es_buzon_voz": false,
-  "scores": {
-${scoresSchemaTrad}
-  },
-  "fortalezas": ["Fortaleza 1 concreta de criterio habilitado (Etapa)", "Fortaleza 2 (Etapa)"],
-  "areas_mejora": ["Mejora 1 de criterio habilitado (Etapa)", "Mejora 2 (Etapa)"],
-  "palabras_riesgo": [],
-  "objeciones_detectadas": [{"tipo":"...","frase_prospecto":"...","respuesta_asesor":"...","evaluacion":"adecuada|vaga|ignorada"}],
-  "necesidad_prospecto": {"categoria":"<ver catálogo abajo>","cita_textual":"...","detalle_otro":"<solo si categoria='otro'>"},
-  "sin_objeciones": true,
-  "oferta_onaliat_indebida": false,
-  "promo_condicionada": false,
-  "sentimiento_cliente": "positivo|neutral|negativo",
-  "logro_objetivo": false,
-  "nivel_urgencia": "critica|revisar|normal",
-  "feedback_agente": "2-3 oraciones directas al asesor",
-  "resumen_supervisor": "2-3 oraciones dirigidas al supervisor",
-  "probabilidad_inscripcion": 0,
-  "razon_probabilidad": "Explicación breve en una oración"
-}
-
-CATÁLOGO PARA "necesidad_prospecto" (clasifica la respuesta del prospecto a la pregunta de sondeo — inv_sondeo — en UNA de estas categorías; usa "otro" solo si de verdad no encaja en ninguna, y en ese caso llena "detalle_otro" con una descripción breve de la motivación real):
-1. crecimiento_profesional — quiere ascender o crecer en su empresa/puesto actual.
-2. requisito_empleador — su trabajo le exige el título/cédula para quedarse o ascender.
-3. mejora_economica — busca mejor sueldo o estabilidad económica.
-4. cambio_carrera — quiere reencauzarse, no le gustó lo que estudió antes o hace algo distinto.
-5. retomar_estudios — dejó de estudiar hace tiempo y quiere terminar/retomar.
-6. flexibilidad_tiempo — trabaja y necesita horarios/modalidad que se adapten a su tiempo.
-7. vocacion — interés genuino en el tema, sin relación con necesidad laboral.
-8. superacion_personal — meta propia, "algo pendiente conmigo mismo".
-9. apoyo_familiar — familia o pareja lo motiva/pide que estudie.
-10. emprendimiento — quiere poner su propio negocio y busca conocimientos formales.
-11. trayectoria_natural — recién egresado de bachillerato, sigue su curso natural sin motivo de cambio particular.
-12. otro — no encaja claramente en ninguna anterior (usa "detalle_otro").
-Si el asesor no hizo la pregunta de sondeo o el prospecto no respondió con información suficiente, deja "categoria":"otro" y "detalle_otro":"sin información suficiente".
-
-REGLAS DE CALIBRACIÓN:
-1. DURACIÓN CORTA (<2min): probabilidad_inscripcion máx 25.
-2. PROSPECTO HOSTIL/CUELGA: criterios no cubiertos por el corte = 50, no 0. No aplica si el asesor simplemente no lo intentó.
-3. OBJECIONES SIN NEGATIVA: si el prospecto no objetó nada: si cre_cita=100 → obj_objeciones=100 (no había nada que rebatir, y el cierre sí se logró). Si cre_cita≠100 → obj_objeciones=75. En ambos casos: sin_objeciones=true, objeciones_detectadas=[]. Asigna 0 solo si hubo objeción real y el asesor la ignoró.
-4. REFERIDOS COMPLETOS: obj_referidos=100 solo con los 3 elementos (solicitud + 5% + condicionado a inscripción). Si falta uno, 0.
-5. OFERTA DE ONALIAT DENTRO DE TRADICIONAL: el asesor solo puede ofertar OnAliat (100% en línea) si (a) el prospecto lo pidió, o (b) fue último recurso ante objeción real de costo/lejanía. Si cumple esto, la llamada puede cerrar por el Camino B de cre_cita (pregunta de cierre + transferencia/seguimiento, en vez de cita a campus — el asesor no tiene permisos para matricular OnAliat directamente). Si ofertó OnAliat SIN que se cumplan esas condiciones: no cuentes esa mención en demo_modalidad/demo_ventaja, trátala como argumento fuera de lugar en obj_objeciones, y cre_cita queda topado a máx 50 (no se evalúa el Camino A). Marca oferta_onaliat_indebida=true si detectas esto.
-
-ESCALA: 100=completo y correcto. 75=incompleto o con errores menores. 50=deficiente o no evaluable por causa externa (regla 2). 25=mención mínima. 0=sin evidencia textual (nunca infieras).
-
-logro_objetivo: true SOLO si el prospecto confirmó explícitamente asistencia con fecha, hora y campus.
-
-FORMATO DE TEXTOS: fortalezas/areas_mejora solo de criterios habilitados, con etapa entre paréntesis. nivel_urgencia: critica <60%, revisar 60-80%, normal >80%.
-
-GUÍA CRITERIO POR CRITERIO (en todos los criterios de mención/explicación: no se requieren frases textuales exactas — cualquier expresión que transmita la misma idea cuenta igual):
-
-${guiaPorEtapa}`;
-  } else {
     prompt = `Eres un auditor experto de calidad para callcenter de ADMISIONES EDUCATIVAS de Aliat Universidades en México.
 Modelo educativo evaluado: ${modelo === 'corbuse' ? 'CORBUSÉ (presencial/mixto, misma lógica de cierre que Tradicional)' : esTrad ? 'TRADICIONAL (presencial/mixto)' : 'ONALIAT (100% en línea)'}.
 El objetivo del asesor es ${objetivoTexto}.
@@ -4761,10 +4622,20 @@ REGLA 3 — OBJECIONES SIN NEGATIVA: Si el prospecto NO presentó ninguna negati
 REGLA 4 — REFERIDOS COMPLETOS: Para que obj_referidos reciba 100, el asesor DEBE haber mencionado explícitamente los 3 elementos: (a) la solicitud de referidos, (b) el beneficio del 5% de descuento, Y (c) que ese beneficio está CONDICIONADO a que el referido se inscriba. Si falta cualquiera de los tres, o si alguno se presenta de forma incorrecta o engañosa, el score es 0.
 Notas: hizo=cuáles de los 3 elementos mencionó (solicitud/5%/condición de inscripción) con cita textual; no_hizo=cuáles faltaron; ejemplo=frase completa con los 3 elementos: "¿Conoces a alguien que también esté buscando estudiar? Si se inscribe con nosotros, tú recibes un 5% de descuento en tu colegiatura.".
 ${esTrad ? `
-REGLA 5 — OFERTA DE MODALIDAD ONALIAT DENTRO DE UNA LLAMADA TRADICIONAL: En llamadas de Tradicional/CORBUSÉ, el asesor puede mencionar u ofertar la modalidad OnAliat (100% en línea) ÚNICAMENTE si: (a) el prospecto la solicitó explícitamente por iniciativa propia, o (b) el prospecto presentó una objeción real de costo/economía o de distancia/lejanía, Y el asesor la ofrece como último recurso para resolver esa objeción específica.
+REGLA 5 — OFERTA DE MODALIDAD ONALIAT DENTRO DE UNA LLAMADA TRADICIONAL: En llamadas de Tradicional/CORBUSÉ, el asesor puede mencionar u ofertar la modalidad OnAliat (100% en línea) ÚNICAMENTE si: (a) el prospecto la solicitó explícitamente por iniciativa propia, o (b) el prospecto presentó una objeción real de costo/economía o de distancia/lejanía Y esa objeción es genuina según la REGLA 5.1 de abajo.
 Si estas condiciones SÍ se cumplen, la llamada puede seguir el "Camino B" descrito en cre_cita (5.1) — el asesor no matricula directamente (no tiene permisos para eso en Tradicional), debe cerrar con una pregunta que induzca a la inscripción y luego transferir o derivar a seguimiento.
 Si el asesor menciona, promueve o vende la modalidad en línea SIN que se cumplan estas condiciones (oferta indebida): no cuentes esa mención como beneficio válido en demo_modalidad, no la cuentes como ventaja institucional en demo_ventaja, trátala en obj_objeciones como un argumento que no corresponde a lo que el prospecto pidió, Y además cre_cita queda topado a un máximo de 50 puntos, sin importar qué tan bien haya ejecutado el resto del cierre — no se le da oportunidad de puntuar por el Camino A (visita a campus) en ese caso, porque la llamada ya se desvió indebidamente.
-Marca en el campo "oferta_onaliat_indebida" (true/false) si detectaste este comportamiento, y menciónalo explícitamente en areas_mejora si aplica.` : ''}
+Marca en el campo "oferta_onaliat_indebida" (true/false) si detectaste este comportamiento, y menciónalo explícitamente en areas_mejora si aplica.
+
+REGLA 5.1 — CÓMO DISTINGUIR UNA OBJECIÓN DE DISTANCIA GENUINA DE UNA QUE NO LO ES: no todas las menciones de distancia son iguales — depende de si existe o no un campus físico real y razonablemente accesible en la ubicación del prospecto. Usa el catálogo de campus reales de la Red Aliat (abajo) para decidir, identificando la CIUDAD/MUNICIPIO o ESTADO que el prospecto mencionó como su ubicación — NO te guíes por el nombre de marca/universidad que diga el asesor o el prospecto, porque las transcripciones de audio frecuentemente distorsionan siglas y nombres de marca (ETAC, UVG, UNEA, UTAN, etc.) — la ciudad/estado es un dato mucho más confiable de identificar en la transcripción.
+- Si la ciudad/estado del prospecto SÍ aparece en el catálogo (o es claramente la misma zona metropolitana de una ciudad del catálogo — ej. San Francisco Coacalco y Coacalco de Berriozábal son la misma ciudad): SÍ existe opción presencial real. En este caso, el asesor debe intentar primero ofrecer/vender la modalidad presencial de esa ciudad — si salta directo a ofertar OnAliat sin ese intento, SÍ es oferta indebida.
+- Si la ciudad/estado del prospecto NO aparece en el catálogo, ni es reconociblemente cercana a alguna: es imposibilidad geográfica real — el asesor puede ofertar OnAliat de inmediato, sin necesidad de "intentarlo" primero con la modalidad presencial (no hay nada que intentar). NO marques esto como oferta indebida ni como que "debió ofrecer presencial antes".
+Ejemplo de imposibilidad real (NO es oferta indebida): un prospecto que se mudó a Cancún — Quintana Roo no tiene ningún campus en el catálogo, así que ofertar OnAliat de inmediato es la respuesta correcta.
+Ejemplo de objeción que si requiere intentar primero lo presencial (SÍ sería oferta indebida si se salta directo a OnAliat): un prospecto en Coacalco, Estado de México — ahí SÍ hay un campus real (Universidad ETAC Coacalco), así que el asesor debe intentar la opción presencial antes de ofrecer en línea.
+
+CATÁLOGO DE CAMPUS FÍSICOS DE LA RED ALIAT (ciudad/municipio — estado):
+Coacalco de Berriozábal — Estado de México · Chalco de Díaz Covarrubias — Estado de México · Tlalnepantla de Baz — Estado de México · Ciudad de México (incluye Tlatelolco y Benito Juárez/Parque Hundido) — CDMX · Tulancingo de Bravo — Hidalgo · Campeche — Campeche · Coatzacoalcos — Veracruz · Comitán de Domínguez — Chiapas · Pichucalco — Chiapas · Tapachula — Chiapas · Tuxtla Gutiérrez — Chiapas · Villahermosa (Centro) — Tabasco · Aguascalientes (incluye Ejido Ojocaliente) — Aguascalientes · Saltillo — Coahuila · Querétaro — Querétaro · Tijuana (Alamar y Florido) — Baja California · Mexicali — Baja California · Chihuahua — Chihuahua · Axtla de Terrazas — San Luis Potosí · San Luis Potosí (ciudad) — San Luis Potosí.
+Cualquier ciudad o estado que NO aparezca en esta lista se considera sin campus físico — imposibilidad geográfica real.` : ''}
 
 ESCALA DE PUNTUACIÓN (aplica a todos los criterios, EXCEPTO cuando la guía de un criterio específico defina su propio conjunto de valores):
 - 100: Lo realizó completo y correctamente — hay evidencia textual clara.
@@ -4960,7 +4831,6 @@ ${naKeys.has('etq_conflicto')?'':'etq_conflicto (6.4) — Manejo emocional y con
 
 ${naKeys.has('etq_control')?'':'etq_control (6.5) — Mute, tiempos de espera y respuestas.\nAcción esperada: Controlar silencios, usar correctamente el mute.\nPuntuación: 100=controló silencios y mute correctamente (o no fue necesario). 50=algún silencio incómodo pero manejable. 0=silencios prolongados sin gestionar, ruidos de fondo, mute inadecuado. [Valores válidos: 100/50/0 únicamente, nunca 75/25]'}`;
 
-  }
 
 
   let resultado;
@@ -5002,8 +4872,7 @@ ${naKeys.has('etq_control')?'':'etq_control (6.5) — Mute, tiempos de espera y 
 // ═══════════════════════════════════════════════
 async function procesarLlamada() {
   if (!audioFile) { alert('Por favor selecciona un archivo de audio.'); return; }
-  const groqKey = localStorage.getItem('qa_groq_key');
-  if (!groqKey && !getGeminiKeyActiva()) { abrirConfig(); return; }
+  if (!getGeminiKeyActiva()) { abrirConfig(); return; }
   const agente        = document.getElementById('f-agente').value.trim() || 'No especificado';
   const tipo          = document.getElementById('f-tipo').value;
   const campana       = document.getElementById('f-campana').value.trim() || '';
@@ -5016,14 +4885,14 @@ async function procesarLlamada() {
   let transcripcion = '';
   try {
     setStep(2); log('Leyendo archivo de audio...','spin');
-    log('Enviando audio a Groq Whisper...','spin');
+    log('Enviando audio a Gemini...','spin');
     transcripcion = await transcribirAudioIA(audioFile);
     log('Audio transcrito ('+transcripcion.split(' ').length+' palabras)','ok');
     log('Midiendo duración del audio...','spin');
     const duracion = await medirDuracionAudio(audioFile);
     const duracionExacta = duracion !== estimarDuracion(audioFile);
     setStep(3); log('Enviando a IA para evaluación ['+(modelo==='onaliat'?'OnAliat':'Tradicional')+']...','spin');
-    const resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, groqKey, modelo, undefined, duracion);
+    const resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, modelo, undefined, duracion);
     log('Evaluación completada — Score: '+resultado.score_total+'/100','ok');
     const entrada = {id:Date.now(),fecha:new Date().toLocaleString('es-MX'),agente,tipo,campana,modelo,archivo:audioFile.name,transcripcion:transcripcion.slice(0,5000),duracion_segundos:duracion,_duracionExacta:duracionExacta,fecha_llamada:audioFile._fechaLlamada||'',hora_llamada:audioFile._horaLlamada||'',es_top:normScore(resultado.score_total,resultado.pts_activos)>=85,...resultado};
     historial.unshift(entrada);
@@ -5530,8 +5399,8 @@ function agregarArchivosBatch(files) {
   const validos = nuevos.filter(f => f.size/1024/1024 <= 25);
   nuevos.forEach(f => {
     const { agente, campana, fechaLlamada, horaLlamada } = parsearNombreArchivo(f.name);
-    const tooBig = f.size/1024/1024 > 25;
-    const item = { file:f, agente:agente||'', fechaLlamada:fechaLlamada||'', horaLlamada:horaLlamada||'', id: Date.now()+Math.random(), status: tooBig?'error':'pending', result:null, error: tooBig?'Archivo >25 MB (límite Groq Whisper)':null };
+    const tooBig = f.size/1024/1024 > 20;
+    const item = { file:f, agente:agente||'', fechaLlamada:fechaLlamada||'', horaLlamada:horaLlamada||'', id: Date.now()+Math.random(), status: tooBig?'error':'pending', result:null, error: tooBig?'Archivo >20 MB (límite recomendado para Gemini)':null };
     batchQueue.push(item);
     if (!tooBig && campana) {
       const campEl = document.getElementById('b-campana');
@@ -5653,19 +5522,14 @@ function limpiarBatch() {
 async function iniciarBatch() {
   const pending = batchQueue.filter(i => i.status==='pending');
   if (!pending.length) { alert('No hay llamadas pendientes en la cola.'); return; }
-  const groqKey = localStorage.getItem('qa_groq_key');
-  if (!groqKey && !getGeminiKeyActiva()) { abrirConfig(); return; }
+  if (!getGeminiKeyActiva()) { abrirConfig(); return; }
 
   const tipo    = document.getElementById('b-tipo').value;
   const campana = document.getElementById('b-campana').value.trim();
   const delay   = parseInt(document.getElementById('b-delay').value);
   const modelo  = _modeloBatch;
 
-  // Concurrencia: la elige el usuario en el desplegable, pero si el proveedor activo es Groq
-  // se fuerza a 1 (secuencial) — Groq se satura más fácil con paralelismo real.
-  const concurrencia = getProveedorActivo() === 'gemini'
-    ? (parseInt(document.getElementById('b-concurrencia').value) || 1)
-    : 1;
+  const concurrencia = parseInt(document.getElementById('b-concurrencia').value) || 1;
 
   batchRunning = true; batchStop = false;
   batchDone = batchErrors = 0;
@@ -5698,7 +5562,7 @@ async function iniciarBatch() {
       // 2. Medir duración (necesaria para las reglas de calibración del prompt)
       const duracion = await medirDuracionAudio(item.file);
       // 3. Evaluar
-      const resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, groqKey, modelo, undefined, duracion);
+      const resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, modelo, undefined, duracion);
       // 4. Guardar
       const entrada = {
         id: Date.now()+idx,
@@ -5728,9 +5592,9 @@ async function iniciarBatch() {
       batchErrConsecutivos++;
       agregarResultadoBatch(item);
 
-      if (batchErrConsecutivos >= BATCH_MAX_ERR_CONSECUTIVOS && groqKeys.length > 1 && getProveedorActivo() !== 'gemini') {
+      if (batchErrConsecutivos >= BATCH_MAX_ERR_CONSECUTIVOS && geminiKeys.length > 1) {
         console.warn(`Batch: ${batchErrConsecutivos} errores consecutivos — rotando key proactivamente`);
-        await rotarGroqKey();
+        await rotarGeminiKey();
         batchErrConsecutivos = 0;
         await esperar(5000);
       }
@@ -6475,6 +6339,12 @@ function _renderReportesBody(data, kpiEl, esFiltradoAgente) {
 
   renderTrendChart(data);
   renderTrendChartSemanal(data);
+  aplicarFrecuenciaTendencia(_freqTrendManual || decidirFrecuenciaAuto(data), !_freqTrendManual);
+  // Si el panel de correlación ya está abierto, mantenerlo sincronizado con el filtro
+  // actual — antes solo se recalculaba al abrir el panel o cambiar de modo, y se quedaba
+  // con datos viejos si el usuario cambiaba filtros con el panel ya expandido.
+  const corrPanel = document.getElementById('corr-panel');
+  if (corrPanel && corrPanel.style.display !== 'none') { poblarSelectorEtapaCorrelacion(data); renderCorrelacionKPIs(data); }
 
   // Ranking — ocultar si se filtró por agente individual (no tiene sentido un ranking de 1)
   const rankCard = document.getElementById('rep-ranking').closest('.card');
@@ -6498,7 +6368,7 @@ function _renderReportesBody(data, kpiEl, esFiltradoAgente) {
       </div>`;
     }).join('') || '<div class="empty-state" style="padding:24px"><p>Sin llamadas</p></div>';
   } else {
-    document.getElementById('rep-ranking').closest('.card').querySelector('.card-head h3').textContent = 'Ranking de agentes';
+    document.getElementById('rep-ranking').closest('.card').querySelector('.card-head h3').textContent = 'Asesores — top 10 mejores';
     const agentMap={};
     data.forEach(h=>{
       if(!agentMap[h.agente])agentMap[h.agente]={scores:[],cierres:0,llamadas:0,pts:[]};
@@ -6511,7 +6381,7 @@ function _renderReportesBody(data, kpiEl, esFiltradoAgente) {
       const avgPts=d.scores.reduce((a,b)=>a+b,0)/d.scores.length;
       const avgTotal=d.pts.reduce((a,b)=>a+b,0)/d.pts.length;
       return {nombre:n,avg:avgPts,avgTotal,pct:Math.round(avgPts/avgTotal*100),llamadas:d.llamadas,cierres:d.cierres};
-    }).sort((a,b)=>b.pct-a.pct);
+    }).sort((a,b)=>b.pct-a.pct).slice(0,10);
     const maxPct=ranking[0]?.pct||100;
     document.getElementById('rep-ranking').innerHTML=ranking.map((r,i)=>{
       const col=r.pct>=80?'var(--green)':r.pct>=60?'var(--yellow)':'var(--red)',barW=Math.round(r.pct/maxPct*100);
@@ -6524,52 +6394,33 @@ function _renderReportesBody(data, kpiEl, esFiltradoAgente) {
         <div class="rank-score" style="color:${col}">${r.pct}%</div>
       </div>`;
     }).join('')||'<div class="empty-state" style="padding:24px"><p>Sin datos</p></div>';
+
+    // Top 10 peores — mismo agentMap y misma métrica (score promedio), como espejo exacto
+    // del de mejores (antes usaba % de llamadas críticas, una métrica distinta — se
+    // unificó a petición explícita: "10 mejores y 10 peores, evalúa lo mismo").
+    const rankingPeor = Object.entries(agentMap).map(([n,d])=>{
+      const avgPts=d.scores.reduce((a,b)=>a+b,0)/d.scores.length;
+      const avgTotal=d.pts.reduce((a,b)=>a+b,0)/d.pts.length;
+      return {nombre:n,pct:Math.round(avgPts/avgTotal*100),llamadas:d.llamadas,cierres:d.cierres};
+    }).sort((a,b)=>a.pct-b.pct).slice(0,10);
+    document.getElementById('rep-criticas').innerHTML = rankingPeor.length ? rankingPeor.map((r,i) => {
+      const col = r.pct>=80?'var(--green)':r.pct>=60?'var(--yellow)':'var(--red)';
+      const barW = Math.round(r.pct);
+      return `<div class="rank-row" onclick="msSeleccionarAgente('${r.nombre.replace(/'/g,"\\'")}');renderReportes()" style="cursor:pointer" title="Ver detalle de ${r.nombre}">
+        <div class="rank-num" style="color:${col};font-size:14px">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-name">${r.nombre}</div>
+          <div class="rank-meta">${r.llamadas} llamada${r.llamadas!==1?'s':''} · ${Math.round(r.cierres/r.llamadas*100)}% cierre</div>
+        </div>
+        <div class="rank-bar-wrap"><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barW}%;background:${col}"></div></div></div>
+        <div class="rank-score" style="color:${col}">${r.pct}%</div>
+      </div>`;
+    }).join('') : '<div class="empty-state" style="padding:24px"><div class="empty-icon" style="font-size:28px">✅</div><p>Sin datos</p></div>';
   }
 
-  // Ranking de asesores críticos
-  const agentesCrit = {};
-  data.forEach(h => {
-    if (!agentesCrit[h.agente]) agentesCrit[h.agente] = {llamadas:0, criticas:0, scores:[], pts:[], peorScore:999};
-    agentesCrit[h.agente].llamadas++;
-    const pct = h.pts_activos ? Math.round(h.score_total/h.pts_activos*100) : h.score_total;
-    if (pct < 60) {
-      agentesCrit[h.agente].criticas++;
-      if (h.score_total < agentesCrit[h.agente].peorScore) agentesCrit[h.agente].peorScore = h.score_total;
-    }
-    agentesCrit[h.agente].scores.push(h.score_total||0);
-    agentesCrit[h.agente].pts.push(h.pts_activos||100);
-  });
-  const rankingCrit = Object.entries(agentesCrit)
-    .filter(([,d]) => d.criticas > 0)
-    .map(([nombre,d]) => ({
-      nombre,
-      criticas: d.criticas,
-      llamadas: d.llamadas,
-      pct: Math.round(d.criticas/d.llamadas*100),
-      avg: Math.round(d.scores.reduce((a,b)=>a+b,0)/d.scores.length),
-      peorScore: d.peorScore
-    }))
-    .sort((a,b) => b.criticas - a.criticas || a.avg - b.avg)
-    .slice(0, 8);
-
-  document.getElementById('rep-criticas').innerHTML = rankingCrit.length ? rankingCrit.map((r,i) => {
-    const pctCol = r.pct >= 75 ? 'var(--red)' : r.pct >= 40 ? 'var(--yellow)' : 'var(--muted)';
-    const barW = Math.round(r.pct);
-    return `<div class="rank-row" onclick="msSeleccionarAgente('${r.nombre.replace(/'/g,"\\'")}');renderReportes()" style="cursor:pointer" title="Ver detalle de ${r.nombre}">
-      <div class="rank-num" style="color:${pctCol};font-size:14px">${i+1}</div>
-      <div class="rank-info">
-        <div class="rank-name">${r.nombre}</div>
-        <div class="rank-meta">${r.criticas} crítica${r.criticas!==1?'s':''} de ${r.llamadas} llamada${r.llamadas!==1?'s':''} · Score prom. ${r.avg}</div>
-        <div style="margin-top:5px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;width:100%">
-          <div style="height:100%;width:${barW}%;background:${pctCol};border-radius:2px;transition:width 1s ease"></div>
-        </div>
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:20px;font-weight:700;color:${pctCol}">${r.pct}%</div>
-        <div style="font-size:10px;color:var(--muted)">llamadas críticas</div>
-      </div>
-    </div>`;
-  }).join('') : `<div class="empty-state" style="padding:30px"><div class="empty-icon" style="font-size:28px">✅</div><p>Ningún asesor con llamadas críticas<br>en el período</p></div>`;
+  // Nota: el ranking de "top 10 peores" ahora se calcula arriba, dentro del bloque de
+  // agentMap, usando la misma métrica de score promedio que "top 10 mejores" (espejo
+  // exacto) — antes vivía aquí aparte con la métrica de % de llamadas críticas.
 
   const planBox=document.getElementById('rep-plan-box');
   planBox.className='ai-plan-box loading';
@@ -6746,6 +6597,74 @@ function toggleDetalleOtroNecesidad(row) {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════
+// EVOLUTIVO POR ENTIDAD (etapa / criterio / supervisor) — usa TODO el
+// historial ya cargado en memoria (no solo el filtro de fecha activo de
+// Reportes, que sería muy angosto para ver una tendencia), respetando el
+// filtro de modelo si hay uno activo. Compara últimas semanas con datos.
+// ══════════════════════════════════════════════════════════════════
+let _evolutivoAbierto = null; // {tipo:'etapa'|'criterio'|'supervisor', key, label} | null
+function toggleEvolutivo(tipo, key, label) {
+  const yaAbierto = _evolutivoAbierto && _evolutivoAbierto.tipo===tipo && _evolutivoAbierto.key===key;
+  _evolutivoAbierto = yaAbierto ? null : {tipo, key, label};
+  renderEvolutivoPanel();
+}
+function renderEvolutivoPanel() {
+  ['evo-etapas','evo-items','evo-supervisores'].forEach(id => { const el=document.getElementById(id); if (el) el.innerHTML=''; });
+  if (!_evolutivoAbierto) return;
+  const {tipo, key, label} = _evolutivoAbierto;
+  const modeloActivo = sharedFiltros.modelo;
+  let base = (typeof historial !== 'undefined' ? historial : []).slice();
+  if (modeloActivo !== '__todos__') base = base.filter(h => (h.modelo||'tradicional')===modeloActivo);
+
+  let keysUsadas = null;
+  if (tipo === 'etapa') {
+    const modeloRef = modeloActivo !== '__todos__' ? modeloActivo : (base[0]?.modelo || 'tradicional');
+    keysUsadas = getCriterios(modeloRef).filter(c => c.etapa === key).map(c => c.key);
+  } else if (tipo === 'criterio') {
+    keysUsadas = [key];
+  } else if (tipo === 'supervisor') {
+    base = base.filter(h => buscarAgenteEnHC(h.agente)?.jefeDirecto === key);
+  }
+
+  const bySemana = _bucketsPorSemana(base);
+  const semanasOrd = Object.keys(bySemana).sort().slice(-8); // últimas 8 semanas con datos, para no saturar
+  const filas = semanasOrd.map(semKey => {
+    const calls = bySemana[semKey].calls;
+    let vals;
+    if (keysUsadas) {
+      vals = calls.flatMap(h => {
+        const naSetH = new Set(Array.isArray(h.criterios_na) ? h.criterios_na.map(String) : []);
+        return keysUsadas.filter(k => !naSetH.has(k)).map(k => {
+          const v = h.scores?.[k];
+          if (v == null) return null;
+          if (typeof v === 'string' && v.trim().toUpperCase() === 'N/A') return null;
+          return typeof v === 'number' ? v : null;
+        });
+      }).filter(v => v !== null);
+    } else {
+      vals = calls.map(h => normScore(h.score_total||0, h.pts_activos));
+    }
+    const avg = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+    return { label: bySemana[semKey].label, avg };
+  }).filter(f => f.avg !== null);
+
+  const contenedorId = tipo==='etapa' ? 'evo-etapas' : tipo==='criterio' ? 'evo-items' : 'evo-supervisores';
+  const el = document.getElementById(contenedorId);
+  if (!el) return;
+  if (filas.length < 2) {
+    el.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:8px 0;border-top:1px solid var(--border)">Evolutivo — <b>${label}</b>: no hay suficientes semanas con datos para mostrar tendencia.</div>`;
+    return;
+  }
+  el.innerHTML = `<div style="border-top:1px solid var(--border);padding-top:8px">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Evolutivo — ${label} (últimas ${filas.length} semanas con datos)</div>
+    <div style="overflow-x:auto"><table style="width:100%;font-size:11px;border-collapse:collapse;min-width:${filas.length*56}px">
+      <tr>${filas.map(f=>`<th style="padding:3px 6px;text-align:center;color:var(--muted);font-weight:400;white-space:nowrap">${f.label}</th>`).join('')}</tr>
+      <tr>${filas.map(f=>{const col=f.avg>=80?'var(--green)':f.avg>=60?'var(--yellow)':'var(--red)';return `<td style="padding:3px 6px;text-align:center;font-weight:700;color:${col}">${f.avg}</td>`;}).join('')}</tr>
+    </table></div>
+  </div>`;
+}
+
 function renderEtapaAnalysis(data) {
   const el = document.getElementById('rep-etapas');
   if (!el) return;
@@ -6788,6 +6707,7 @@ function renderEtapaAnalysis(data) {
       <span class="stage-bar-label">${etapa.emoji} ${etapa.label}</span>
       <div class="stage-bar-track"><div class="stage-bar-fill" style="width:${avg}%;background:${col}"></div></div>
       <span class="stage-bar-val" style="color:${col}">${avg}</span>
+      <span onclick="toggleEvolutivo('etapa','${etapa.key}','${etapa.label.replace(/'/g,"\\'")}')" title="Ver evolutivo" style="cursor:pointer;color:var(--muted);font-size:13px;margin-left:4px">📈</span>
     </div>`;
   }).join('');
 }
@@ -6880,6 +6800,7 @@ function renderCriteriosRanking(data) {
         <div style="width:${barW}%;height:100%;background:${col};border-radius:3px"></div>
       </div>
       <span style="font-size:13px;font-weight:700;color:${col};min-width:32px;text-align:right">${f.avg}</span>
+      <span onclick="toggleEvolutivo('criterio','${f.key}','${(f.label||f.key).replace(/'/g,"\\'")}')" title="Ver evolutivo" style="cursor:pointer;color:var(--muted);font-size:13px">📈</span>
     </div>`;
   }).join('');
 
@@ -7045,6 +6966,7 @@ function renderAntiguedadScatter(data) {
       <span style="flex:1;font-size:13px;font-weight:600;color:var(--text)">${f.nombre}</span>
       <span style="font-size:14px;font-weight:700;color:${col};min-width:56px;text-align:right">${pct}</span>
       <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;min-width:200px">${e1txt}${e2txt}</div>
+      <span onclick="toggleEvolutivo('supervisor','${f.nombre.replace(/'/g,"\\'")}','${f.nombre.replace(/'/g,"\\'")}')" title="Ver evolutivo" style="cursor:pointer;color:var(--muted);font-size:13px;margin-left:6px">📈</span>
     </div>`;
   }).join('');
 
@@ -7110,13 +7032,50 @@ function setModoTrend(cual, modo) {
     const el = document.getElementById(`btn-trend-${c}-${m}`);
     if (el) el.classList.toggle('active', (c==='diaria'?_modoTrendDiaria:_modoTrendSemanal)===m);
   }));
+  const tD = document.getElementById('rep-trend-antig-table'), tS = document.getElementById('rep-trend-semanal-antig-table');
+  if (tD) tD.style.display = _modoTrendDiaria === 'antiguedad' ? 'block' : 'none';
+  if (tS) tS.style.display = _modoTrendSemanal === 'antiguedad' ? 'block' : 'none';
 }
+// Frecuencia de la tendencia (diaria/semanal) — se autoselecciona según el rango de
+// fechas de llamada que cubra el filtro activo (≤7 días=diaria, más=semanal), pero
+// se puede forzar manualmente con los botones — el filtro pisa la elección automática
+// hasta que se limpien filtros o cambie el rango, momento en que vuelve a decidir sola.
+let _freqTrendManual = null;
+function decidirFrecuenciaAuto(data) {
+  if (!data || data.length < 2) return 'semanal';
+  const fechas = data.map(h => fechaEfectivaLlamada(h).getTime());
+  const spanDias = (Math.max(...fechas) - Math.min(...fechas)) / 86400000;
+  return spanDias <= 7 ? 'diaria' : 'semanal';
+}
+function aplicarFrecuenciaTendencia(freq, esAuto) {
+  const dBtn = document.getElementById('btn-freq-diaria'), sBtn = document.getElementById('btn-freq-semanal');
+  if (dBtn) dBtn.classList.toggle('active', freq==='diaria');
+  if (sBtn) sBtn.classList.toggle('active', freq==='semanal');
+  const rD = document.getElementById('rep-trend-wrap')?.parentElement, rS = document.getElementById('rep-trend-semanal-row');
+  if (rD) rD.style.display = freq==='diaria' ? 'flex' : 'none';
+  if (rS) rS.style.display = freq==='semanal' ? 'flex' : 'none';
+  const mD = document.getElementById('trend-modo-diaria'), mS = document.getElementById('trend-modo-semanal');
+  if (mD) mD.style.display = freq==='diaria' ? 'flex' : 'none';
+  if (mS) mS.style.display = freq==='semanal' ? 'flex' : 'none';
+  const tD = document.getElementById('rep-trend-antig-table'), tS = document.getElementById('rep-trend-semanal-antig-table');
+  if (tD) tD.style.display = _modoTrendDiaria === 'antiguedad' ? 'block' : 'none';
+  if (tS) tS.style.display = _modoTrendSemanal === 'antiguedad' ? 'block' : 'none';
+  const note = document.getElementById('trend-freq-note');
+  if (note) note.textContent = esAuto
+    ? (freq==='diaria' ? 'diaria — el filtro actual cubre 7 días o menos' : 'semanal — el filtro actual cubre más de 7 días')
+    : `${freq} — elegida manualmente (vuelve a decidir sola si limpias el filtro)`;
+}
+function setFreqTrend(freq) {
+  _freqTrendManual = freq;
+  aplicarFrecuenciaTendencia(freq, false);
+}
+function limpiarFrecuenciaManual() { _freqTrendManual = null; }
 
 // Función genérica: dibuja la gráfica (línea / dispersión / por grupo de antigüedad).
 // Recibe los DATOS CRUDOS (no pre-agrupados) porque el modo "antigüedad" necesita agrupar
 // por (bucket, grupo) y el modo "dispersión" necesita promedios DIARIOS incluso dentro de la
 // vista semanal (para no mostrar cientos de llamadas individuales sueltas).
-function _renderTrendGenerico(wrapId, tooltipId, data, porSemana, modo, gradId, tipFn, hideFn) {
+function _renderTrendGenerico(wrapId, tooltipId, data, porSemana, modo, gradId, tipFn, hideFn, tablaWrapId) {
   const wrap = document.getElementById(wrapId);
   if (!wrap) return;
   const buckets = porSemana ? _bucketsPorSemana(data) : _bucketsPorDia(data);
@@ -7177,7 +7136,7 @@ function _renderTrendGenerico(wrapId, tooltipId, data, porSemana, modo, gradId, 
       : `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="8" fill="#3a4a6a" text-anchor="middle">${lab}</text>`;
   }).join('');
 
-  let content, leyenda = '';
+  let content, leyenda = '', tablaComparativaHTML = '';
   if (modo === 'dispersion') {
     // Un punto por DÍA (no por llamada individual) — así en la vista semanal no se amontonan
     // decenas de llamadas sueltas, solo los promedios diarios dentro de cada semana.
@@ -7228,16 +7187,15 @@ function _renderTrendGenerico(wrapId, tooltipId, data, porSemana, modo, gradId, 
       }).join('');
       return `<tr><td style="padding:4px 8px;color:var(--muted);white-space:nowrap">${labels[i]}</td>${celdas}</tr>`;
     }).join('');
-    const tablaComparativa = `<div style="overflow-x:auto;margin-top:10px">
+    tablaComparativaHTML = `<div style="max-height:230px;overflow-y:auto">
       <table style="width:100%;border-collapse:collapse;font-size:11px">
         <thead><tr style="border-bottom:1px solid var(--border)">
-          <th style="padding:4px 8px;text-align:left;color:var(--muted)">${porSemana?'Semana':'Día'}</th>
-          ${nombresGrupos.map((g,gi)=>`<th style="padding:4px 8px;text-align:center;color:${PALETA_GRUPOS_ANTIGUEDAD[gi%PALETA_GRUPOS_ANTIGUEDAD.length]}">${g}</th>`).join('')}
+          <th style="padding:4px 8px;text-align:left;color:var(--muted);position:sticky;top:0;background:var(--surface)">${porSemana?'Semana':'Día'}</th>
+          ${nombresGrupos.map((g,gi)=>`<th style="padding:4px 8px;text-align:center;color:${PALETA_GRUPOS_ANTIGUEDAD[gi%PALETA_GRUPOS_ANTIGUEDAD.length]};position:sticky;top:0;background:var(--surface)">${g}</th>`).join('')}
         </tr></thead>
         <tbody>${filasTabla}</tbody>
       </table>
     </div>`;
-    leyenda += tablaComparativa;
   } else {
     const pts = promedios.map((v,i)=>({x:xOf(i), y:yOf(v), v, d:labels[i]}));
     const pathD = pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
@@ -7253,16 +7211,18 @@ function _renderTrendGenerico(wrapId, tooltipId, data, porSemana, modo, gradId, 
     content = `<path d="${fillD}" fill="url(#${gradId})"/><path d="${pathD}" fill="none" stroke="#638cff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${circles}${valLabels}`;
   }
 
-  wrap.innerHTML = `<div class="chart-tooltip" id="${tooltipId}"></div><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+  wrap.innerHTML = `<div class="chart-tooltip" id="${tooltipId}"></div><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:600px;height:auto;display:block;overflow:visible">
     <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#638cff" stop-opacity=".18"/><stop offset="100%" stop-color="#638cff" stop-opacity="0"/></linearGradient></defs>
     ${grids}${xLabels}${content}
   </svg>${leyenda}`;
+  const tablaWrap = document.getElementById(tablaWrapId);
+  if (tablaWrap) tablaWrap.innerHTML = modo === 'antiguedad' ? tablaComparativaHTML : '';
 }
 
 function renderTrendChart(data) {
   window._lastDataTrendDiaria = data;
   if (data.length<2){const wrap=document.getElementById('rep-trend-wrap');if(wrap)wrap.innerHTML=`<div class="chart-tooltip" id="rep-tooltip"></div><div style="padding:40px;text-align:center;color:var(--muted);font-size:12px">Necesitas al menos 2 evaluaciones para ver la tendencia</div>`;return;}
-  _renderTrendGenerico('rep-trend-wrap','rep-tooltip', data, false, _modoTrendDiaria, 'trendGrad', 'showChartTip', 'hideChartTip');
+  _renderTrendGenerico('rep-trend-wrap','rep-tooltip', data, false, _modoTrendDiaria, 'trendGrad', 'showChartTip', 'hideChartTip', 'rep-trend-antig-table');
 }
 // Misma gráfica pero agrupada por semana ISO, usando EXACTAMENTE la misma convención "S{semana}-{año}"
 // (getISOWeek/semanaLabel) que ya usan los filtros de semana en Historial/Reportes.
@@ -7271,7 +7231,7 @@ function renderTrendChartSemanal(data) {
   const wrap=document.getElementById('rep-trend-semanal-wrap');
   if (!wrap) return;
   if (data.length<2){wrap.innerHTML=`<div class="chart-tooltip" id="rep-tooltip-semanal"></div><div style="padding:40px;text-align:center;color:var(--muted);font-size:12px">Necesitas al menos 2 evaluaciones para ver la tendencia</div>`;return;}
-  _renderTrendGenerico('rep-trend-semanal-wrap','rep-tooltip-semanal', data, true, _modoTrendSemanal, 'trendGradSemanal', 'showChartTipSemanal', 'hideChartTipSemanal');
+  _renderTrendGenerico('rep-trend-semanal-wrap','rep-tooltip-semanal', data, true, _modoTrendSemanal, 'trendGradSemanal', 'showChartTipSemanal', 'hideChartTipSemanal', 'rep-trend-semanal-antig-table');
 }
 function showChartTip(e,el){
   const tip=document.getElementById('rep-tooltip');if(!tip)return;
@@ -7298,8 +7258,167 @@ function showChartTipSemanal(e,el){
 }
 function hideChartTipSemanal(){const tip=document.getElementById('rep-tooltip-semanal');if(tip)tip.style.display='none';}
 
+// ══════════════════════════════════════════════════════════════════
+// CORRELACIÓN CON KPIs DE NEGOCIO — colapsada por default (análisis
+// mensual, no forma parte del seguimiento diario). Cruza el score de
+// calidad promedio de cada asesor (en el período ya filtrado en Reportes)
+// contra sus KPIs de citas reales (obtenerKpisCitasRango), sumando las
+// semanas que ese mismo filtro cubre (semanasDelFiltroActivo) — así
+// responde al mismo filtro que el resto de la página, sin lógica de
+// fechas duplicada.
+// ══════════════════════════════════════════════════════════════════
+let _modoCorrelacion = 'metas';
+let _etapaCorrelacion = '__general__';
+function toggleCorrelacionKPIs() {
+  const panel = document.getElementById('corr-panel');
+  const chevron = document.getElementById('corr-chevron');
+  const abierto = panel.style.display !== 'none';
+  panel.style.display = abierto ? 'none' : 'block';
+  chevron.textContent = abierto ? '▸' : '▾';
+  if (!abierto) { poblarSelectorEtapaCorrelacion(window._lastDataTrendDiaria || []); renderCorrelacionKPIs(window._lastDataTrendDiaria || []); }
+}
+function setModoCorrelacion(modo) {
+  _modoCorrelacion = modo;
+  document.getElementById('btn-corr-metas').classList.toggle('active', modo==='metas');
+  document.getElementById('btn-corr-asistencia').classList.toggle('active', modo==='asistencia');
+  renderCorrelacionKPIs(window._lastDataTrendDiaria || []);
+}
+function setEtapaCorrelacion(etapaKey) {
+  _etapaCorrelacion = etapaKey;
+  renderCorrelacionKPIs(window._lastDataTrendDiaria || []);
+}
+// Llena el selector "Score general / [etapas del modelo]" — mismo patrón genérico por
+// modelo que ya usa "Rendimiento por etapa" (getCriterios/getEtapasMeta), para que
+// cualquier modelo nuevo quede cubierto automáticamente sin lista fija.
+function poblarSelectorEtapaCorrelacion(data) {
+  const sel = document.getElementById('corr-etapa-select');
+  if (!sel) return;
+  const modeloActivo = sharedFiltros.modelo;
+  const modeloRef = modeloActivo !== '__todos__' ? modeloActivo : (data[0]?.modelo || 'tradicional');
+  const criteriosRef = getCriterios(modeloRef);
+  const etapasMetaRef = getEtapasMeta(modeloRef);
+  const etapasKeysOrden = [...new Set(criteriosRef.map(c => c.etapa))];
+  const valorActual = sel.value;
+  sel.innerHTML = '<option value="__general__">Score general</option>' + etapasKeysOrden.map(k =>
+    `<option value="${k}">${(etapasMetaRef[k] && etapasMetaRef[k].emoji) || '📋'} ${(etapasMetaRef[k] && etapasMetaRef[k].label) || k}</option>`
+  ).join('');
+  // Conservar selección previa si sigue existiendo en el nuevo modelo; si no, volver a general
+  if ([...sel.options].some(o => o.value === valorActual)) { sel.value = valorActual; _etapaCorrelacion = valorActual; }
+  else { sel.value = '__general__'; _etapaCorrelacion = '__general__'; }
+}
+function renderCorrelacionKPIs(data) {
+  const wrap = document.getElementById('corr-chart-wrap');
+  const statsEl = document.getElementById('corr-stats');
+  if (!wrap) return;
+  if (!Object.keys(citasData).length) {
+    wrap.innerHTML = '<div style="padding:30px;text-align:center;color:var(--muted);font-size:12px">Aún no hay ningún reporte de citas cargado — súbelo desde el menú de usuario ("📈 KPIs de citas") para ver esta gráfica.</div>';
+    statsEl.innerHTML = '';
+    return;
+  }
+  if (!data || !data.length) {
+    wrap.innerHTML = '<div style="padding:30px;text-align:center;color:var(--muted);font-size:12px">Sin llamadas en el período filtrado.</div>';
+    statsEl.innerHTML = '';
+    return;
+  }
+  const semanas = semanasDelFiltroActivo(data);
+  // Si se eligió una etapa específica (no "score general"), calcular el promedio de esa
+  // etapa por agente — mismos criterios y misma exclusión de N/A (estático de Calibración
+  // + dinámico por llamada) que ya usa "Rendimiento por etapa", para que ambas cifras
+  // sean consistentes entre sí.
+  let etapaKeys = null;
+  if (_etapaCorrelacion !== '__general__') {
+    const modeloActivo = sharedFiltros.modelo;
+    const modeloRef = modeloActivo !== '__todos__' ? modeloActivo : (data[0]?.modelo || 'tradicional');
+    etapaKeys = getCriterios(modeloRef).filter(c => c.etapa === _etapaCorrelacion).map(c => c.key);
+  }
+  // Agrupar llamadas por agente para tener su score promedio del período filtrado
+  const porAgente = {};
+  data.forEach(h => {
+    if (!porAgente[h.agente]) porAgente[h.agente] = {scores:[], pts:[], etapaVals:[]};
+    porAgente[h.agente].scores.push(h.score_total||0);
+    porAgente[h.agente].pts.push(h.pts_activos||100);
+    if (etapaKeys) {
+      const naSetH = new Set(Array.isArray(h.criterios_na) ? h.criterios_na.map(String) : []);
+      etapaKeys.filter(k => !naSetH.has(k)).forEach(k => {
+        const v = h.scores?.[k];
+        if (v == null) return;
+        if (typeof v === 'string' && v.trim().toUpperCase() === 'N/A') return;
+        if (typeof v === 'number') porAgente[h.agente].etapaVals.push(v);
+      });
+    }
+  });
+  const puntos = [];
+  Object.entries(porAgente).forEach(([agente, d]) => {
+    let scorePct;
+    if (etapaKeys) {
+      if (!d.etapaVals.length) return; // sin criterios activos de esta etapa en ninguna de sus llamadas
+      scorePct = Math.round(d.etapaVals.reduce((a,b)=>a+b,0)/d.etapaVals.length);
+    } else {
+      const avgScore = d.scores.reduce((a,b)=>a+b,0)/d.scores.length;
+      const avgPts = d.pts.reduce((a,b)=>a+b,0)/d.pts.length;
+      scorePct = avgPts ? Math.round(avgScore/avgPts*100) : Math.round(avgScore);
+    }
+    const kpi = obtenerKpisCitasRango(agente, semanas);
+    if (!kpi) return;
+    const kpiVal = _modoCorrelacion === 'metas' ? kpi.alcanceMetas : kpi.tasaAsistencia;
+    if (kpiVal == null) return;
+    puntos.push({x: kpiVal, y: scorePct, nombre: kpi.nombre||agente, agenteCrudo: agente,
+      citasCreadas: kpi.citasCreadas, citasProgramadas: kpi.citasProgramadas, asistencias: kpi.asistencias,
+      semanasConDato: kpi.semanasConDato, semanasTotal: kpi.semanasTotal});
+  });
+  const totalAgentesConLlamadas = Object.keys(porAgente).length;
+  if (puntos.length < 3) {
+    // Diagnóstico real en vez de solo "insuficiente" — para saber si el problema es
+    // que no hay traslape de semanas, o que los nombres no cruzan aunque sí haya traslape.
+    const semanasConDatos = semanas.filter(s => citasData[s]);
+    const semanasCargadas = Object.keys(citasData);
+    let intentados = 0, sinKpi = 0;
+    Object.keys(porAgente).forEach(ag => { intentados++; if (!obtenerKpisCitasRango(ag, semanas)) sinKpi++; });
+    let motivo;
+    if (Object.keys(hcData).length === 0) {
+      motivo = `El Headcount no está cargado en esta sesión — sin él no se puede normalizar ningún nombre de asesor hacia el formato del Excel de citas, por eso fallan absolutamente todos. Ve a tu menú de usuario → "📋 Headcount" y súbelo primero.`;
+    } else if (!semanasConDatos.length) {
+      motivo = `Las semanas de tu filtro actual (${semanas.join(', ')||'ninguna'}) no coinciden con ninguna semana de citas ya cargada (tienes cargadas: ${semanasCargadas.join(', ')||'ninguna'}). Ajusta el filtro de fecha para que caiga dentro de una semana con reporte de citas subido.`;
+    } else {
+      motivo = `Hay traslape de semana (${semanasConDatos.join(', ')}), pero de ${intentados} asesores con llamadas en este período, ${sinKpi} no se encontraron en el reporte de citas para esas semanas — revisa que el nombre capturado en la evaluación exista en Headcount y que ese mismo nombre aparezca en el Excel de citas.`;
+    }
+    wrap.innerHTML = `<div style="padding:20px;color:var(--muted);font-size:12px;line-height:1.6">Solo ${puntos.length} asesor(es) con datos cruzados — se necesitan al menos 3.<br><br>${motivo}</div>`;
+    statsEl.innerHTML = '';
+    return;
+  }
+  const nombresSinMatch = Object.keys(porAgente).filter(ag => !puntos.some(p => p.agenteCrudo === ag));
+  const n = puntos.length;
+  let sx=0, sy=0, sxy=0, sxx=0, syy=0;
+  puntos.forEach(p=>{ sx+=p.x; sy+=p.y; sxy+=p.x*p.y; sxx+=p.x*p.x; syy+=p.y*p.y; });
+  const num = n*sxy - sx*sy, den = Math.sqrt((n*sxx-sx*sx)*(n*syy-sy*sy));
+  const r = den ? num/den : 0;
+  const lectura = Math.abs(r)<0.2?'relación muy débil o nula':Math.abs(r)<0.4?'relación débil':Math.abs(r)<0.6?'relación moderada':'relación fuerte';
+  statsEl.innerHTML = `<div><b style="font-size:16px;color:var(--text)">${r.toFixed(2)}</b><br>coeficiente (r)</div><div><b style="font-size:16px;color:var(--text)">${n}</b> de ${totalAgentesConLlamadas}<br>asesores cruzados</div><div style="align-self:center">${lectura}</div>`;
+
+  const W=640, H=280, PAD=40;
+  const minX=0, maxX=100;
+  const minY=Math.max(0, Math.min(40, ...puntos.map(p=>p.y))-5), maxY=100;
+  const sxp = v => PAD + (v-minX)/(maxX-minX)*(W-2*PAD);
+  const syp = v => H-PAD - (v-minY)/(maxY-minY)*(H-2*PAD);
+  const m = (n*sxy-sx*sy)/(n*sxx-sx*sx), b=(sy-m*sx)/n;
+  const y1c = Math.max(minY,Math.min(maxY, m*minX+b)), y2c = Math.max(minY,Math.min(maxY, m*maxX+b));
+  const circles = puntos.map(p => `<circle cx="${sxp(p.x).toFixed(1)}" cy="${syp(p.y).toFixed(1)}" r="5" fill="var(--blue)" fill-opacity=".7"><title>${p.nombre} (evaluado como "${p.agenteCrudo}")
+score: ${p.y} · ${_modoCorrelacion==='metas'?'alcance de metas':'cita→asistencia'}: ${p.x}%
+citas creadas: ${p.citasCreadas} · citas programadas: ${p.citasProgramadas} · asistencias: ${p.asistencias}
+semanas con dato: ${p.semanasConDato} de ${p.semanasTotal} en el filtro</title></circle>`).join('');
+  wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;overflow:visible">
+    <line x1="${PAD}" y1="${H-PAD}" x2="${W-PAD}" y2="${H-PAD}" stroke="var(--border2)" stroke-width="1"/>
+    <line x1="${PAD}" y1="${PAD}" x2="${PAD}" y2="${H-PAD}" stroke="var(--border2)" stroke-width="1"/>
+    <line x1="${sxp(minX).toFixed(1)}" y1="${syp(y1c).toFixed(1)}" x2="${sxp(maxX).toFixed(1)}" y2="${syp(y2c).toFixed(1)}" stroke="var(--muted)" stroke-dasharray="5,4" stroke-width="1.5"/>
+    ${circles}
+    <text x="${W/2}" y="${H-8}" text-anchor="middle" fill="var(--muted)" font-size="11">${_modoCorrelacion==='metas'?'% alcance de meta de citas':'% conversión cita → asistencia'}</text>
+    <text x="14" y="${H/2}" text-anchor="middle" fill="var(--muted)" font-size="11" transform="rotate(-90 14 ${H/2})">${document.getElementById('corr-etapa-select')?.selectedOptions[0]?.textContent.trim() || 'score de calidad'}</text>
+  </svg>
+  ${nombresSinMatch.length ? `<details style="margin-top:6px"><summary style="font-size:11px;color:var(--blue);cursor:pointer">${nombresSinMatch.length} asesor(es) con llamadas en este período que NO cruzaron — ver cuáles</summary><div style="font-size:11px;color:var(--muted);margin-top:6px;max-height:120px;overflow-y:auto">${nombresSinMatch.join(', ')}</div></details>` : ''}`;
+}
+
 async function generarPlanIA() {
-  if (!localStorage.getItem('qa_groq_key') && !getGeminiKeyActiva()) { abrirConfig(); return; }
+  if (!getGeminiKeyActiva()) { abrirConfig(); return; }
   const data=filtrarPorPeriodo(); if(!data.length){alert('Sin datos en el período.');return;}
   const btn=document.getElementById('btn-gen-plan'), box=document.getElementById('rep-plan-box');
   btn.disabled=true; btn.innerHTML='<span class="spinning">◌</span> Generando...';
@@ -7630,7 +7749,7 @@ async function preguntarPlanIA() {
   if (!pregunta || !window._planChatContext) return;
   input.value = '';
 
-  if (!localStorage.getItem('qa_groq_key') && !getGeminiKeyActiva()) { alert('Configura tu API key primero.'); return; }
+  if (!getGeminiKeyActiva()) { alert('Configura tu API key primero.'); return; }
 
   // Mostrar mensaje del usuario
   const addMsg = (txt, esUsuario) => {
@@ -8072,7 +8191,7 @@ function toggleTopFromList(id) {
 let _docTopContent = '';
 
 async function generarDocumentoTop() {
-  if (!localStorage.getItem('qa_groq_key') && !getGeminiKeyActiva()) { abrirConfig(); return; }
+  if (!getGeminiKeyActiva()) { abrirConfig(); return; }
   const modeloF = document.getElementById('top-modelo-filter')?.value || '__todos__';
   let tops = historial.filter(h=>h.es_top);
   if (modeloF !== '__todos__') tops = tops.filter(h=>(h.modelo||'tradicional')===modeloF);
@@ -8661,12 +8780,11 @@ function renderReporteCorte() {
 function actualizarDelayInfo(val) {
   const info = document.getElementById('batch-delay-info-txt');
   if (!info) return;
-  const esGemini = getProveedorActivo() === 'gemini';
-  const concurrencia = esGemini ? (parseInt(document.getElementById('b-concurrencia')?.value) || 1) : 1;
+  const concurrencia = parseInt(document.getElementById('b-concurrencia')?.value) || 1;
   const segundos = parseInt(val) / 1000;
   const porTanda = segundos + 30; // estimado de tiempo de transcripción+evaluación por llamada
-  const llamadasPorHora = Math.round((3600 / porTanda) * concurrencia * (groqKeys.length > 1 && concurrencia===1 ? groqKeys.length : 1));
-  const etiquetaConc = concurrencia > 1 ? ` · procesando ${concurrencia} a la vez (Gemini)` : '';
+  const llamadasPorHora = Math.round((3600 / porTanda) * concurrencia);
+  const etiquetaConc = concurrencia > 1 ? ` · procesando ${concurrencia} a la vez` : '';
   const map = {
     '8000': `8 segundos entre tandas${etiquetaConc}. Estimado: ~${llamadasPorHora} llamadas/hora.`,
     '12000': `12 segundos entre tandas${etiquetaConc}. Estimado: ~${llamadasPorHora} llamadas/hora.`,
@@ -8676,24 +8794,14 @@ function actualizarDelayInfo(val) {
   info.textContent = map[val] || '';
 }
 
-// Habilita/deshabilita los controles de velocidad (8s y concurrencia) según el proveedor activo.
-// Con Groq se fuerza 1 llamada a la vez y mínimo 12s, tal como funcionaba siempre.
+// Habilita los controles de velocidad (8s y concurrencia) — Gemini soporta ambos sin restricción.
 function actualizarControlesVelocidadBatch() {
-  const esGemini = getProveedorActivo() === 'gemini';
   const selConc = document.getElementById('b-concurrencia');
   const selDelay = document.getElementById('b-delay');
   const opt8 = document.getElementById('opt-delay-8');
   if (!selConc || !selDelay || !opt8) return;
-
-  if (esGemini) {
-    selConc.disabled = false;
-    opt8.disabled = false;
-  } else {
-    selConc.value = '1';
-    selConc.disabled = true;
-    opt8.disabled = true;
-    if (selDelay.value === '8000') selDelay.value = '12000';
-  }
+  selConc.disabled = false;
+  opt8.disabled = false;
   actualizarDelayInfo(selDelay.value);
 }
 
