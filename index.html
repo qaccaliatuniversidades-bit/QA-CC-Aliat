@@ -163,7 +163,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
 /* LOG */
 .process-log{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:var(--mono);font-size:12px;line-height:1.8;max-height:160px;overflow-y:auto}
 .log-line{display:flex;gap:10px}
-.log-time{color:var(--dim)} .log-ok{color:var(--green)} .log-spin{color:var(--blue)} .log-err{color:var(--red)} .log-info{color:var(--cyan)}
+.log-time{color:var(--dim)} .log-ok{color:var(--green)} .log-spin{color:var(--blue)} .log-err{color:var(--red)} .log-info{color:var(--cyan)} .log-warn{color:var(--yellow)}
 
 /* MAIN BTN */
 .btn-main{width:100%;padding:15px;background:linear-gradient(135deg,var(--aliat-blue),var(--aliat-orange));border:none;border-radius:11px;color:#fff;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:-.2px}
@@ -4114,10 +4114,10 @@ function setAudio(f) {
   document.getElementById('audio-name').textContent = f.name;
   const sizeMB = f.size/1024/1024;
   const sizeEl = document.getElementById('audio-size');
-  if (sizeMB > 20) {
-    sizeEl.innerHTML = `<span style="color:var(--red);font-weight:600">⚠️ ${sizeMB.toFixed(2)} MB — Supera el límite recomendado de 20 MB para transcripción con Gemini.</span>`;
+  if (sizeMB > 25) {
+    sizeEl.innerHTML = `<span style="color:var(--red);font-weight:600">⚠️ ${sizeMB.toFixed(2)} MB — Supera el límite de 25 MB.</span>`;
     document.getElementById('btn-main').disabled = true;
-    document.getElementById('btn-main').innerHTML = '<span>⚠️</span> Archivo demasiado grande (máx 20 MB)';
+    document.getElementById('btn-main').innerHTML = '<span>⚠️</span> Archivo demasiado grande (máx 25 MB)';
   } else if (sizeMB > 20) {
     sizeEl.innerHTML = `<span style="color:var(--yellow)">${sizeMB.toFixed(2)} MB — Cerca del límite (25 MB)</span>`;
     document.getElementById('btn-main').disabled = false;
@@ -4147,8 +4147,8 @@ function limpiarAudio() {
 function log(msg, tipo='info') {
   const el  = document.getElementById('process-log');
   const now = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const cls = tipo==='ok'?'log-ok':tipo==='err'?'log-err':tipo==='spin'?'log-spin':'log-info';
-  const ico = tipo==='ok'?'✓':tipo==='err'?'✗':tipo==='spin'?'◌':'→';
+  const cls = tipo==='ok'?'log-ok':tipo==='err'?'log-err':tipo==='spin'?'log-spin':tipo==='warn'?'log-warn':'log-info';
+  const ico = tipo==='ok'?'✓':tipo==='err'?'✗':tipo==='spin'?'◌':tipo==='warn'?'⚠':'→';
   el.innerHTML += `<div class="log-line"><span class="log-time">${now}</span><span class="${cls}">${ico} ${msg}</span></div>`;
   el.scrollTop = el.scrollHeight;
 }
@@ -4232,8 +4232,9 @@ async function transcribirAudioGemini(file) {
       }
       if (!texto) { lastErr = `Sin contenido (finishReason: ${finishReason||'?'})`; console.warn(`Transcripción: modelo ${m} sin contenido (finishReason: ${finishReason||'?'})`); continue; }
       console.info(`Transcripción OK con modelo ${m} — ${texto.length} caracteres, finishReason: ${finishReason||'?'}`);
-      if (finishReason === 'MAX_TOKENS') console.warn('⚠️ Transcripción posiblemente incompleta (se alcanzó el límite de tokens de salida).');
-      return limpiarTranscripcionGemini(texto);
+      const incompleta = finishReason === 'MAX_TOKENS';
+      if (incompleta) console.warn('⚠️ Transcripción posiblemente incompleta (se alcanzó el límite de tokens de salida).');
+      return { texto: limpiarTranscripcionGemini(texto), incompleta, motivo: incompleta ? 'Se alcanzó el límite de longitud de salida del modelo — probablemente el audio es muy largo o muy pesado para transcribirse completo en una sola pasada.' : null };
     } catch(e) { lastErr = e.message; continue; }
   }
   throw new Error('Gemini (transcripción) falló: ' + lastErr);
@@ -4886,13 +4887,17 @@ async function procesarLlamada() {
   try {
     setStep(2); log('Leyendo archivo de audio...','spin');
     log('Enviando audio a Gemini...','spin');
-    transcripcion = await transcribirAudioIA(audioFile);
-    log('Audio transcrito ('+transcripcion.split(' ').length+' palabras)','ok');
+    const transRes = await transcribirAudioIA(audioFile);
+    transcripcion = transRes.texto;
+    log('Audio transcrito ('+transcripcion.split(' ').length+' palabras)', transRes.incompleta ? 'warn' : 'ok');
+    if (transRes.incompleta) log('⚠️ La transcripción podría estar incompleta — ' + transRes.motivo, 'warn');
     log('Midiendo duración del audio...','spin');
     const duracion = await medirDuracionAudio(audioFile);
     const duracionExacta = duracion !== estimarDuracion(audioFile);
     setStep(3); log('Enviando a IA para evaluación ['+(modelo==='onaliat'?'OnAliat':'Tradicional')+']...','spin');
     const resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, modelo, undefined, duracion);
+    resultado.transcripcion_incompleta = transRes.incompleta || false;
+    resultado.transcripcion_incompleta_motivo = transRes.motivo || null;
     log('Evaluación completada — Score: '+resultado.score_total+'/100','ok');
     const entrada = {id:Date.now(),fecha:new Date().toLocaleString('es-MX'),agente,tipo,campana,modelo,archivo:audioFile.name,transcripcion:transcripcion.slice(0,5000),duracion_segundos:duracion,_duracionExacta:duracionExacta,fecha_llamada:audioFile._fechaLlamada||'',hora_llamada:audioFile._horaLlamada||'',es_top:normScore(resultado.score_total,resultado.pts_activos)>=85,...resultado};
     historial.unshift(entrada);
@@ -5046,6 +5051,7 @@ function renderResultado(r, transcripcionCompleta) {
   let alertHtml='';
   if(r.nivel_urgencia==='critica') alertHtml=`<div class="alert-banner alert-r">🚨 <strong>Llamada crítica</strong> — Requiere revisión inmediata del supervisor.</div>`;
   else if(r.nivel_urgencia==='revisar') alertHtml=`<div class="alert-banner alert-y">⚠️ <strong>Requiere atención</strong> — Se detectaron áreas de oportunidad importantes.</div>`;
+  if(r.transcripcion_incompleta) alertHtml+=`<div class="alert-banner alert-y">✂️ <strong>Transcripción posiblemente incompleta</strong> — ${r.transcripcion_incompleta_motivo||'se alcanzó el límite de longitud de salida del modelo.'} La evaluación se hizo sobre el texto disponible; revisa el audio directamente si el resultado no cuadra con lo que escuchas.</div>`;
   const txDisplay=transcripcionCompleta||r.transcripcion||'';
   const hcMatch = buscarAgenteEnHC(r.agente);
   const nombreCompleto = hcMatch ? hcMatch.nombre : null;
@@ -5399,8 +5405,8 @@ function agregarArchivosBatch(files) {
   const validos = nuevos.filter(f => f.size/1024/1024 <= 25);
   nuevos.forEach(f => {
     const { agente, campana, fechaLlamada, horaLlamada } = parsearNombreArchivo(f.name);
-    const tooBig = f.size/1024/1024 > 20;
-    const item = { file:f, agente:agente||'', fechaLlamada:fechaLlamada||'', horaLlamada:horaLlamada||'', id: Date.now()+Math.random(), status: tooBig?'error':'pending', result:null, error: tooBig?'Archivo >20 MB (límite recomendado para Gemini)':null };
+    const tooBig = f.size/1024/1024 > 25;
+    const item = { file:f, agente:agente||'', fechaLlamada:fechaLlamada||'', horaLlamada:horaLlamada||'', id: Date.now()+Math.random(), status: tooBig?'error':'pending', result:null, error: tooBig?'Archivo >25 MB':null };
     batchQueue.push(item);
     if (!tooBig && campana) {
       const campEl = document.getElementById('b-campana');
@@ -5558,11 +5564,14 @@ async function iniciarBatch() {
         : '⚡ ' + item.file.name.slice(0,30);
 
       // 1. Transcribir
-      const transcripcion = await transcribirAudioIA(item.file);
+      const transRes = await transcribirAudioIA(item.file);
+      const transcripcion = transRes.texto;
       // 2. Medir duración (necesaria para las reglas de calibración del prompt)
       const duracion = await medirDuracionAudio(item.file);
       // 3. Evaluar
       const resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, modelo, undefined, duracion);
+      resultado.transcripcion_incompleta = transRes.incompleta || false;
+      resultado.transcripcion_incompleta_motivo = transRes.motivo || null;
       // 4. Guardar
       const entrada = {
         id: Date.now()+idx,
@@ -5745,7 +5754,7 @@ function agregarResultadoBatch(item) {
         <div class="tags" style="flex-shrink:0">
           <span class="tag ${s>=80?'tg':s>=60?'ty':'tr'}">${niv}</span>
           <span class="tag ${r.sentimiento_cliente==='positivo'?'tg':r.sentimiento_cliente==='negativo'?'tr':'tb'}">Cliente ${r.sentimiento_cliente}</span>
-          <span class="tag ${r.logro_objetivo?'tg':'tr'}">${r.logro_objetivo?'✅ Cerró':'❌ Sin cierre'}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}
+          <span class="tag ${r.logro_objetivo?'tg':'tr'}">${r.logro_objetivo?'✅ Cerró':'❌ Sin cierre'}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${r.transcripcion_incompleta?'<span class="tag ty">✂️ Transcripción incompleta</span>':''}
           ${urgBadge}
         </div>
         <button class="btn-sm" onclick="verDetalle(${r.id})">Ver detalle</button>
@@ -8168,7 +8177,7 @@ function renderTopCalls() {
       <span style="font-size:22px">⭐</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;margin-bottom:4px">${h.agente} <span style="color:var(--muted);font-size:11px">· ${h.fecha}</span></div>
-        <div class="tags">${modeloTag}${prob}${dur}<span class="tag ${h.logro_objetivo?'tg':'tr'}">${h.logro_objetivo?'✅ Cerró':'Sin cierre'}</span>${h.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}</div>
+        <div class="tags">${modeloTag}${prob}${dur}<span class="tag ${h.logro_objetivo?'tg':'tr'}">${h.logro_objetivo?'✅ Cerró':'Sin cierre'}</span>${h.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${h.transcripcion_incompleta?'<span class="tag ty">✂️ Transcripción incompleta</span>':''}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">✓ ${(h.fortalezas||'').slice(0,80)}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
