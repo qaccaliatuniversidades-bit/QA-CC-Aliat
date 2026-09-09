@@ -1300,6 +1300,26 @@ header{position:sticky;top:0;z-index:200;background:rgba(var(--bg-rgb),0.95);bac
       <div id="evo-supervisores" style="padding:0 16px 12px"></div>
     </div>
   </div>
+  <div style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-head" style="flex-wrap:wrap;gap:8px">
+        <span>🧑‍💼</span><h3>Detalle por supervisor</h3>
+        <div class="period-tabs" id="repsup-modo-tabs" style="margin-left:auto">
+          <button class="period-tab active" id="repsup-modo-dia" onclick="setRepSupModo('dia')">Vista diaria</button>
+          <button class="period-tab" id="repsup-modo-semana" onclick="setRepSupModo('semana')">Vista semanal</button>
+        </div>
+        <button class="btn-sm" onclick="copiarTablaComoImagen('repsup-contenido', this)">📋 Copiar como imagen</button>
+      </div>
+      <div class="card-body" style="padding:16px">
+        <div id="repsup-semana-nav" style="display:none;align-items:center;gap:10px;margin-bottom:12px">
+          <button class="btn-sm" onclick="repSupCambiarSemana(-1)">◀</button>
+          <span id="repsup-semana-label" style="font-size:13px;font-weight:600;color:var(--blue)">Semana —</span>
+          <button class="btn-sm" onclick="repSupCambiarSemana(1)">▶</button>
+        </div>
+        <div id="repsup-contenido"><div style="padding:14px;font-size:12px;color:var(--muted)">Sin datos aún.</div></div>
+      </div>
+    </div>
+  </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
     <div class="card">
       <div class="card-head"><span>🏆</span><h3>Asesores — top 10 mejores</h3></div>
@@ -4573,13 +4593,14 @@ CAMINO A (estándar): Proponer una visita al campus con fecha específica, hora 
 50=mencionó la cita pero sin fecha ni hora específica.
 0=no propuso cita.
 
-CAMINO B (solo si la Regla 6 confirma que la oferta de OnAliat fue LEGÍTIMA — el prospecto lo pidió, o fue último recurso ante objeción real de costo/lejanía): el asesor debe hacer una pregunta de cierre real que induzca a la inscripción (cualquier técnica de cierre de ventas es válida), y actuar según la respuesta del prospecto: transferirlo si acepta, o programar seguimiento concreto si no acepta en el momento. Que el prospecto termine inscribiéndose o no NO es lo que se evalúa aquí — solo si el asesor intentó el cierre correctamente y actuó bien según la respuesta.
-100=hizo la pregunta de cierre Y ejecutó bien la acción correspondiente (transfirió claramente, o programó seguimiento con fecha/hora concreta).
+CAMINO B (solo si la Regla 5 confirma que la oferta de OnAliat fue LEGÍTIMA — el prospecto lo pidió, fue último recurso ante objeción real de costo/lejanía, o la carrera no se ofrece presencial): el asesor debe hacer una pregunta de cierre real que induzca a la inscripción (cualquier técnica de cierre de ventas es válida), y actuar según la respuesta del prospecto: transferirlo si acepta, o programar seguimiento concreto si no acepta en el momento. Que el prospecto termine inscribiéndose o no NO es lo que se evalúa aquí — solo si el asesor intentó el cierre correctamente y actuó bien según la respuesta.
+⚠️ IMPORTANTE — no confundas "ofrecer la modalidad en línea" con "hacer una pregunta de cierre": preguntar algo como "¿te interesaría tomarla en línea o buscas presencial?" es solo una PREGUNTA DE PREFERENCIA/INTERÉS, no todavía una pregunta de cierre que induzca a inscribirse (no pide ningún compromiso ni siguiente paso). Que el asesor haya hecho esa pregunta de interés SÍ cuenta como haber intentado algo — así que NUNCA es 0 solo por eso — pero si después de la respuesta del prospecto (acepte o decline) el asesor no hace una pregunta de cierre real ni programa un seguimiento concreto, el score correcto es 50, no 100 ni 0.
+100=hizo la pregunta de cierre Y ejecutó bien la acción correspondiente (transfirió claramente, o programó seguimiento con fecha/hora concreta) — incluso si el prospecto declinó ambas modalidades, para llegar a 100 el asesor debe haber propuesto algún seguimiento concreto (p. ej. dejar sus datos por si abre un campus más cercano, o programar una nueva llamada) en vez de solo despedirse cortésmente sin más acción.
 75=hizo el cierre pero no ejecutó bien la transferencia/derivación (fue vago sobre a quién transfiere, o el "seguimiento" quedó sin fecha/hora).
-50=intento débil de cierre (insinuó algo pero sin una verdadera pregunta que induzca a inscribirse).
-0=no intentó ningún cierre hacia la inscripción.
+50=intento débil de cierre — incluye el caso de solo preguntar interés/preferencia de modalidad (sin verdadera pregunta de cierre) y/o no proponer ningún seguimiento concreto cuando el prospecto no acepta en el momento. Ejemplo: el asesor pregunta "¿te interesaría en línea o buscas presencial?", el prospecto declina ambas opciones, y el asesor simplemente acepta el "no" y se despide sin ofrecer dejar sus datos ni programar ningún contacto futuro — eso es 50, no 0 (sí hubo un intento) ni 100 (no hubo cierre real ni seguimiento).
+0=no intentó ningún cierre hacia la inscripción — el asesor ni siquiera mencionó/ofreció la alternativa de modalidad ni hizo ningún esfuerzo por avanzar hacia una inscripción o cita, aceptando la negativa del prospecto sin haber propuesto nada.
 
-⚠️ Si Regla 6 detecta que la oferta de OnAliat fue INDEBIDA: cre_cita queda TOPADO a máximo 50, sin importar cómo haya ejecutado el resto — no se evalúa el Camino A en ese caso.
+⚠️ Si la Regla 5 detecta que la oferta de OnAliat fue INDEBIDA: cre_cita queda TOPADO a máximo 50, sin importar cómo haya ejecutado el resto — no se evalúa el Camino A en ese caso.
 
 [Valores válidos: 100/75/50/0 únicamente, nunca 25]
 Notas: hizo=qué camino tomó la llamada (A o B) y qué intentó el asesor; no_hizo=qué faltó; ejemplo=frase concreta que debió usar según el camino correspondiente.`
@@ -4672,16 +4693,24 @@ REGLA 3 — OBJECIONES SIN NEGATIVA: Si el prospecto NO presentó ninguna negati
 REGLA 4 — REFERIDOS COMPLETOS: Para que obj_referidos reciba 100, el asesor DEBE haber mencionado explícitamente los 3 elementos: (a) la solicitud de referidos, (b) el beneficio del 5% de descuento, Y (c) que ese beneficio está CONDICIONADO a que el referido se inscriba. Si falta cualquiera de los tres, o si alguno se presenta de forma incorrecta o engañosa, el score es 0.
 Notas: hizo=cuáles de los 3 elementos mencionó (solicitud/5%/condición de inscripción) con cita textual; no_hizo=cuáles faltaron; ejemplo=frase completa con los 3 elementos: "¿Conoces a alguien que también esté buscando estudiar? Si se inscribe con nosotros, tú recibes un 5% de descuento en tu colegiatura.".
 ${esTrad ? `
-REGLA 5 — OFERTA DE MODALIDAD ONALIAT DENTRO DE UNA LLAMADA TRADICIONAL: En llamadas de Tradicional/CORBUSÉ, el asesor puede mencionar u ofertar la modalidad OnAliat (100% en línea) ÚNICAMENTE si: (a) el prospecto la solicitó explícitamente por iniciativa propia, o (b) el prospecto presentó una objeción real de costo/economía o de distancia/lejanía Y esa objeción es genuina según la REGLA 5.1 de abajo.
-Si estas condiciones SÍ se cumplen, la llamada puede seguir el "Camino B" descrito en cre_cita (5.1) — el asesor no matricula directamente (no tiene permisos para eso en Tradicional), debe cerrar con una pregunta que induzca a la inscripción y luego transferir o derivar a seguimiento.
-Si el asesor menciona, promueve o vende la modalidad en línea SIN que se cumplan estas condiciones (oferta indebida): no cuentes esa mención como beneficio válido en demo_modalidad, no la cuentes como ventaja institucional en demo_ventaja, trátala en obj_objeciones como un argumento que no corresponde a lo que el prospecto pidió, Y además cre_cita queda topado a un máximo de 50 puntos, sin importar qué tan bien haya ejecutado el resto del cierre — no se le da oportunidad de puntuar por el Camino A (visita a campus) en ese caso, porque la llamada ya se desvió indebidamente.
+REGLA 5 — OFERTA DE MODALIDAD ONALIAT DENTRO DE UNA LLAMADA TRADICIONAL: En llamadas de Tradicional/CORBUSÉ, el asesor puede mencionar u ofertar la modalidad OnAliat (100% en línea) ÚNICAMENTE si se cumple el caso (a), el caso (b) o el caso (c) de abajo. Antes que nada, identifica QUIÉN mencionó primero la modalidad en línea en la conversación — el prospecto o el asesor — y POR QUÉ, porque de eso depende cuál caso aplica:
+
+CASO (a) — EL PROSPECTO LA PIDIÓ POR SU CUENTA: el prospecto es quien menciona primero (en cualquier momento de la llamada, incluyendo desde el inicio) que busca, necesita o prefiere la modalidad en línea, SIN que el asesor se lo haya preguntado ni ofrecido antes. Esto incluye casos donde el prospecto justifica su petición mencionando que vive en otra ciudad o localidad — esa mención de ubicación NO activa la Regla 5.1, porque el prospecto ya pidió la modalidad por su cuenta. Este caso es SIEMPRE legítimo, sin importar si su ciudad tiene o no campus físico en el catálogo de abajo — NO apliques la Regla 5.1 aquí bajo ninguna circunstancia; el catálogo de campus solo sirve para el caso (b). Que el asesor atienda una solicitud directa del prospecto (recabando sus datos y transfiriendo/derivando, Camino B) NUNCA es oferta indebida, así su ciudad sí tenga un campus real.
+
+CASO (b) — EL ASESOR LA OFRECE ANTE UNA OBJECIÓN, SIN QUE EL PROSPECTO LA HAYA PEDIDO: el prospecto NO pidió la modalidad en línea por iniciativa propia, pero presentó una objeción real de costo/economía o de distancia/lejanía, y es el ASESOR quien entonces propone OnAliat como solución a esa objeción. SOLO en este caso aplica la Regla 5.1 de abajo, para verificar si la objeción de distancia era genuina.
+
+CASO (c) — LA CARRERA/PROGRAMA DE INTERÉS NO SE OFRECE EN MODALIDAD PRESENCIAL: si de la conversación se desprende que el programa de interés del prospecto NO está disponible en modalidad presencial/campus (porque el asesor lo indica explícitamente — ej. "esa carrera no la tenemos de forma presencial, pero sí en línea" — o porque de la conversación se da a entender claramente que la única modalidad en la que existe ese programa es en línea), el asesor puede ofertar OnAliat de inmediato sin que esto sea oferta indebida — sin importar la ciudad del prospecto (no aplica el catálogo de campus de la Regla 5.1, ese catálogo es de ubicaciones, no de programas) y sin necesidad de que el prospecto lo haya pedido primero (aunque puede coincidir con el caso a). Este caso se evalúa ÚNICAMENTE por lo que se dice o se da a entender en la transcripción — no existe (todavía) un catálogo de qué carreras se ofrecen en cada modalidad para verificarlo de forma independiente, así que si el asesor simplemente ofrece OnAliat sin explicar ni dar a entender que es porque el programa no existe presencial, ESO NO ACTIVA el caso (c) — se evalúa entonces solo por (a) o (b).
+
+Si se cumple el caso (a), el caso (b) [con Regla 5.1 favorable] o el caso (c), la llamada puede seguir el "Camino B" descrito en cre_cita (5.1) — el asesor no matricula directamente (no tiene permisos para eso en Tradicional), debe cerrar con una pregunta que induzca a la inscripción y luego transferir o derivar a seguimiento.
+Si el asesor menciona, promueve o vende la modalidad en línea SIN que se cumpla ninguno de los tres casos (oferta indebida): no cuentes esa mención como beneficio válido en demo_modalidad, no la cuentes como ventaja institucional en demo_ventaja, trátala en obj_objeciones como un argumento que no corresponde a lo que el prospecto pidió, Y además cre_cita queda topado a un máximo de 50 puntos, sin importar qué tan bien haya ejecutado el resto del cierre — no se le da oportunidad de puntuar por el Camino A (visita a campus) en ese caso, porque la llamada ya se desvió indebidamente.
 Marca en el campo "oferta_onaliat_indebida" (true/false) si detectaste este comportamiento, y menciónalo explícitamente en areas_mejora si aplica.
 
-REGLA 5.1 — CÓMO DISTINGUIR UNA OBJECIÓN DE DISTANCIA GENUINA DE UNA QUE NO LO ES: no todas las menciones de distancia son iguales — depende de si existe o no un campus físico real y razonablemente accesible en la ubicación del prospecto. Usa el catálogo de campus reales de la Red Aliat (abajo) para decidir, identificando la CIUDAD/MUNICIPIO o ESTADO que el prospecto mencionó como su ubicación — NO te guíes por el nombre de marca/universidad que diga el asesor o el prospecto, porque las transcripciones de audio frecuentemente distorsionan siglas y nombres de marca (ETAC, UVG, UNEA, UTAN, etc.) — la ciudad/estado es un dato mucho más confiable de identificar en la transcripción.
+REGLA 5.1 — CÓMO DISTINGUIR UNA OBJECIÓN DE DISTANCIA GENUINA DE UNA QUE NO LO ES (⚠️ esta regla SOLO se evalúa dentro del caso (b) de la Regla 5 — si ya determinaste que aplica el caso (a), es decir que el prospecto pidió la modalidad en línea por su cuenta, IGNORA por completo esta Regla 5.1, no la apliques ni la menciones): no todas las menciones de distancia son iguales — depende de si existe o no un campus físico real y razonablemente accesible en la ubicación del prospecto. Usa el catálogo de campus reales de la Red Aliat (abajo) para decidir, identificando la CIUDAD/MUNICIPIO o ESTADO que el prospecto mencionó como su ubicación — NO te guíes por el nombre de marca/universidad que diga el asesor o el prospecto, porque las transcripciones de audio frecuentemente distorsionan siglas y nombres de marca (ETAC, UVG, UNEA, UTAN, etc.) — la ciudad/estado es un dato mucho más confiable de identificar en la transcripción.
 - Si la ciudad/estado del prospecto SÍ aparece en el catálogo (o es claramente la misma zona metropolitana de una ciudad del catálogo — ej. San Francisco Coacalco y Coacalco de Berriozábal son la misma ciudad): SÍ existe opción presencial real. En este caso, el asesor debe intentar primero ofrecer/vender la modalidad presencial de esa ciudad — si salta directo a ofertar OnAliat sin ese intento, SÍ es oferta indebida.
 - Si la ciudad/estado del prospecto NO aparece en el catálogo, ni es reconociblemente cercana a alguna: es imposibilidad geográfica real — el asesor puede ofertar OnAliat de inmediato, sin necesidad de "intentarlo" primero con la modalidad presencial (no hay nada que intentar). NO marques esto como oferta indebida ni como que "debió ofrecer presencial antes".
 Ejemplo de imposibilidad real (NO es oferta indebida): un prospecto que se mudó a Cancún — Quintana Roo no tiene ningún campus en el catálogo, así que ofertar OnAliat de inmediato es la respuesta correcta.
 Ejemplo de objeción que si requiere intentar primero lo presencial (SÍ sería oferta indebida si se salta directo a OnAliat): un prospecto en Coacalco, Estado de México — ahí SÍ hay un campus real (Universidad ETAC Coacalco), así que el asesor debe intentar la opción presencial antes de ofrecer en línea.
+Ejemplo de caso (a), NUNCA oferta indebida así su ciudad tenga campus real (no confundir con el ejemplo anterior): el prospecto dice desde el inicio de la llamada "vivo en Coacalco y necesito que sea en línea" — aunque Coacalco SÍ tenga campus en el catálogo, esto es caso (a): el prospecto pidió la modalidad en línea por su cuenta, así que la Regla 5.1 NO aplica y el asesor atendiendo esa solicitud está bien. La diferencia con el ejemplo de Coacalco de arriba es quién lo pidió primero: ahí es el asesor quien ofrece OnAliat ante una objeción del prospecto que no pidió eso; aquí es el prospecto quien ya llegó pidiéndolo.
 
 CATÁLOGO DE CAMPUS FÍSICOS DE LA RED ALIAT (ciudad/municipio — estado):
 Coacalco de Berriozábal — Estado de México · Chalco de Díaz Covarrubias — Estado de México · Tlalnepantla de Baz — Estado de México · Ciudad de México (incluye Tlatelolco y Benito Juárez/Parque Hundido) — CDMX · Tulancingo de Bravo — Hidalgo · Campeche — Campeche · Coatzacoalcos — Veracruz · Comitán de Domínguez — Chiapas · Pichucalco — Chiapas · Tapachula — Chiapas · Tuxtla Gutiérrez — Chiapas · Villahermosa (Centro) — Tabasco · Aguascalientes (incluye Ejido Ojocaliente) — Aguascalientes · Saltillo — Coahuila · Querétaro — Querétaro · Tijuana (Alamar y Florido) — Baja California · Mexicali — Baja California · Chihuahua — Chihuahua · Axtla de Terrazas — San Luis Potosí · San Luis Potosí (ciudad) — San Luis Potosí.
@@ -5978,9 +6007,11 @@ function renderReportesDatos() {
     if(kpiEl) kpiEl.innerHTML=`<div class="stat-card" style="grid-column:1/-1"><div class="stat-lbl" style="padding:20px 0;text-align:center">Sin datos para el filtro seleccionado</div></div>`;
     ['rep-ranking','rep-criticas'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<div class="empty-state" style="padding:30px"><div class="empty-icon" style="font-size:28px">📊</div><p>Sin datos</p></div>';});
     const ag=document.getElementById('rep-antiguedad');if(ag)ag.innerHTML='<div style="padding:30px;text-align:center;color:var(--muted);font-size:12px">Sin datos para el filtro seleccionado</div>';
+    renderReporteSupervisor();
     return;
   }
   _renderReportesBody(data, kpiEl, esFiltradoAgente);
+  renderReporteSupervisor();
 }
 
 function renderHistorial() {
@@ -8474,6 +8505,329 @@ function copiarFeedback(id) {
   navigator.clipboard.writeText(txt).then(()=>alert('Feedback copiado ✅')).catch(()=>alert('Copia este texto:\n\n'+txt));
 }
 // ══════════════════════════════════════════
+// DETALLE POR SUPERVISOR (page-reportes) — vista diaria / semanal
+// ══════════════════════════════════════════
+let repSupModo = 'dia'; // 'dia' | 'semana'
+let repSupSemanaAncla = new Date(); // cualquier fecha dentro de la semana ISO mostrada
+
+function _pctScoreRep(h) {
+  return h.pts_activos ? Math.round((h.score_total||0) / h.pts_activos * 100) : (h.score_total||0);
+}
+
+function setRepSupModo(modo) {
+  repSupModo = modo;
+  const bd = document.getElementById('repsup-modo-dia'), bs = document.getElementById('repsup-modo-semana');
+  if (bd) bd.classList.toggle('active', modo === 'dia');
+  if (bs) bs.classList.toggle('active', modo === 'semana');
+  const nav = document.getElementById('repsup-semana-nav');
+  if (nav) nav.style.display = modo === 'semana' ? 'flex' : 'none';
+  renderReporteSupervisor();
+}
+
+function repSupCambiarSemana(delta) {
+  repSupSemanaAncla = new Date(repSupSemanaAncla.getTime() + delta * 7 * 86400000);
+  renderReporteSupervisor();
+}
+
+function renderReporteSupervisor() {
+  if (!document.getElementById('repsup-contenido')) return;
+  if (repSupModo === 'semana') renderReporteSupervisorSemana();
+  else renderReporteSupervisorDia();
+}
+
+// Copia el contenido de un contenedor (la tabla que se esté viendo) como imagen PNG
+// al portapapeles; si el navegador no permite portapapeles, la descarga en su lugar.
+async function copiarTablaComoImagen(containerId, btn) {
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  const original = btn ? btn.innerHTML : null;
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Generando...'; }
+  const restaurar = (txt, ms=1800) => {
+    if (!btn) return;
+    btn.innerHTML = txt;
+    setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, ms);
+  };
+  try {
+    // Esperar a que las fuentes terminen de cargar: si se captura antes de eso,
+    // html2canvas puede calcular mal la altura de celdas con texto en varias líneas
+    // (como el nombre del supervisor) y el texto sale encimado en la imagen.
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e) {} }
+    const bg = getComputedStyle(document.body).getPropertyValue('--surface').trim() || '#0e1420';
+    const opts = {
+      scale: 1, useCORS: true, backgroundColor: bg, logging: false, // scale:1 = tamaño real en pantalla, como una captura de pantalla
+      windowWidth: cont.scrollWidth, windowHeight: cont.scrollHeight
+    };
+    const _esCanvasVacio = (c) => {
+      try {
+        const ctx = c.getContext('2d');
+        const d = ctx.getImageData(0, 0, c.width, c.height).data;
+        for (let i = 3; i < d.length; i += 4 * 97) if (d[i] !== 0) return false; // alpha != 0 en algún píxel muestreado
+        return true;
+      } catch (e) { return false; } // si no se puede inspeccionar, asumimos que sí sirve
+    };
+    // foreignObjectRendering renderiza el DOM real (vía SVG) en vez de re-medir cada nodo con
+    // el motor propio de html2canvas — así el resultado coincide con lo que se ve en pantalla y
+    // evita que celdas con texto en varias líneas (como el nombre del supervisor) salgan encimadas.
+    // Si el navegador no lo soporta bien (canvas en blanco), se reintenta sin esa opción.
+    let canvas = await html2canvas(cont, {...opts, foreignObjectRendering: true});
+    if (_esCanvasVacio(canvas)) canvas = await html2canvas(cont, opts);
+    canvas.toBlob(async (blob) => {
+      if (!blob) { restaurar('❌ Error'); return; }
+      try {
+        if (!navigator.clipboard || !window.ClipboardItem) throw new Error('sin portapapeles');
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        restaurar('✅ Copiado');
+      } catch (e) {
+        // Fallback: descargar el PNG si el navegador bloquea el portapapeles
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `detalle_supervisor_${new Date().toISOString().slice(0,10)}.png`;
+        a.click();
+        restaurar('⬇ Descargado');
+      }
+    }, 'image/png');
+  } catch (e) {
+    console.error(e);
+    restaurar('❌ Error');
+  }
+}
+
+// Agrupa un conjunto de llamadas (ya filtrado) por Fecha+Turno+Supervisor+Campaña
+// Campaña por supervisor: Castera y Dorack operan Inbound, el resto Outbound.
+function _campanaPorSupervisor(supervisor) {
+  const norm = (supervisor || '').toLowerCase();
+  return (norm.includes('castera') || norm.includes('dorack')) ? 'Inbound' : 'Outbound';
+}
+
+function calcularFilasSupervisorFecha(data) {
+  const grupos = {};
+  data.forEach(h => {
+    const hcM = buscarAgenteEnHC(h.agente);
+    const sup = hcM?.jefeDirecto || '(Sin supervisor)';
+    const turno = hcM?.turno || '—';
+    const fecha = (h.fecha_llamada || '').trim() || '—';
+    const key = `${fecha}||${sup}||${turno}`;
+    if (!grupos[key]) grupos[key] = {fecha, supervisor:sup, turno, agentes:new Set(), llamadas:[]};
+    grupos[key].agentes.add(h.agente);
+    grupos[key].llamadas.push(h);
+  });
+  return Object.values(grupos).map(g => {
+    const plantilla = calcularPlantillaSup(g.supervisor, '__todos__');
+    const evaluados = g.agentes.size;
+    const cobertura = plantilla > 0 ? Math.round(evaluados/plantilla*100) : null;
+    const ll = g.llamadas;
+    const pcts = ll.map(_pctScoreRep);
+    const scorePromedio = pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length) : 0;
+    const llBajo  = pcts.filter(p=>p<=60).length;
+    const llMedio = pcts.filter(p=>p>=61 && p<=80).length;
+    const llAlto  = pcts.filter(p=>p>=81).length;
+    const pq = calcularPQ(ll);
+    return {fecha:g.fecha, turno:g.turno, supervisor:g.supervisor, campana:_campanaPorSupervisor(g.supervisor),
+      plantilla, evaluados, cobertura, scorePromedio, llamadas:ll.length, llBajo, llMedio, llAlto, pq, _llamadasRaw:ll};
+  }).sort((a,b) => a.turno.localeCompare(b.turno) || a.supervisor.localeCompare(b.supervisor));
+}
+
+function _sumarFilasSupervisor(filas, turno) {
+  if (!filas.length) return null;
+  const plantilla = filas.reduce((s,f)=>s+(f.plantilla||0),0);
+  const evaluados = filas.reduce((s,f)=>s+f.evaluados,0);
+  const cobertura = plantilla>0 ? Math.round(evaluados/plantilla*100) : null;
+  const totalLl = filas.reduce((s,f)=>s+f.llamadas,0);
+  const scoreW = totalLl>0 ? Math.round(filas.reduce((s,f)=>s+f.scorePromedio*f.llamadas,0)/totalLl) : 0;
+  const llBajo  = filas.reduce((s,f)=>s+f.llBajo,0);
+  const llMedio = filas.reduce((s,f)=>s+f.llMedio,0);
+  const llAlto  = filas.reduce((s,f)=>s+f.llAlto,0);
+  // El PQ de un total NO se calcula por votación de las etiquetas de cada fila (eso puede
+  // premiar una etapa que solo fue "la más débil" de un supervisor con pocas llamadas igual
+  // que una de un supervisor con muchas). Se recalcula directamente sobre TODAS las llamadas
+  // reales agrupadas, igual que se hace por supervisor.
+  const todasLlamadas = filas.flatMap(f => f._llamadasRaw || []);
+  const pq = todasLlamadas.length ? calcularPQ(todasLlamadas) : '—';
+  return {fecha:'', turno, supervisor:'', campana:'—', plantilla, evaluados, cobertura,
+    scorePromedio:scoreW, llamadas:totalLl, llBajo, llMedio, llAlto, pq, _llamadasRaw:todasLlamadas};
+}
+
+function _filaSupervisorHtml(f, tipo='normal') {
+  const isTurno = tipo === 'total-turno', isGeneral = tipo === 'total-general';
+  const bg = isGeneral ? 'style="background:rgba(26,95,168,.28);font-weight:800"'
+    : isTurno ? 'style="background:rgba(26,95,168,.15);font-weight:700"' : '';
+  const cobStr = f.cobertura != null ? f.cobertura+'%' : '—';
+  const cobPct = f.cobertura ?? 0;
+  const cobCls = cobPct>=80?'cn-g':cobPct>=60?'cn-y':'cn-r';
+  const sCls = f.scorePromedio>=81?'cn-g':f.scorePromedio>=61?'cn-y':'cn-r';
+  const supCell = isGeneral ? '<strong>Total General</strong>' : isTurno ? `<strong>Total Turno ${f.turno}</strong>` : f.supervisor;
+  return `<tr ${bg}>
+    <td class="left">${isTurno||isGeneral?'':f.fecha}</td>
+    <td class="left">${isGeneral?'—':f.turno}</td>
+    <td class="left">${supCell}</td>
+    <td class="left">${isTurno||isGeneral?'—':(f.campana||'—')}</td>
+    <td style="text-align:center">${f.plantilla||'—'}</td>
+    <td style="text-align:center">${f.evaluados}</td>
+    <td style="text-align:center;font-weight:600" class="${cobCls}">${cobStr}</td>
+    <td style="text-align:center;font-weight:600" class="${sCls}">${f.scorePromedio}</td>
+    <td style="text-align:center">${f.llamadas}</td>
+    <td style="text-align:center" class="${f.llBajo>0?'cn-r':''}">${f.llBajo}</td>
+    <td style="text-align:center" class="${f.llMedio>0?'cn-y':''}">${f.llMedio}</td>
+    <td style="text-align:center" class="${f.llAlto>0?'cn-g':''}">${f.llAlto}</td>
+    <td class="left">${f.pq}</td>
+  </tr>`;
+}
+
+function _tablaSupervisorDiaHTML(filas) {
+  const THEAD = `<thead><tr style="background:rgba(26,95,168,.2)">
+    <th class="left">Fecha</th><th class="left">Turno</th><th class="left">Supervisor</th><th class="left">Campaña</th>
+    <th style="text-align:center">Plantilla<br>(en op.)</th>
+    <th style="text-align:center">Asesores<br>eval.</th>
+    <th style="text-align:center">Cobertura</th>
+    <th style="text-align:center">Cal. líder<br>(prom.)</th>
+    <th style="text-align:center">Llamadas<br>eval.</th>
+    <th style="text-align:center">≤60</th>
+    <th style="text-align:center">61–80</th>
+    <th style="text-align:center">≥81</th>
+    <th class="left">PQ</th>
+  </tr></thead>`;
+  let html = `<div style="overflow-x:auto"><table class="ct">${THEAD}<tbody>`;
+  const turnosOrden = [...new Set(filas.map(f=>f.turno))].sort();
+  turnosOrden.forEach(turno => {
+    const filasTurno = filas.filter(f=>f.turno===turno);
+    filasTurno.forEach(f => { html += _filaSupervisorHtml(f); });
+    const totTurno = _sumarFilasSupervisor(filasTurno, turno);
+    if (totTurno) html += _filaSupervisorHtml(totTurno, 'total-turno');
+    html += `<tr><td colspan="13" style="height:8px;background:transparent;border:none"></td></tr>`;
+  });
+  const totGeneral = _sumarFilasSupervisor(filas, '—');
+  if (totGeneral) html += _filaSupervisorHtml(totGeneral, 'total-general');
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function renderReporteSupervisorDia() {
+  const cont = document.getElementById('repsup-contenido');
+  if (!cont) return;
+  const data = filtrarPorPeriodo(); // ya respeta modelo/evaluador/turno/HC/fecha de llamada de Reportes
+  if (!data.length) {
+    cont.innerHTML = '<div style="padding:14px;font-size:12px;color:var(--muted)">Sin evaluaciones para los filtros seleccionados.</div>';
+    return;
+  }
+  const fechasLlamada = [...new Set(data.map(h => (h.fecha_llamada||'').trim()).filter(Boolean))];
+  if (fechasLlamada.length > 1) {
+    cont.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--muted)">
+      Esta vista muestra el detalle por supervisor de <strong>un solo día</strong>. El filtro de "Fecha de la llamada"
+      arriba incluye actualmente ${fechasLlamada.length} días distintos. Acótalo a un solo día (por ejemplo "Hoy" o un
+      rango de un día en "📅 Rango"), o cambia a la <strong>vista semanal</strong> para ver varios días agrupados por semana.
+    </div>`;
+    return;
+  }
+  const filas = calcularFilasSupervisorFecha(data);
+  cont.innerHTML = _tablaSupervisorDiaHTML(filas);
+}
+
+function _avgPctSupervisor(llamadas) {
+  if (!llamadas || !llamadas.length) return null;
+  const vals = llamadas.map(_pctScoreRep);
+  return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+}
+
+// Celda combinada: score arriba, PQ del mismo día debajo en letra pequeña —
+// así el punto de quiebre queda alineado justo bajo el puntaje que lo originó.
+function _celdaScorePQHtml(llamadas, semanal=false) {
+  const v = _avgPctSupervisor(llamadas);
+  const pesoSem = semanal ? 'font-weight:800' : 'font-weight:600';
+  if (v == null) return '<td style="text-align:center;color:var(--muted)">—</td>';
+  const cls = v>=81?'cn-g':v>=61?'cn-y':'cn-r';
+  const pq = calcularPQ(llamadas);
+  return `<td style="text-align:center;line-height:1.3">
+    <div style="${pesoSem}" class="${cls}">${v}</div>
+    <div style="font-size:10px;color:var(--muted);font-weight:400;white-space:normal">${pq}</div>
+  </td>`;
+}
+
+// Vista semanal: estrictamente acotada a los días REALES con evaluaciones dentro de
+// la semana ISO (lunes–domingo) seleccionada — nunca se rellena ni se mezcla con
+// semanas adyacentes. Si una semana solo tiene 3 días evaluados, solo esos 3 aparecen.
+function renderReporteSupervisorSemana() {
+  const cont = document.getElementById('repsup-contenido');
+  const lbl = document.getElementById('repsup-semana-label');
+  if (!cont) return;
+
+  const { week, year } = getISOWeek(repSupSemanaAncla);
+  const { lunes, domingo } = getLunesDomingo(repSupSemanaAncla);
+  if (lbl) {
+    const fmt = d => d.toLocaleDateString('es-MX', {day:'2-digit', month:'short'});
+    lbl.textContent = `Semana ${week}/${String(year).slice(2)} (${fmt(lunes)} – ${fmt(domingo)})`;
+  }
+
+  // Base: todo el historial, respetando modelo/evaluador/turno/HC (no el rango de fecha
+  // de llamada del filtro superior, que es independiente de la semana elegida aquí).
+  let data = historial.slice();
+  if (sharedFiltros.modelo !== '__todos__') data = data.filter(h => (h.modelo||'tradicional') === sharedFiltros.modelo);
+  if (sharedFiltros.evaluador !== '__todos__') data = data.filter(h => (h.evaluadorNombre||'') === sharedFiltros.evaluador);
+  data = aplicarFiltrosHC(data);
+  if (repTurno !== '__todos__') data = data.filter(h => matchTurno(h.hora_llamada, repTurno));
+  data = data.filter(h => {
+    const fl = parseFechaLlamada(h.fecha_llamada);
+    return fl && fl >= lunes && fl <= domingo;
+  });
+
+  if (!data.length) {
+    cont.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--muted)">Sin llamadas evaluadas en la semana ${week}/${String(year).slice(2)}.</div>`;
+    return;
+  }
+
+  const DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const porDia = {}; // 'YYYY-MM-DD' -> llamadas[] (solo días con datos reales)
+  data.forEach(h => {
+    const fl = parseFechaLlamada(h.fecha_llamada);
+    const key = fl.toISOString().slice(0,10);
+    (porDia[key] = porDia[key] || []).push(h);
+  });
+  const diasConDatos = Object.keys(porDia).sort();
+
+  const gruposSupTurno = {}; // 'sup||turno' -> {supervisor, turno, porDia:{fechaKey:[llamadas]}}
+  data.forEach(h => {
+    const hcM = buscarAgenteEnHC(h.agente);
+    const sup = hcM?.jefeDirecto || '(Sin supervisor)';
+    const turno = hcM?.turno || '—';
+    const fl = parseFechaLlamada(h.fecha_llamada);
+    const fkey = fl.toISOString().slice(0,10);
+    const key = `${sup}||${turno}`;
+    if (!gruposSupTurno[key]) gruposSupTurno[key] = {supervisor:sup, turno, porDia:{}};
+    (gruposSupTurno[key].porDia[fkey] = gruposSupTurno[key].porDia[fkey] || []).push(h);
+  });
+
+  const theadCols = diasConDatos.map(d => {
+    const dt = new Date(d+'T00:00:00');
+    const dow = (dt.getDay()+6)%7;
+    return `<th style="text-align:center">${DIAS[dow]}<br>${dt.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit'})}</th>`;
+  }).join('');
+  const THEAD = `<thead><tr style="background:rgba(26,95,168,.2)"><th class="left">Turno</th><th class="left">Supervisor</th>${theadCols}<th style="text-align:center">Semanal</th></tr></thead>`;
+
+  const turnos = [...new Set(Object.values(gruposSupTurno).map(g=>g.turno))].sort();
+  let rows = '';
+  turnos.forEach(turno => {
+    const gruposTurno = Object.values(gruposSupTurno).filter(g=>g.turno===turno).sort((a,b)=>a.supervisor.localeCompare(b.supervisor));
+    gruposTurno.forEach(g => {
+      const celdas = diasConDatos.map(d => _celdaScorePQHtml(g.porDia[d])).join('');
+      const todas = diasConDatos.flatMap(d => g.porDia[d] || []);
+      rows += `<tr><td class="left">${turno}</td><td class="left">${g.supervisor}</td>${celdas}${_celdaScorePQHtml(todas, true)}</tr>`;
+    });
+    const combinadaPorDia = {};
+    diasConDatos.forEach(d => { combinadaPorDia[d] = gruposTurno.flatMap(g => g.porDia[d] || []); });
+    const todasTurno = diasConDatos.flatMap(d => combinadaPorDia[d]);
+    const celdasTotTurno = diasConDatos.map(d => _celdaScorePQHtml(combinadaPorDia[d])).join('');
+    rows += `<tr style="background:rgba(26,95,168,.15)"><td class="left" colspan="2" style="font-weight:700">Total Turno ${turno}</td>${celdasTotTurno}${_celdaScorePQHtml(todasTurno, true)}</tr>`;
+  });
+
+  const celdasGenerales = diasConDatos.map(d => _celdaScorePQHtml(porDia[d])).join('');
+  rows += `<tr style="background:rgba(26,95,168,.28)"><td class="left" colspan="2" style="font-weight:800">Total General</td>${celdasGenerales}${_celdaScorePQHtml(data, true)}</tr>`;
+
+  cont.innerHTML = `
+    <p style="font-size:11px;color:var(--muted);margin:0 0 8px">Cada celda muestra la calificación líder del día y, debajo en letra pequeña, su(s) punto(s) de quiebre (PQ).</p>
+    <div style="overflow-x:auto"><table class="ct" style="font-size:11px">${THEAD}<tbody>${rows}</tbody></table></div>
+  `;
+}
+
+// ══════════════════════════════════════════
 // REPORTE DE CORTE
 // ══════════════════════════════════════════
 // ══════════════════════════════════════════
@@ -8631,10 +8985,15 @@ function calcularPQ(llamadas) {
     const avg = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : 100;
     return {label: etapa.label, avg};
   });
-  promedios.sort((a,b) => a.avg - b.avg);
-  const top = [promedios[0]];
-  if (promedios[1] && promedios[1].avg - promedios[0].avg <= 10) top.push(promedios[1]);
-  return top.map(e=>e.label).join(' & ');
+  // Puntos de quiebre reales = etapas por debajo de 100.
+  // - Ninguna etapa por debajo de 100 → sin quiebre.
+  // - Exactamente una etapa por debajo de 100 (el resto en 100) → un solo PQ.
+  // - Dos o más etapas por debajo de 100 → siempre las DOS más notables (las más bajas).
+  const debiles = promedios.filter(e => e.avg < 100);
+  if (debiles.length === 0) return '—';
+  if (debiles.length === 1) return debiles[0].label;
+  const ordenados = [...debiles].sort((a,b) => a.avg - b.avg);
+  return ordenados.slice(0,2).map(e=>e.label).join(' & ');
 }
 
 function calcularPlantillaSup(supervisor, proyectoFiltro) {
@@ -8761,7 +9120,7 @@ function sumarFilas(filas, turno, corte, tipo, corteNum) {
   const ll48a64 = filas.reduce((s,f)=>s+f.ll48a64,0);
   const ll64 = filas.reduce((s,f)=>s+f.ll64,0);
   const pqCount = {};
-  filas.forEach(f=>f.pq.split(' & ').forEach(p=>{pqCount[p]=(pqCount[p]||0)+1;}));
+  filas.forEach(f=>f.pq.split(' & ').forEach(p=>{ if (p && p !== '—') pqCount[p]=(pqCount[p]||0)+1; }));
   const pq = Object.entries(pqCount).sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]).join(' & ') || '—';
   return {fecha:'', turno, corte, supervisor:'', campana:'—', plantilla, evaluados, cobertura,
     scorePromedio:scoreW, llamadas:totalLl, ll48, ll48a64, ll64, pq, corteNum};
