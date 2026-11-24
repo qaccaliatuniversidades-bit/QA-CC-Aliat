@@ -2227,6 +2227,10 @@ const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/';
 let _controladoresActivos = new Set();
 // Modelos "lite" validados como rápidos y confiables para evaluación (ver bitácora de pruebas Gemini)
 const GEMINI_MODELOS_PRIORIDAD = ['gemini-3.1-flash-lite','gemini-flash-lite-latest','gemini-3.5-flash-lite','gemini-3.1-flash-lite-preview','gemini-flash-latest','gemini-pro-latest'];
+// Estos modelos rechazan el parámetro "thinkingConfig" con 400 sin importar el valor que se le
+// mande — se les omite por completo en vez de desperdiciar el intento (la transcripción ya
+// evitaba mandarlo por default; esto extiende el mismo criterio a la cascada de evaluación).
+const GEMINI_MODELOS_SIN_THINKING = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite'];
 // gemini-3.1-flash-lite va primero: en la práctica (agosto 2026) resultó más estable que el
 // alias "latest", que empezó a dar 503 con más frecuencia — posiblemente porque Google movió
 // "latest" a apuntar a un modelo más nuevo con menos capacidad de servicio provisionada aún.
@@ -2310,6 +2314,23 @@ async function obtenerModelosDisponiblesGemini() {
   }
 }
 
+// Un 404 en :generateContent significa que Google retiró/renombró ese modelo — ListModels a
+// veces lo sigue listando un tiempo después. Cuando pasa, lo sacamos YA de la lista en caché
+// para que ni esta llamada ni las siguientes de la sesión sigan desperdiciando una solicitud
+// completa en un modelo que sabemos que no existe (vuelve a aparecer solo si se refresca la
+// caché de 24h y Google todavía lo ofrece).
+function _descartarModeloMuerto(m) {
+  // Reasigna a un array NUEVO (no usa splice sobre el existente): la llamada en curso puede
+  // estar iterando ese mismo array con un for-of, y mutarlo in-place saltaría el siguiente
+  // modelo de la lista por el corrimiento de índices. Con una reasignación, la llamada en
+  // curso simplemente termina de usar la lista vieja (como mucho un 404 más, una sola vez),
+  // mientras que toda llamada nueva ya obtiene la lista sin el modelo muerto.
+  if (_geminiModelosCache && _geminiModelosCache.includes(m)) {
+    _geminiModelosCache = _geminiModelosCache.filter(x => x !== m);
+    console.warn(`Modelo ${m} devolvió 404 (ya no existe) — se retira de la lista por el resto de la sesión.`);
+  }
+}
+
 // Wrapper de rotación para Gemini — reintenta con la siguiente key ante error/límite
 // al formato de Gemini (key por query param, generationConfig con JSON forzado)
 async function fetchGeminiConRotacion(modeloNombre, prompt, temperature, maxTokens, jsonMode = true, thinkingBudget = 0) {
@@ -2328,7 +2349,8 @@ async function fetchGeminiConRotacion(modeloNombre, prompt, temperature, maxToke
     const controller = new AbortController();
     _controladoresActivos.add(controller);
     try {
-      const generationConfig = { temperature, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget } };
+      const generationConfig = { temperature, maxOutputTokens: maxTokens };
+      if (!GEMINI_MODELOS_SIN_THINKING.includes(modeloNombre)) generationConfig.thinkingConfig = { thinkingBudget };
       if (jsonMode) generationConfig.responseMimeType = 'application/json';
       const resp = await fetch(`${GEMINI_API_BASE}models/${modeloNombre}:generateContent?key=${encodeURIComponent(keyActiva)}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2421,7 +2443,7 @@ async function llamarIA(prompt, opts = {}) {
     try {
       const resp = await fetchGeminiConRotacion(m, prompt, temperature, maxTokens, jsonMode, opts.thinkingBudget ?? 0);
       const respText = await resp.text();
-      if (!resp.ok) { lastErr = respText; continue; }
+      if (!resp.ok) { lastErr = respText; if (resp.status === 404) _descartarModeloMuerto(m); continue; }
       const d = JSON.parse(respText);
       const texto = extraerTextoGemini(d.candidates?.[0]);
       if (!texto) { lastErr = `Sin contenido (finishReason: ${d.candidates?.[0]?.finishReason||'?'})`; continue; }
@@ -4278,7 +4300,7 @@ async function transcribirAudioGemini(file) {
       // y dos de los preferidos (gemini-flash-lite-latest, gemini-3.5-flash-lite) lo rechazan
       // con 400 siempre, así que mandarlo por default solo desperdicia una llamada.
       let resp = await intentarUnaVez(m, key, false);
-      if (!resp.ok) { lastErr = await resp.text(); console.warn(`Transcripción: modelo ${m} falló (${resp.status})`); continue; }
+      if (!resp.ok) { lastErr = await resp.text(); console.warn(`Transcripción: modelo ${m} falló (${resp.status})`); if (resp.status === 404) _descartarModeloMuerto(m); continue; }
       let data = await resp.json();
       let texto = extraerTextoGemini(data.candidates?.[0]);
       let finishReason = data.candidates?.[0]?.finishReason;
@@ -4381,6 +4403,7 @@ ${scoresTitKeys}
   "fortalezas":"<2 cosas concretas que el asesor hizo bien SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa (Apertura|Investigación|Demostración|Manejo de Objeciones|Cierre|Etiqueta). NUNCA menciones criterios deshabilitados. Ejemplo: "Se presentó correctamente con nombre y universidad (Apertura)">",
   "areas_mejora":"<2-3 acciones específicas de mejora SOLO de criterios habilitados, cada una indicando entre paréntesis la etapa. NUNCA menciones criterios deshabilitados aunque el asesor haya fallado en ellos. Ejemplo: "Practicar el manejo de precios: pago inicial y parcialidades (Demostración)">",
   "palabras_riesgo":[],
+  "es_reagenda":<true|false — true si esta llamada es para reprogramar/confirmar/dar seguimiento a un compromiso de pago o llamada YA acordado antes, no un primer contacto>,
   "sentimiento_cliente":"<positivo|neutral|negativo>",
   "logro_objetivo":<true|false>,
   "nivel_urgencia":"<critica si score<60% pts activos | revisar si 60-80% | normal si >80%>",
@@ -4454,6 +4477,7 @@ DEFINICIÓN DE logro_objetivo (Titulación): true SOLO si el egresado confirmó 
     resultadoT.pts_activos = totalPesoT;
     const _pct = totalPesoT ? Math.round(resultadoT.score_total / totalPesoT * 100) : 0;
     resultadoT.nivel_urgencia = _pct < 60 ? 'critica' : _pct <= 80 ? 'revisar' : 'normal';
+    resultadoT.es_reagenda = !!resultadoT.es_reagenda;
     return resultadoT;
   }
 
@@ -4495,6 +4519,7 @@ ${scoresCamKeys}
   "palabras_riesgo": [],
   "objeciones_detectadas": [{"tipo":"...","frase_prospecto":"...","respuesta_asesor":"...","evaluacion":"adecuada|vaga|ignorada"}],
   "sin_objeciones": true,
+  "es_reagenda": false,
   "sentimiento_cliente": "positivo|neutral|negativo",
   "logro_objetivo": false,
   "nivel_urgencia": "critica|revisar|normal",
@@ -4509,6 +4534,7 @@ REGLAS DE CALIBRACIÓN:
 2. PROSPECTO HOSTIL/CUELGA: Si el prospecto muestra actitud claramente negativa desde el inicio (interrumpe, cuelga pronto, se niega a escuchar) y por eso el asesor no alcanzó a cubrir ciertos criterios, esos criterios se marcan como "N/A" en tu respuesta (no como 0) — indícalo en areas_mejora como "no evaluable por corte del prospecto". Solo aplica si el corte fue causado por el prospecto, no si el asesor simplemente no lo intentó.
 3. DEPENDENCIA WHATSAPP/UBICACIÓN (REGLA CAM-1): cam_conf_whatsapp y cam_conf_ubicacion dependen de dos pasos previos: (a) ¿el asesor intentó agendar la cita? (cam_inv_invitacion=100 O cam_inv_pregunta_dia=100), y (b) ¿la cita quedó confirmada? (cam_conf_confirma=100 Y cam_conf_dia_hora=100). Si el asesor NUNCA intentó agendar (ambos en 0): puntúa cam_conf_whatsapp y cam_conf_ubicacion normalmente en 0 — es una falla real, no algo no aplicable. Si SÍ intentó agendar pero la cita no quedó confirmada: marca cam_conf_whatsapp y cam_conf_ubicacion como "N/A" — hubo intento, pero no hay cita que notificar. Si la cita SÍ quedó confirmada: evalúa ambos normalmente (100/0).
 4. IDENTIFICACIÓN DE ROLES (audio de un solo canal, sin diarización): Al inicio de la llamada, ambos hablantes pueden usar frases genéricas de saludo que no distinguen quién es quién (ej. "hola, buenas tardes", "¿qué tal?"). NO asignes el rol de cada hablante basándote únicamente en esas primeras líneas. En vez de eso, busca primero en TODA la transcripción las frases que son inequívocamente del asesor — mencionar que es asesor de la universidad, la procedencia del dato del prospecto, la invitación al campus, el envío de WhatsApp o de ubicación, o la pregunta sobre disponibilidad para la cita. Una vez que identifiques con certeza cuál hablante es el asesor (por este tipo de contenido inequívoco), aplica esa misma asignación de rol de forma RETROACTIVA a TODA la llamada, incluyendo las líneas iniciales ambiguas. NUNCA cambies de opinión sobre quién es quién a la mitad de la transcripción — la asignación de roles debe ser una sola, consistente de principio a fin.
+5. "es_reagenda" (informativo, no afecta score): true si la llamada NO es para agendar una cita desde cero, sino que el asesor y el prospecto están reprogramando, confirmando o dando seguimiento a una cita que YA existía de una llamada anterior (ej. "te hablo para confirmar tu cita de mañana", "necesitamos moverla de fecha"). false si es la primera vez que se agenda o no se menciona ninguna cita previa. Estas llamadas suelen no quedar registradas en la base de datos principal, así que es importante marcarlas.
 
 ESCALA: Todos los criterios de esta cédula son BINARIOS — no existen valores intermedios (nunca 25/50/75). Para cada uno: 100=el asesor comunicó esa idea, aunque sea con palabras distintas a las del script (no se requiere frase textual exacta — cualquier expresión que transmita el mismo mensaje cuenta). 0=no hay evidencia de que lo haya comunicado. N/A=solo en los casos descritos en Regla 2 y Regla CAM-1 arriba.
 
@@ -4577,6 +4603,7 @@ ${G('cam_cierre_nombre_final', 'cam_cierre_nombre_final (6.2) — Recuerda su no
     resultadoCam.pts_activos = totalPesoCam;
     const _pctCam = totalPesoCam ? Math.round(resultadoCam.score_total / totalPesoCam * 100) : 0;
     resultadoCam.nivel_urgencia = _pctCam < 60 ? 'critica' : _pctCam <= 80 ? 'revisar' : 'normal';
+    resultadoCam.es_reagenda = !!resultadoCam.es_reagenda;
     return resultadoCam;
   }
 
@@ -4658,7 +4685,9 @@ Evalúa del 0 al 100 cada criterio según la Cédula QA Aliat v4.0 y responde SO
   ],
   "sin_objeciones":<true si el prospecto no presentó ninguna negativa, duda ni resistencia; false si hubo al menos una>,
   "necesidad_prospecto":{"categoria":"<ver catálogo abajo>","cita_textual":"...","detalle_otro":"<solo si categoria='otro'>"},
-  ${esTrad ? '"oferta_onaliat_indebida":<true|false — ver REGLA 5>,\n  "promo_condicionada":<true|false — ver demo_promociones>,\n  ' : ''}"sentimiento_cliente":"<positivo|neutral|negativo>",
+  ${esTrad ? '"oferta_onaliat_indebida":<true|false — ver REGLA 5>,\n  "promo_condicionada":<true|false — ver demo_promociones>,\n  ' : ''}"es_online":<true|false — ver NOTA ETIQUETAS ADICIONALES>,
+  "es_reagenda":<true|false — ver NOTA ETIQUETAS ADICIONALES>,
+  "sentimiento_cliente":"<positivo|neutral|negativo>",
   "logro_objetivo":<true|false>,
   "nivel_urgencia":"<critica si score<60% pts activos | revisar si 60-80% | normal si >80%>",
   "feedback_agente":"<2-3 oraciones directas al asesor, tono constructivo. NUNCA menciones criterios deshabilitados>",
@@ -4701,7 +4730,9 @@ CASO (b) — EL ASESOR LA OFRECE ANTE UNA OBJECIÓN, SIN QUE EL PROSPECTO LA HAY
 
 CASO (c) — LA CARRERA/PROGRAMA DE INTERÉS NO SE OFRECE EN MODALIDAD PRESENCIAL: si de la conversación se desprende que el programa de interés del prospecto NO está disponible en modalidad presencial/campus (porque el asesor lo indica explícitamente — ej. "esa carrera no la tenemos de forma presencial, pero sí en línea" — o porque de la conversación se da a entender claramente que la única modalidad en la que existe ese programa es en línea), el asesor puede ofertar OnAliat de inmediato sin que esto sea oferta indebida — sin importar la ciudad del prospecto (no aplica el catálogo de campus de la Regla 5.1, ese catálogo es de ubicaciones, no de programas) y sin necesidad de que el prospecto lo haya pedido primero (aunque puede coincidir con el caso a). Este caso se evalúa ÚNICAMENTE por lo que se dice o se da a entender en la transcripción — no existe (todavía) un catálogo de qué carreras se ofrecen en cada modalidad para verificarlo de forma independiente, así que si el asesor simplemente ofrece OnAliat sin explicar ni dar a entender que es porque el programa no existe presencial, ESO NO ACTIVA el caso (c) — se evalúa entonces solo por (a) o (b).
 
-Si se cumple el caso (a), el caso (b) [con Regla 5.1 favorable] o el caso (c), la llamada puede seguir el "Camino B" descrito en cre_cita (5.1) — el asesor no matricula directamente (no tiene permisos para eso en Tradicional), debe cerrar con una pregunta que induzca a la inscripción y luego transferir o derivar a seguimiento.
+CASO ESPECIAL — OPTOMETRÍA (aplicación automática del caso (c)): si detectas que la carrera/programa de interés del prospecto es Optometría, trátala SIEMPRE como caso (c) de forma automática, sin necesidad de que el asesor lo explique ni lo justifique en la llamada. Aunque Optometría está catalogada dentro del modelo Tradicional, EN LA PRÁCTICA solo se oferta en modalidad en línea (las prácticas profesionales las realiza el alumno por su cuenta, no requieren campus físico). Por lo tanto, si el asesor ofrece o gestiona la modalidad en línea para un prospecto de Optometría, esto NUNCA es oferta indebida — NO marques "oferta_onaliat_indebida":true por este motivo. Sin condición: para que este caso se considere bien manejado, el PROSPECTO debe haber dado una confirmación o aceptación explícita de la modalidad en línea (una respuesta afirmativa, no silencio ni indiferencia) — si el asesor solo la menciona pero el prospecto nunca confirmó ni mostró aceptación, sigue sin ser oferta indebida, pero indícalo en areas_mejora como una confirmación pendiente. Cuando apliques este caso especial, marca también "es_online":true en el JSON de salida.
+
+Si se cumple el caso (a), el caso (b) [con Regla 5.1 favorable], el caso (c) o el caso especial de Optometría, la llamada puede seguir el "Camino B" descrito en cre_cita (5.1) — el asesor no matricula directamente (no tiene permisos para eso en Tradicional), debe cerrar con una pregunta que induzca a la inscripción y luego transferir o derivar a seguimiento.
 Si el asesor menciona, promueve o vende la modalidad en línea SIN que se cumpla ninguno de los tres casos (oferta indebida): no cuentes esa mención como beneficio válido en demo_modalidad, no la cuentes como ventaja institucional en demo_ventaja, trátala en obj_objeciones como un argumento que no corresponde a lo que el prospecto pidió, Y además cre_cita queda topado a un máximo de 50 puntos, sin importar qué tan bien haya ejecutado el resto del cierre — no se le da oportunidad de puntuar por el Camino A (visita a campus) en ese caso, porque la llamada ya se desvió indebidamente.
 Marca en el campo "oferta_onaliat_indebida" (true/false) si detectaste este comportamiento, y menciónalo explícitamente en areas_mejora si aplica.
 
@@ -4715,6 +4746,10 @@ Ejemplo de caso (a), NUNCA oferta indebida así su ciudad tenga campus real (no 
 CATÁLOGO DE CAMPUS FÍSICOS DE LA RED ALIAT (ciudad/municipio — estado):
 Coacalco de Berriozábal — Estado de México · Chalco de Díaz Covarrubias — Estado de México · Tlalnepantla de Baz — Estado de México · Ciudad de México (incluye Tlatelolco y Benito Juárez/Parque Hundido) — CDMX · Tulancingo de Bravo — Hidalgo · Campeche — Campeche · Coatzacoalcos — Veracruz · Comitán de Domínguez — Chiapas · Pichucalco — Chiapas · Tapachula — Chiapas · Tuxtla Gutiérrez — Chiapas · Villahermosa (Centro) — Tabasco · Aguascalientes (incluye Ejido Ojocaliente) — Aguascalientes · Saltillo — Coahuila · Querétaro — Querétaro · Tijuana (Alamar y Florido) — Baja California · Mexicali — Baja California · Chihuahua — Chihuahua · Axtla de Terrazas — San Luis Potosí · San Luis Potosí (ciudad) — San Luis Potosí.
 Cualquier ciudad o estado que NO aparezca en esta lista se considera sin campus físico — imposibilidad geográfica real.` : ''}
+
+NOTA — ETIQUETAS ADICIONALES ("es_online" / "es_reagenda"): son puramente informativas para reportes, NO afectan ningún score.
+"es_online": true si la modalidad que finalmente se está ofertando o gestionando para el prospecto en esta llamada es 100% en línea (OnAliat) — esto incluye el modelo OnAliat en sí mismo, y también una llamada Tradicional/CORBUSÉ donde el asesor legítimamente ofreció/gestionó la modalidad en línea (cualquiera de los casos (a), (b) o (c) de la Regla 5, incluyendo el caso especial de Optometría). false si la llamada trata sobre la modalidad presencial, o si se ofertó en línea de forma indebida (sin cumplir ningún caso de la Regla 5).
+"es_reagenda": true si la llamada NO es un primer contacto para agendar una cita/proceso desde cero, sino que el asesor y el prospecto están reprogramando, confirmando o dando seguimiento a una cita que YA existía de una llamada anterior (ej. "te hablo para confirmar tu cita de mañana", "necesitamos moverla de fecha porque..."). false si es la primera vez que se agenda o no se menciona ninguna cita previa. Estas llamadas suelen no quedar registradas en la base de datos principal de citas, así que es importante marcarlas para que el equipo de reportes las identifique.
 
 ESCALA DE PUNTUACIÓN (aplica a todos los criterios, EXCEPTO cuando la guía de un criterio específico defina su propio conjunto de valores):
 - 100: Lo realizó completo y correctamente — hay evidencia textual clara.
@@ -4930,6 +4965,10 @@ ${naKeys.has('etq_control')?'':'etq_control (6.5) — Mute, tiempos de espera y 
   if (esTrad && resultado.oferta_onaliat_indebida && typeof resultado.scores.cre_cita === 'number' && resultado.scores.cre_cita > 50) {
     resultado.scores.cre_cita = 50;
   }
+  // "es_online": el modelo OnAliat es 100% en línea por definición — se fuerza en código en vez
+  // de depender de que la IA lo marque siempre, aunque también se le pide en el prompt.
+  resultado.es_online = modelo === 'onaliat' ? true : !!resultado.es_online;
+  resultado.es_reagenda = !!resultado.es_reagenda;
   const totalPeso = criteriosActivos.reduce((s,c) => s + (pesos[c.key]||0), 0) || 100;
   let ptsObtenidos = 0;
   criteriosActivos.forEach(c => {
@@ -4968,7 +5007,12 @@ async function procesarLlamada() {
     const transRes = await transcribirAudioIA(audioFile);
     transcripcion = transRes.texto;
     log('Audio transcrito ('+transcripcion.split(' ').length+' palabras)', transRes.incompleta ? 'warn' : 'ok');
-    if (transRes.incompleta) log('⚠️ La transcripción podría estar incompleta — ' + transRes.motivo, 'warn');
+    if (transRes.incompleta) {
+      // No evaluamos sobre una transcripción incompleta: cuesta tiempo y recursos de IA
+      // repetir evaluaciones hechas sobre datos parciales. Se marca como error de una vez.
+      log('✂️ Transcripción incompleta — ' + transRes.motivo, 'err');
+      throw new Error('Transcripción incompleta — ' + (transRes.motivo || 'se alcanzó el límite de longitud de salida del modelo.') + ' No se evaluó para no desperdiciar tiempo/recursos; divide el audio o vuelve a intentarlo.');
+    }
     log('Midiendo duración del audio...','spin');
     const duracion = await medirDuracionAudio(audioFile);
     const duracionExacta = duracion !== estimarDuracion(audioFile);
@@ -5149,7 +5193,7 @@ function renderResultado(r, transcripcionCompleta) {
   const antiguedad = calcularAntiguedad(hcFechaIng, r.fecha);
   const metaPill = (label, val, mono=false, color=null) =>
     `<div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase">${label}</span><span style="font-size:13px;font-weight:700;${mono?'font-family:var(--mono);':''}color:${color||'var(--text)'}">${val||'—'}</span></div>`;
-  document.getElementById('resultado-container').innerHTML=`${alertHtml}<div class="card" style="margin-top:${alertHtml?'12px':'0'}"><div class="result-hero"><div class="score-donut ${dc}"><span class="score-num">${scoreDisplay}</span></div><div class="result-info"><h2>${nombreCompleto||r.agente} — Calidad ${nivel}</h2><div class="tags">${modeloTag}<span class="tag ${tc}">${nivel}</span><span class="tag ${sc}">Prospecto ${r.sentimiento_cliente}</span><span class="tag ${r.logro_objetivo?'tg':'tr'}">${logroTxt}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${durStr}${r.tipo?`<span class="tag tc">${r.tipo}</span>`:''}${r.campana?`<span class="tag tc">${r.campana}</span>`:''}</div></div><div style="margin-left:auto;padding-right:8px">${topBtn}</div></div>
+  document.getElementById('resultado-container').innerHTML=`${alertHtml}<div class="card" style="margin-top:${alertHtml?'12px':'0'}"><div class="result-hero"><div class="score-donut ${dc}"><span class="score-num">${scoreDisplay}</span></div><div class="result-info"><h2>${nombreCompleto||r.agente} — Calidad ${nivel}</h2><div class="tags">${modeloTag}<span class="tag ${tc}">${nivel}</span><span class="tag ${sc}">Prospecto ${r.sentimiento_cliente}</span><span class="tag ${r.logro_objetivo?'tg':'tr'}">${logroTxt}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${r.es_online?'<span class="tag tc">🌐 Online</span>':''}${r.es_reagenda?'<span class="tag tp">🔁 Reagenda</span>':''}${durStr}${r.tipo?`<span class="tag tc">${r.tipo}</span>`:''}${r.campana?`<span class="tag tc">${r.campana}</span>`:''}</div></div><div style="margin-left:auto;padding-right:8px">${topBtn}</div></div>
 <div style="display:flex;gap:20px;padding:12px 24px;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap">
   ${metaPill('Asesor', nombreCompleto || (hcNoEncontrado ? `${r.agente} ⚠️` : r.agente))}
   ${hcPosicion   ? metaPill('Posición',   hcPosicion)   : ''}
@@ -5644,6 +5688,14 @@ async function iniciarBatch() {
       // 1. Transcribir
       const transRes = await transcribirAudioIA(item.file);
       const transcripcion = transRes.texto;
+      if (transRes.incompleta) {
+        // No evaluamos sobre una transcripción incompleta: cuesta tiempo y recursos de IA
+        // repetir evaluaciones hechas sobre datos parciales. Se marca como error de inmediato,
+        // sin llamar a evaluarTranscripcion(), y el archivo queda listo para reintentar.
+        const errInc = new Error('Transcripción incompleta — ' + (transRes.motivo || 'se alcanzó el límite de longitud de salida del modelo.') + ' No se evaluó para no desperdiciar tiempo/recursos; divide el audio o vuelve a intentarlo.');
+        errInc.transcripcionIncompleta = true;
+        throw errInc;
+      }
       // 2. Medir duración (necesaria para las reglas de calibración del prompt)
       const duracion = await medirDuracionAudio(item.file);
       // 3. Evaluar
@@ -5684,15 +5736,20 @@ async function iniciarBatch() {
       item.status = 'error';
       item.error  = err.message.slice(0,80);
       batchErrors++;
-      batchErrConsecutivos++;
-      agregarResultadoBatch(item);
 
-      if (batchErrConsecutivos >= BATCH_MAX_ERR_CONSECUTIVOS && geminiKeys.length > 1) {
-        console.warn(`Batch: ${batchErrConsecutivos} errores consecutivos — rotando key proactivamente`);
-        await rotarGeminiKey();
-        batchErrConsecutivos = 0;
-        await esperarCancelable(5000);
+      // Una transcripción incompleta no es una falla de la API/key — no debe contar para la
+      // rotación proactiva de keys (rotar no soluciona nada si el problema es la duración/peso
+      // del audio), así que no toca la racha de errores consecutivos.
+      if (!err.transcripcionIncompleta) {
+        batchErrConsecutivos++;
+        if (batchErrConsecutivos >= BATCH_MAX_ERR_CONSECUTIVOS && geminiKeys.length > 1) {
+          console.warn(`Batch: ${batchErrConsecutivos} errores consecutivos — rotando key proactivamente`);
+          await rotarGeminiKey();
+          batchErrConsecutivos = 0;
+          await esperarCancelable(5000);
+        }
       }
+      agregarResultadoBatch(item);
     }
 
     renderBatchQueue();
@@ -5845,7 +5902,7 @@ function agregarResultadoBatch(item) {
         <div class="tags" style="flex-shrink:0">
           <span class="tag ${s>=80?'tg':s>=60?'ty':'tr'}">${niv}</span>
           <span class="tag ${r.sentimiento_cliente==='positivo'?'tg':r.sentimiento_cliente==='negativo'?'tr':'tb'}">Cliente ${r.sentimiento_cliente}</span>
-          <span class="tag ${r.logro_objetivo?'tg':'tr'}">${r.logro_objetivo?'✅ Cerró':'❌ Sin cierre'}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${r.transcripcion_incompleta?'<span class="tag ty">✂️ Transcripción incompleta</span>':''}
+          <span class="tag ${r.logro_objetivo?'tg':'tr'}">${r.logro_objetivo?'✅ Cerró':'❌ Sin cierre'}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${r.es_online?'<span class="tag tc">🌐 Online</span>':''}${r.es_reagenda?'<span class="tag tp">🔁 Reagenda</span>':''}${r.transcripcion_incompleta?'<span class="tag ty">✂️ Transcripción incompleta</span>':''}
           ${urgBadge}
         </div>
         <button class="btn-sm" onclick="verDetalle(${r.id})">Ver detalle</button>
@@ -8270,7 +8327,7 @@ function renderTopCalls() {
       <span style="font-size:22px">⭐</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;margin-bottom:4px">${h.agente} <span style="color:var(--muted);font-size:11px">· ${h.fecha}</span></div>
-        <div class="tags">${modeloTag}${prob}${dur}<span class="tag ${h.logro_objetivo?'tg':'tr'}">${h.logro_objetivo?'✅ Cerró':'Sin cierre'}</span>${h.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${h.transcripcion_incompleta?'<span class="tag ty">✂️ Transcripción incompleta</span>':''}</div>
+        <div class="tags">${modeloTag}${prob}${dur}<span class="tag ${h.logro_objetivo?'tg':'tr'}">${h.logro_objetivo?'✅ Cerró':'Sin cierre'}</span>${h.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${h.es_online?'<span class="tag tc">🌐 Online</span>':''}${h.es_reagenda?'<span class="tag tp">🔁 Reagenda</span>':''}${h.transcripcion_incompleta?'<span class="tag ty">✂️ Transcripción incompleta</span>':''}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">✓ ${(h.fortalezas||'').slice(0,80)}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
