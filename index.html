@@ -1531,7 +1531,7 @@ const CRITERIOS_DEMO_TRADICIONAL = [
   {etapa:'demostracion',  key:'demo_ventaja',      num:'3.1', label:'Menciona ≥2 ventajas competitivas, 1 de empleabilidad'},
   {etapa:'demostracion',  key:'demo_grado',        num:'3.2', label:'Menciona ≥2 características del grado académico'},
   {etapa:'demostracion',  key:'demo_modalidad',    num:'3.3', label:'Beneficio de la modalidad de estudio'},
-  {etapa:'demostracion',  key:'demo_promociones',  num:'3.4', label:'Menciona ≥1 promoción vigente'},
+  {etapa:'demostracion',  key:'demo_promociones',  num:'3.4', label:'Menciona la beca académica del 20% (convenio 10% opcional)'},
   {etapa:'demostracion',  key:'demo_precio',       num:'3.5', label:'Manejo de precio (pago inicial, parcialidades, desglose)'},
 ];
 const CRITERIOS_DEMO_ONALIAT = [
@@ -2227,6 +2227,14 @@ const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/';
 let _controladoresActivos = new Set();
 // Modelos "lite" validados como rápidos y confiables para evaluación (ver bitácora de pruebas Gemini)
 const GEMINI_MODELOS_PRIORIDAD = ['gemini-3.1-flash-lite','gemini-flash-lite-latest','gemini-3.5-flash-lite','gemini-3.1-flash-lite-preview','gemini-flash-latest','gemini-pro-latest'];
+// Prioridad para TRANSCRIPCIÓN según la prueba comparativa de noviembre 2026: los 4 primeros son los
+// que mejor transcribieron (en ese orden); después, los que respondieron 503 en la prueba (pueden
+// funcionar cuando haya menos saturación). Solo se usan estos — ver soloCurados.
+const GEMINI_MODELOS_TRANSCRIPCION = ['gemini-3.5-flash','gemini-3.5-transcribe','gemini-3-flash-preview','gemini-flash-lite-latest','gemini-3.7-flash','gemini-4-hydrogen','gemini-3.8-flash','gemini-3.1-flash-lite-preview','gemini-3.1-flash-lite','gemini-3.6-flash','gemini-3.5-flash-lite'];
+// Prioridad para EVALUACIÓN (y demás usos de texto): primero los que mejor evaluaron en la prueba de
+// noviembre 2026 (3.1-flash-lite-preview, 3.5-flash-lite, 3.1-flash-lite), luego la lista prioritaria
+// anterior (los que dan 503 se conservan como respaldo). gemini-3.5-transcribe va al final. Sin 2.5 (404).
+const GEMINI_MODELOS_EVALUACION = ['gemini-3.1-flash-lite-preview','gemini-3.5-flash-lite','gemini-3.1-flash-lite','gemini-3.5-flash','gemini-3-flash-preview','gemini-flash-lite-latest','gemini-3.7-flash','gemini-4-hydrogen','gemini-3.8-flash','gemini-3.6-flash','gemini-3.5-transcribe'];
 // Estos modelos rechazan el parámetro "thinkingConfig" con 400 sin importar el valor que se le
 // mande — se les omite por completo en vez de desperdiciar el intento (la transcripción ya
 // evitaba mandarlo por default; esto extiende el mismo criterio a la cascada de evaluación).
@@ -2280,14 +2288,27 @@ async function rotarGeminiKey() {
 }
 
 // Descubre modelos disponibles en la cuenta de Gemini, priorizando los "lite" ya validados
-async function obtenerModelosDisponiblesGemini() {
+// Cache = lista CRUDA de modelos que la cuenta ofrece (con generateContent). El orden se aplica en
+// cada llamada según el uso: transcripción y evaluación tienen listas de prioridad distintas.
+// soloCurados=true → solo los modelos de la lista de prioridad (nada de "probar todos los flash");
+// únicamente si NINGUNO de ellos está disponible se cae a cualquier flash como último recurso.
+function _ordenarModelosGemini(disponibles, prioridad, soloCurados) {
+  const curados = prioridad.filter(m => disponibles.includes(m));
+  const extras = disponibles.filter(m => !prioridad.includes(m) && /flash/i.test(m)).sort();
+  if (soloCurados) return curados.length ? curados : extras;
+  return [...curados, ...extras];
+}
+
+async function obtenerModelosDisponiblesGemini(prioridad = GEMINI_MODELOS_PRIORIDAD, soloCurados = false) {
   const ahora = Date.now();
   const CACHE_TTL = 24 * 60 * 60 * 1000;
+  const fallback = () => prioridad.slice(0, 2);
   if (_geminiModelosCache && _geminiModelosCache.length > 0 && (ahora - _geminiModelosCacheTs) < CACHE_TTL) {
-    return _geminiModelosCache;
+    const o = _ordenarModelosGemini(_geminiModelosCache, prioridad, soloCurados);
+    return o.length ? o : fallback();
   }
   const key = getGeminiKeyActiva();
-  if (!key) return GEMINI_MODELOS_PRIORIDAD.slice(0, 2);
+  if (!key) return fallback();
   try {
     const resp = await fetch(`${GEMINI_API_BASE}models?key=${encodeURIComponent(key)}&pageSize=100`);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -2300,17 +2321,17 @@ async function obtenerModelosDisponiblesGemini() {
       // el nivel gratuito, confirmado en el panel de cuotas de Google).
       .filter(m => !/-image|-tts|omni/i.test(m));
     if (!disponibles.length) throw new Error('Sin modelos válidos en respuesta');
-    const ordenados = [
-      ...GEMINI_MODELOS_PRIORIDAD.filter(m => disponibles.includes(m)),
-      ...disponibles.filter(m => !GEMINI_MODELOS_PRIORIDAD.includes(m) && /flash/i.test(m)).sort(),
-    ];
-    _geminiModelosCache = ordenados.length ? ordenados : GEMINI_MODELOS_PRIORIDAD.slice(0,2);
+    _geminiModelosCache = disponibles;
     _geminiModelosCacheTs = ahora;
-    return _geminiModelosCache;
+    const o = _ordenarModelosGemini(disponibles, prioridad, soloCurados);
+    return o.length ? o : fallback();
   } catch(err) {
     console.warn('No se pudo consultar modelos de Gemini, usando fallback:', err.message);
-    if (_geminiModelosCache && _geminiModelosCache.length > 0) return _geminiModelosCache;
-    return GEMINI_MODELOS_PRIORIDAD.slice(0, 2);
+    if (_geminiModelosCache && _geminiModelosCache.length > 0) {
+      const o = _ordenarModelosGemini(_geminiModelosCache, prioridad, soloCurados);
+      if (o.length) return o;
+    }
+    return fallback();
   }
 }
 
@@ -2319,6 +2340,27 @@ async function obtenerModelosDisponiblesGemini() {
 // para que ni esta llamada ni las siguientes de la sesión sigan desperdiciando una solicitud
 // completa en un modelo que sabemos que no existe (vuelve a aparecer solo si se refresca la
 // caché de 24h y Google todavía lo ofrece).
+// ── Enfriamiento de modelos ──────────────────────────────────────────────────────────────────
+// Si un modelo acaba de responder 429 (cuota) o 503 (saturado), insistir de inmediato solo gasta
+// tiempo y solicitudes. Se anota hasta cuándo "descansa" y las llamadas siguientes lo saltan.
+// El alcance ('t' transcripción / 'e' evaluación) va separado: un modelo puede estar sin cuota
+// para evaluar y aun así servir para transcribir (o viceversa).
+const _modeloEnfriadoHasta = {};
+function _modeloEnfriado(ambito, m) { return (_modeloEnfriadoHasta[ambito + ':' + m] || 0) > Date.now(); }
+function _marcarFalloModelo(ambito, m, status, body) {
+  const t = String(body || '');
+  let ms = 0;
+  if (status === 429) {
+    if (/per\s*day|PerDay|daily/i.test(t)) ms = 60 * 60 * 1000;           // cuota diaria agotada
+    else {
+      const mm = t.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);     // Google indica cuánto esperar
+      ms = mm ? (parseFloat(mm[1]) + 2) * 1000 : 60 * 1000;
+    }
+  } else if (status === 503 || status === 500) ms = 10 * 1000;             // saturación: se recupera rápido
+  else if (status === 400) ms = 10 * 60 * 1000;                            // petición rechazada: no insistir
+  if (ms) _modeloEnfriadoHasta[ambito + ':' + m] = Date.now() + ms;
+}
+
 function _descartarModeloMuerto(m) {
   // Reasigna a un array NUEVO (no usa splice sobre el existente): la llamada en curso puede
   // estar iterando ese mismo array con un for-of, y mutarlo in-place saltaría el siguiente
@@ -2436,25 +2478,53 @@ async function llamarIA(prompt, opts = {}) {
   const temperature = opts.temperature ?? 0.2;
   const maxTokens = opts.maxTokens ?? 2500;
   const jsonMode = opts.jsonMode ?? true;
-  const modelos = await obtenerModelosDisponiblesGemini();
+  const todos = await obtenerModelosDisponiblesGemini(GEMINI_MODELOS_EVALUACION, true);
+  const MAX_PASADAS = 3, ESPERA_PASADA_MS = 15000;
+  const tally = {};          // código HTTP → cuántas veces falló en esta llamada
   let lastErr = '';
-  for (const m of modelos) {
-    if (batchStop) throw new Error('Cancelado por el usuario');
-    try {
-      const resp = await fetchGeminiConRotacion(m, prompt, temperature, maxTokens, jsonMode, opts.thinkingBudget ?? 0);
-      const respText = await resp.text();
-      if (!resp.ok) { lastErr = respText; if (resp.status === 404) _descartarModeloMuerto(m); continue; }
-      const d = JSON.parse(respText);
-      const texto = extraerTextoGemini(d.candidates?.[0]);
-      if (!texto) { lastErr = `Sin contenido (finishReason: ${d.candidates?.[0]?.finishReason||'?'})`; continue; }
-      return texto;
-    } catch(e) {
-      // Cancelación manual ("Detener") — no seguir probando el siguiente modelo, propagar de inmediato.
-      if (e.message === 'Cancelado por el usuario') throw e;
-      lastErr = e.message; continue;
+  for (let pasada = 0; pasada < MAX_PASADAS; pasada++) {
+    // Se saltan los modelos que están "descansando" (429/503 recientes); si TODOS lo están en la
+    // primera pasada se intenta con todos igualmente.
+    let candidatos = todos.filter(m => !_modeloEnfriado('e', m));
+    if (!candidatos.length) { if (pasada === 0) candidatos = todos; else break; }
+    for (const m of candidatos) {
+      if (batchStop) throw new Error('Cancelado por el usuario');
+      try {
+        const resp = await fetchGeminiConRotacion(m, prompt, temperature, maxTokens, jsonMode, opts.thinkingBudget ?? 0);
+        const respText = await resp.text();
+        if (!resp.ok) {
+          lastErr = respText; tally[resp.status] = (tally[resp.status] || 0) + 1;
+          console.warn(`Evaluación IA: modelo ${m} falló (${resp.status})`);
+          _marcarFalloModelo('e', m, resp.status, respText);
+          if (resp.status === 404) _descartarModeloMuerto(m);
+          continue;
+        }
+        const d = JSON.parse(respText);
+        const texto = extraerTextoGemini(d.candidates?.[0]);
+        if (!texto) { lastErr = `Sin contenido (finishReason: ${d.candidates?.[0]?.finishReason||'?'})`; tally['vacío'] = (tally['vacío'] || 0) + 1; continue; }
+        if (opts.info) opts.info.modelo = m; // quién respondió (se guarda en la evaluación)
+        console.info(`Evaluación IA OK con modelo ${m}` + (pasada ? ` (pasada ${pasada + 1})` : ''));
+        return texto;
+      } catch(e) {
+        // Cancelación manual ("Detener") — no seguir probando el siguiente modelo, propagar de inmediato.
+        if (e.message === 'Cancelado por el usuario') throw e;
+        lastErr = e.message; tally['red'] = (tally['red'] || 0) + 1; continue;
+      }
     }
+    // Todos fallaron. Si alguno se recupera pronto (503 = saturación pasajera), se espera y se
+    // reintenta — así no se pierde la transcripción ya pagada por un pico de saturación.
+    const recuperables = todos.some(m => ((_modeloEnfriadoHasta['e:' + m] || 0) - Date.now()) < ESPERA_PASADA_MS + 5000);
+    if (pasada < MAX_PASADAS - 1 && recuperables) {
+      console.warn(`Evaluación IA: ningún modelo respondió (pasada ${pasada + 1}/${MAX_PASADAS}) — esperando ${ESPERA_PASADA_MS/1000} s para reintentar...`);
+      await esperarCancelable(ESPERA_PASADA_MS);
+      if (batchStop) throw new Error('Cancelado por el usuario');
+    } else break;
   }
-  throw new Error('Gemini falló: ' + lastErr);
+  const nombres = { 503: 'saturados (503)', 429: 'sin cuota (429)', 400: 'rechazo (400)', 404: 'inexistentes (404)' };
+  const resumen = Object.entries(tally).map(([k, n]) => `${n}× ${nombres[k] || k}`).join(', ');
+  let detalle = lastErr;
+  try { detalle = JSON.parse(lastErr)?.error?.message || lastErr; } catch(_) {}
+  throw new Error(`Gemini falló — ${resumen || 'sin modelos disponibles'}. ${String(detalle).slice(0, 140)}`);
 }
 
 let audioFile  = null;
@@ -4262,10 +4332,12 @@ async function transcribirAudioGemini(file) {
     r.onerror = () => reject(new Error('No se pudo leer el archivo de audio'));
     r.readAsDataURL(file);
   });
-  const modelos = await obtenerModelosDisponiblesGemini();
+  const todosT = await obtenerModelosDisponiblesGemini(GEMINI_MODELOS_TRANSCRIPCION, true);
+  const aIntentarT = todosT.filter(m => !_modeloEnfriado('t', m));
+  const modelos = aIntentarT.length ? aIntentarT : todosT; // si todos "descansan", se intenta con todos
   let lastErr = '';
   const intentarUnaVez = async (m, key, conThinking) => {
-    const generationConfig = { temperature: 0.1, maxOutputTokens: 4000 };
+    const generationConfig = { temperature: 0.1, maxOutputTokens: 12000 }; // los modelos que "piensan" gastan ~4k tokens razonando antes de transcribir; con 4000 se cortaban
     if (conThinking) generationConfig.thinkingConfig = { thinkingBudget: 0 };
     const controller = new AbortController();
     _controladoresActivos.add(controller);
@@ -4300,7 +4372,7 @@ async function transcribirAudioGemini(file) {
       // y dos de los preferidos (gemini-flash-lite-latest, gemini-3.5-flash-lite) lo rechazan
       // con 400 siempre, así que mandarlo por default solo desperdicia una llamada.
       let resp = await intentarUnaVez(m, key, false);
-      if (!resp.ok) { lastErr = await resp.text(); console.warn(`Transcripción: modelo ${m} falló (${resp.status})`); if (resp.status === 404) _descartarModeloMuerto(m); continue; }
+      if (!resp.ok) { lastErr = await resp.text(); console.warn(`Transcripción: modelo ${m} falló (${resp.status})`); _marcarFalloModelo('t', m, resp.status, lastErr); if (resp.status === 404) _descartarModeloMuerto(m); continue; }
       let data = await resp.json();
       let texto = extraerTextoGemini(data.candidates?.[0]);
       let finishReason = data.candidates?.[0]?.finishReason;
@@ -4321,7 +4393,7 @@ async function transcribirAudioGemini(file) {
       console.info(`Transcripción OK con modelo ${m} — ${texto.length} caracteres, finishReason: ${finishReason||'?'}`);
       const incompleta = finishReason === 'MAX_TOKENS';
       if (incompleta) console.warn('⚠️ Transcripción posiblemente incompleta (se alcanzó el límite de tokens de salida).');
-      return { texto: limpiarTranscripcionGemini(texto), incompleta, motivo: incompleta ? 'Se alcanzó el límite de longitud de salida del modelo — probablemente el audio es muy largo o muy pesado para transcribirse completo en una sola pasada.' : null };
+      return { texto: limpiarTranscripcionGemini(texto), modelo: m, incompleta, motivo: incompleta ? 'Se alcanzó el límite de longitud de salida del modelo — probablemente el audio es muy largo o muy pesado para transcribirse completo en una sola pasada.' : null };
     } catch(e) {
       // Cancelación manual ("Detener") — no seguir probando el siguiente modelo, propagar de inmediato.
       if (e.message === 'Cancelado por el usuario') throw e;
@@ -4333,14 +4405,29 @@ async function transcribirAudioGemini(file) {
 
 // Punto único de entrada para transcribir: usa el proveedor activo primero; si falla Y el
 // respaldo automático está activado Y el otro proveedor tiene key configurada, lo intenta con ese.
+// Caché en memoria de transcripciones ya completadas: si la evaluación falla (503/429) y se
+// reintenta el mismo audio, NO se vuelve a transcribir — solo se repite la evaluación. Se pierde
+// al recargar la página. Las transcripciones incompletas no se guardan (el reintento debe repetirlas).
+const _cacheTranscripciones = new Map();
 async function transcribirAudioIA(file) {
   if (!getGeminiKeyActiva()) {
     throw new Error('No hay ninguna API key de Gemini configurada para transcribir.');
   }
-  return await transcribirAudioGemini(file);
+  const k = `${file.name}|${file.size}|${file.lastModified}`;
+  if (_cacheTranscripciones.has(k)) {
+    console.info(`Transcripción reutilizada de la caché (hecha con ${_cacheTranscripciones.get(k).modelo||'?'}) — no se vuelve a transcribir`);
+    return _cacheTranscripciones.get(k);
+  }
+  const r = await transcribirAudioGemini(file);
+  if (!r.incompleta) {
+    _cacheTranscripciones.set(k, r);
+    if (_cacheTranscripciones.size > 40) _cacheTranscripciones.delete(_cacheTranscripciones.keys().next().value);
+  }
+  return r;
 }
 
 async function evaluarTranscripcion(transcripcion, agente, tipo, campana, modelo, _unused, duracionSegundos) {
+  const _infoIA = {}; // llamarIA anota aquí qué modelo respondió la evaluación
   // Validar que la transcripción tenga contenido evaluable
   const palabras = (transcripcion||'').toLowerCase().replace(/[^a-záéíóúüñ\s]/gi,'').split(/\s+/).filter(p=>p.length>1);
   const palabrasUnicas = new Set(palabras);
@@ -4454,7 +4541,7 @@ DEFINICIÓN DE logro_objetivo (Titulación): true SOLO si el egresado confirmó 
 
     let resultadoT;
     try {
-      const textoIA = await llamarIA(promptTit, { temperature: 0.2, maxTokens: 4000 });
+      const textoIA = await llamarIA(promptTit, { temperature: 0.2, maxTokens: 4000, info: _infoIA });
       resultadoT = limpiarYParsearJSON(textoIA);
       verificarBuzonVoz(resultadoT);
     } catch(e) {
@@ -4478,6 +4565,7 @@ DEFINICIÓN DE logro_objetivo (Titulación): true SOLO si el egresado confirmó 
     const _pct = totalPesoT ? Math.round(resultadoT.score_total / totalPesoT * 100) : 0;
     resultadoT.nivel_urgencia = _pct < 60 ? 'critica' : _pct <= 80 ? 'revisar' : 'normal';
     resultadoT.es_reagenda = !!resultadoT.es_reagenda;
+    resultadoT.modelo_evaluacion_ia = _infoIA.modelo || null;
     return resultadoT;
   }
 
@@ -4581,7 +4669,7 @@ ${G('cam_cierre_nombre_final', 'cam_cierre_nombre_final (6.2) — Recuerda su no
 
     let resultadoCam;
     try {
-      const textoIA = await llamarIA(promptCampus, { temperature: 0.2, maxTokens: 4000 });
+      const textoIA = await llamarIA(promptCampus, { temperature: 0.2, maxTokens: 4000, info: _infoIA });
       resultadoCam = limpiarYParsearJSON(textoIA);
       verificarBuzonVoz(resultadoCam);
     } catch(e) {
@@ -4604,6 +4692,7 @@ ${G('cam_cierre_nombre_final', 'cam_cierre_nombre_final (6.2) — Recuerda su no
     const _pctCam = totalPesoCam ? Math.round(resultadoCam.score_total / totalPesoCam * 100) : 0;
     resultadoCam.nivel_urgencia = _pctCam < 60 ? 'critica' : _pctCam <= 80 ? 'revisar' : 'normal';
     resultadoCam.es_reagenda = !!resultadoCam.es_reagenda;
+    resultadoCam.modelo_evaluacion_ia = _infoIA.modelo || null;
     return resultadoCam;
   }
 
@@ -4685,7 +4774,7 @@ Evalúa del 0 al 100 cada criterio según la Cédula QA Aliat v4.0 y responde SO
   ],
   "sin_objeciones":<true si el prospecto no presentó ninguna negativa, duda ni resistencia; false si hubo al menos una>,
   "necesidad_prospecto":{"categoria":"<ver catálogo abajo>","cita_textual":"...","detalle_otro":"<solo si categoria='otro'>"},
-  ${esTrad ? '"oferta_onaliat_indebida":<true|false — ver REGLA 5>,\n  "promo_condicionada":<true|false — ver demo_promociones>,\n  ' : ''}"es_online":<true|false — ver NOTA ETIQUETAS ADICIONALES>,
+  ${esTrad ? '"oferta_onaliat_indebida":<true|false — ver REGLA 5>,\n  "condiciones_beca":<null si el asesor no habló de precio/mensualidades | {"inflacion":<true|false>,"sin_adeudos":<true|false>,"sin_reprobar":<true|false>,"promedio":<true|false>} — ver NOTA ETIQUETAS ADICIONALES>,\n  ' : ''}"es_online":<true|false — ver NOTA ETIQUETAS ADICIONALES>,
   "es_reagenda":<true|false — ver NOTA ETIQUETAS ADICIONALES>,
   "sentimiento_cliente":"<positivo|neutral|negativo>",
   "logro_objetivo":<true|false>,
@@ -4747,10 +4836,16 @@ CATÁLOGO DE CAMPUS FÍSICOS DE LA RED ALIAT (ciudad/municipio — estado):
 Coacalco de Berriozábal — Estado de México · Chalco de Díaz Covarrubias — Estado de México · Tlalnepantla de Baz — Estado de México · Ciudad de México (incluye Tlatelolco y Benito Juárez/Parque Hundido) — CDMX · Tulancingo de Bravo — Hidalgo · Campeche — Campeche · Coatzacoalcos — Veracruz · Comitán de Domínguez — Chiapas · Pichucalco — Chiapas · Tapachula — Chiapas · Tuxtla Gutiérrez — Chiapas · Villahermosa (Centro) — Tabasco · Aguascalientes (incluye Ejido Ojocaliente) — Aguascalientes · Saltillo — Coahuila · Querétaro — Querétaro · Tijuana (Alamar y Florido) — Baja California · Mexicali — Baja California · Chihuahua — Chihuahua · Axtla de Terrazas — San Luis Potosí · San Luis Potosí (ciudad) — San Luis Potosí.
 Cualquier ciudad o estado que NO aparezca en esta lista se considera sin campus físico — imposibilidad geográfica real.` : ''}
 
-NOTA — ETIQUETAS ADICIONALES ("es_online" / "es_reagenda"): son puramente informativas para reportes, NO afectan ningún score.
+NOTA — ETIQUETAS ADICIONALES ("es_online" / "es_reagenda"${esTrad ? ' / "condiciones_beca"' : ''}): son puramente informativas para reportes, NO afectan ningún score.
 "es_online": true si la modalidad que finalmente se está ofertando o gestionando para el prospecto en esta llamada es 100% en línea (OnAliat) — esto incluye el modelo OnAliat en sí mismo, y también una llamada Tradicional/CORBUSÉ donde el asesor legítimamente ofreció/gestionó la modalidad en línea (cualquiera de los casos (a), (b) o (c) de la Regla 5, incluyendo el caso especial de Optometría). false si la llamada trata sobre la modalidad presencial, o si se ofertó en línea de forma indebida (sin cumplir ningún caso de la Regla 5).
 "es_reagenda": true si la llamada NO es un primer contacto para agendar una cita/proceso desde cero, sino que el asesor y el prospecto están reprogramando, confirmando o dando seguimiento a una cita que YA existía de una llamada anterior (ej. "te hablo para confirmar tu cita de mañana", "necesitamos moverla de fecha porque..."). false si es la primera vez que se agenda o no se menciona ninguna cita previa. Estas llamadas suelen no quedar registradas en la base de datos principal de citas, así que es importante marcarlas para que el equipo de reportes las identifique.
-
+${esTrad ? `"condiciones_beca": si en la llamada el asesor cotizó precio (pago inicial y/o mensualidades), indica cuáles de estas 4 condiciones mencionó para MANTENER esas mensualidades (la beca/descuento que ya traen incluido) — cada una es true SOLO si hay evidencia textual (no se requiere frase exacta, basta con transmitir la idea):
+- "inflacion": que la colegiatura tiene un aumento anual por inflación.
+- "sin_adeudos": que debe mantenerse sin adeudos.
+- "sin_reprobar": que no debe reprobar materias.
+- "promedio": que debe mantener un promedio mínimo de 8.5.
+Si el asesor NO habló de precio ni de mensualidades en toda la llamada, devuelve "condiciones_beca": null. Esto es solo un registro: no cambia ningún score, ni siquiera el de demo_precio.
+` : ''}
 ESCALA DE PUNTUACIÓN (aplica a todos los criterios, EXCEPTO cuando la guía de un criterio específico defina su propio conjunto de valores):
 - 100: Lo realizó completo y correctamente — hay evidencia textual clara.
 - 75: Lo realizó pero incompleto o con errores menores.
@@ -4838,18 +4933,20 @@ Si el asesor menciona un beneficio de una modalidad distinta a la de interés de
 Puntuación: 100=mencionó ≥1 beneficio de la modalidad correcta. 0=no mencionó ninguno, o solo mencionó beneficios de otra modalidad. N/A=no hay evidencia suficiente en la transcripción para determinar cuál modalidad es la de interés del prospecto. [Valores válidos: SOLO 100, 0 o "N/A", nunca 50/75/25]
 Notas: hizo=cita el beneficio mencionado y la modalidad detectada; no_hizo=confirma que no mencionó ninguno, o que se marcó N/A por falta de evidencia; ejemplo=beneficio concreto que debió mencionar según la modalidad detectada.
 
-demo_promociones (3.4) — Promociones.
-Acción esperada: Mencionar al menos 1 promoción vigente: kit de apoyo estudiantil sin costo, titulación sin costo (según campus), 4ª colegiatura con 50% de descuento, convenio empresarial/institucional 10%, seguro estudiantil + RVOE del 1er ciclo incluidos, beca hasta 45% por promedio/situación, bootcamps aplicables, 50% de descuento en curso de inglés, o 30% de descuento en uniformes.
-⚠️ La promoción de descuento en uniformes NO aplica en todos los casos (depende de campus/programa/vigencia) — si el asesor la mencionó, marca "promo_condicionada":true. El descuento de inglés no requiere esta marca.
-Puntuación: 100=mencionó ≥1 promoción. 0=no mencionó ninguna. [BINARIO — Valores válidos: SOLO 100 o 0, nunca 50/75/25]
-Notas: hizo=cita la promoción mencionada; no_hizo=confirma que no mencionó ninguna; ejemplo=promoción concreta que debió mencionar.
+demo_promociones (3.4) — Promociones vigentes.
+Acción esperada: Mencionar la BECA ACADÉMICA DEL 20% (es la promoción vigente; se obtiene por promedio/perfil académico). Es el descuento que YA TRAEN incluido las mensualidades que cotiza el asesor, así que normalmente se menciona al dar las parcialidades (ej. "tus mensualidades ya incluyen una beca del 20%"); cuenta en cualquier momento de la llamada. Cuenta aunque el asesor la llame "beca académica", "descuento por promedio", "beca del 20 por ciento" o "descuento del 20%" — no se requiere frase exacta, pero el porcentaje debe ser 20%.
+Opcional: la BECA CONVENIO DEL 10% (convenio empresarial/institucional). NO es obligatoria ni necesaria para el 100%, pero si el asesor la menciona debe decir el porcentaje correcto (10%).
+Una beca o descuento con otro porcentaje (por ejemplo "hasta 45%") NO cuenta como la beca académica vigente. Otras promociones (kit, 4ª colegiatura, seguro, uniformes, inglés, etc.) ya NO sustituyen a la beca del 20%: pueden mencionarse, pero no suman a este criterio.
+Puntuación: 100=mencionó la beca académica del 20% (y, si mencionó la beca convenio, la dio con 10%). 50=mencionó la beca académica del 20% pero dio la beca convenio con un porcentaje distinto de 10%. 0=no mencionó la beca académica del 20%, o la mencionó con otro porcentaje. [Valores válidos: 100/50/0 únicamente, nunca 75/25]
+Notas: hizo=cita la beca mencionada con su porcentaje; no_hizo=qué faltó (no habló de la beca del 20%, dio otro porcentaje, o el convenio sin 10%); ejemplo=frase concreta, como: "Con tu promedio puedes obtener una beca académica del 20% en tu colegiatura."
 
 demo_precio (3.5) — Manejo de precio.
 Acción esperada: El asesor debe explicar, en cualquier orden:
 1. Pago inicial — cuánto es el primer pago para quedar formalmente inscrito.
 2. Parcialidades — el monto de las mensualidades siguientes.
 3. Desglose — SOLO cuenta si el prospecto preguntó explícitamente cómo se compone un descuento/beneficio; en ese caso el asesor debe explicarlo (ej. porcentajes que lo integran).
-Si el prospecto no preguntó por el desglose, ese elemento no aplica y no cuenta como faltante (evalúa solo pago inicial + parcialidades). Los montos varían por programa — no evalúes si el monto es correcto, solo si el asesor explicó los elementos aplicables.
+Si el prospecto no preguntó por el desglose, ese elemento no aplica y no cuenta como faltante (evalúa solo pago inicial + parcialidades).
+4. Condiciones para mantener las mensualidades (continuidad de la beca incluida en ellas) — es INFORMATIVO: NO cuenta para la puntuación de este criterio ni cambia la escala de abajo. Se registra aparte en el campo "condiciones_beca" (ver NOTA — ETIQUETAS ADICIONALES). Los montos varían por programa — no evalúes si el monto es correcto, solo si el asesor explicó los elementos aplicables.
 Puntuación: si el prospecto preguntó por el desglose (aplican 3 elementos: pago inicial, parcialidades, desglose): 100=explicó los 3. 66=explicó 2. 33=explicó 1. 0=ninguno. Si NO preguntó por el desglose (aplican 2 elementos: pago inicial, parcialidades): 100=explicó los 2. 50=explicó 1. 0=ninguno. [Valores válidos: 100/66/50/33/0 según el caso, nunca fuera de esta escala]
 Notas: hizo=qué elementos mencionó con cita textual; no_hizo=cuál faltó; ejemplo=frase para el elemento omitido.` : `demo_beneficios (3.1) — Menciona ≥2 beneficios del programa o modalidad.
 Acción esperada: Identificar el grado académico de interés del prospecto (Bachillerato, Licenciatura o Maestría) y mencionar al menos 2 beneficios concretos y específicos — ya sea del grado, de la modalidad, o una combinación de ambos. Hay beneficios que aplican a cualquier grado (grupos reducidos, modalidades flexibles presencial/ejecutiva/online, RVOE Federal, docentes con experiencia laboral real, Bolsa de Trabajo), beneficios exclusivos de cada grado, y (solo si la modalidad es 100% en línea) beneficios propios de esa modalidad:
@@ -4949,7 +5046,7 @@ ${naKeys.has('etq_control')?'':'etq_control (6.5) — Mute, tiempos de espera y 
 
   let resultado;
   try {
-    const textoIA = await llamarIA(prompt, { temperature: 0.2, maxTokens: 4000 });
+    const textoIA = await llamarIA(prompt, { temperature: 0.2, maxTokens: 4000, info: _infoIA });
     resultado = limpiarYParsearJSON(textoIA);
     verificarBuzonVoz(resultado);
   } catch(e) {
@@ -4969,6 +5066,15 @@ ${naKeys.has('etq_control')?'':'etq_control (6.5) — Mute, tiempos de espera y 
   // de depender de que la IA lo marque siempre, aunque también se le pide en el prompt.
   resultado.es_online = modelo === 'onaliat' ? true : !!resultado.es_online;
   resultado.es_reagenda = !!resultado.es_reagenda;
+  // Condiciones de la beca (solo Tradicional/CORBUSÉ, informativo): objeto con 4 booleanos o null si no se habló de beca.
+  // En Tradicional/CORBUSÉ, si no cotizó precio se guarda { sin_precio: true } para mostrar la etiqueta "Sin cotizar precio".
+  const _cb = resultado.condiciones_beca;
+  const _esTradCb = (modelo === 'tradicional' || modelo === 'corbuse');
+  resultado.condiciones_beca = !_esTradCb ? null
+    : (_cb && typeof _cb === 'object' && !_cb.sin_precio)
+      ? { inflacion: !!_cb.inflacion, sin_adeudos: !!_cb.sin_adeudos, sin_reprobar: !!_cb.sin_reprobar, promedio: !!_cb.promedio }
+      : { sin_precio: true };
+  resultado.modelo_evaluacion_ia = _infoIA.modelo || null;
   const totalPeso = criteriosActivos.reduce((s,c) => s + (pesos[c.key]||0), 0) || 100;
   let ptsObtenidos = 0;
   criteriosActivos.forEach(c => {
@@ -5006,7 +5112,7 @@ async function procesarLlamada() {
     log('Enviando audio a Gemini...','spin');
     const transRes = await transcribirAudioIA(audioFile);
     transcripcion = transRes.texto;
-    log('Audio transcrito ('+transcripcion.split(' ').length+' palabras)', transRes.incompleta ? 'warn' : 'ok');
+    log('Audio transcrito con '+(transRes.modelo||'?')+' ('+transcripcion.split(' ').length+' palabras)', transRes.incompleta ? 'warn' : 'ok');
     if (transRes.incompleta) {
       // No evaluamos sobre una transcripción incompleta: cuesta tiempo y recursos de IA
       // repetir evaluaciones hechas sobre datos parciales. Se marca como error de una vez.
@@ -5017,8 +5123,11 @@ async function procesarLlamada() {
     const duracion = await medirDuracionAudio(audioFile);
     const duracionExacta = duracion !== estimarDuracion(audioFile);
     setStep(3); log('Enviando a IA para evaluación ['+(modelo==='onaliat'?'OnAliat':'Tradicional')+']...','spin');
-    const resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, modelo, undefined, duracion);
+    let resultado;
+    try { resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, modelo, undefined, duracion); }
+    catch(eEv) { if (eEv.message !== 'Cancelado por el usuario') eEv.message = `(transcrito con ${transRes.modelo||'?'}) ` + eEv.message; throw eEv; }
     resultado.transcripcion_incompleta = transRes.incompleta || false;
+    resultado.modelo_transcripcion_ia = transRes.modelo || null;
     resultado.transcripcion_incompleta_motivo = transRes.motivo || null;
     log('Evaluación completada — Score: '+resultado.score_total+'/100','ok');
     const entrada = {id:Date.now(),fecha:new Date().toLocaleString('es-MX'),agente,tipo,campana,modelo,archivo:audioFile.name,transcripcion:transcripcion.slice(0,5000),duracion_segundos:duracion,_duracionExacta:duracionExacta,fecha_llamada:audioFile._fechaLlamada||'',hora_llamada:audioFile._horaLlamada||'',es_top:normScore(resultado.score_total,resultado.pts_activos)>=85,...resultado};
@@ -5042,6 +5151,24 @@ async function procesarLlamada() {
 // ═══════════════════════════════════════════════
 // RENDER RESULTADO INDIVIDUAL
 // ═══════════════════════════════════════════════
+// Etiqueta informativa: cuántas de las 4 condiciones para mantener las mensualidades (beca incluida) mencionó el asesor
+function tagCondicionesBeca(r) {
+  const c = r && r.condiciones_beca;
+  if (!c || typeof c !== 'object') return '';
+  if (c.sin_precio) return `<span class="tag tb" title="El asesor no cotizó precio (pago inicial / mensualidades) en la llamada">💲 Sin cotizar precio</span>`;
+  const items = [['inflacion','Aumento anual por inflación'],['sin_adeudos','Sin adeudos'],['sin_reprobar','Sin reprobar materias'],['promedio','Promedio mínimo 8.5']];
+  const n = items.filter(([k]) => c[k]).length;
+  const det = items.map(([k, l]) => (c[k] ? '✅ ' : '❌ ') + l).join('&#10;');
+  const cls = n === 4 ? 'tg' : n === 0 ? 'tr' : 'ty';
+  return `<span class="tag ${cls}" title="${det}">💲 Condiciones de precio ${n}/4</span>`;
+}
+
+// Etiquetas con los modelos de IA que transcribieron y evaluaron (para diagnosticar fallas/calidad)
+function tagsModelosIA(r) {
+  return (r.modelo_transcripcion_ia ? `<span class="tag tb" title="Modelo que transcribió el audio">🎙️ ${r.modelo_transcripcion_ia}</span>` : '') +
+         (r.modelo_evaluacion_ia ? `<span class="tag tb" title="Modelo que evaluó la transcripción">🧠 ${r.modelo_evaluacion_ia}</span>` : '');
+}
+
 function renderResultado(r, transcripcionCompleta) {
   const modelo  = r.modelo || 'tradicional';
   const criterios = getCriterios(modelo);
@@ -5193,7 +5320,7 @@ function renderResultado(r, transcripcionCompleta) {
   const antiguedad = calcularAntiguedad(hcFechaIng, r.fecha);
   const metaPill = (label, val, mono=false, color=null) =>
     `<div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase">${label}</span><span style="font-size:13px;font-weight:700;${mono?'font-family:var(--mono);':''}color:${color||'var(--text)'}">${val||'—'}</span></div>`;
-  document.getElementById('resultado-container').innerHTML=`${alertHtml}<div class="card" style="margin-top:${alertHtml?'12px':'0'}"><div class="result-hero"><div class="score-donut ${dc}"><span class="score-num">${scoreDisplay}</span></div><div class="result-info"><h2>${nombreCompleto||r.agente} — Calidad ${nivel}</h2><div class="tags">${modeloTag}<span class="tag ${tc}">${nivel}</span><span class="tag ${sc}">Prospecto ${r.sentimiento_cliente}</span><span class="tag ${r.logro_objetivo?'tg':'tr'}">${logroTxt}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${r.es_online?'<span class="tag tc">🌐 Online</span>':''}${r.es_reagenda?'<span class="tag tp">🔁 Reagenda</span>':''}${durStr}${r.tipo?`<span class="tag tc">${r.tipo}</span>`:''}${r.campana?`<span class="tag tc">${r.campana}</span>`:''}</div></div><div style="margin-left:auto;padding-right:8px">${topBtn}</div></div>
+  document.getElementById('resultado-container').innerHTML=`${alertHtml}<div class="card" style="margin-top:${alertHtml?'12px':'0'}"><div class="result-hero"><div class="score-donut ${dc}"><span class="score-num">${scoreDisplay}</span></div><div class="result-info"><h2>${nombreCompleto||r.agente} — Calidad ${nivel}</h2><div class="tags">${modeloTag}<span class="tag ${tc}">${nivel}</span><span class="tag ${sc}">Prospecto ${r.sentimiento_cliente}</span><span class="tag ${r.logro_objetivo?'tg':'tr'}">${logroTxt}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${r.es_online?'<span class="tag tc">🌐 Online</span>':''}${r.es_reagenda?'<span class="tag tp">🔁 Reagenda</span>':''}${tagCondicionesBeca(r)}${tagsModelosIA(r)}${durStr}${r.tipo?`<span class="tag tc">${r.tipo}</span>`:''}${r.campana?`<span class="tag tc">${r.campana}</span>`:''}</div></div><div style="margin-left:auto;padding-right:8px">${topBtn}</div></div>
 <div style="display:flex;gap:20px;padding:12px 24px;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap">
   ${metaPill('Asesor', nombreCompleto || (hcNoEncontrado ? `${r.agente} ⚠️` : r.agente))}
   ${hcPosicion   ? metaPill('Posición',   hcPosicion)   : ''}
@@ -5699,8 +5826,11 @@ async function iniciarBatch() {
       // 2. Medir duración (necesaria para las reglas de calibración del prompt)
       const duracion = await medirDuracionAudio(item.file);
       // 3. Evaluar
-      const resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, modelo, undefined, duracion);
+      let resultado;
+      try { resultado = await evaluarTranscripcion(transcripcion, agente, tipo, campana, modelo, undefined, duracion); }
+      catch(eEv) { if (eEv.message !== 'Cancelado por el usuario') eEv.message = `(transcrito con ${transRes.modelo||'?'}) ` + eEv.message; throw eEv; }
       resultado.transcripcion_incompleta = transRes.incompleta || false;
+      resultado.modelo_transcripcion_ia = transRes.modelo || null;
       resultado.transcripcion_incompleta_motivo = transRes.motivo || null;
       // 4. Guardar
       const entrada = {
@@ -5734,7 +5864,7 @@ async function iniciarBatch() {
         return;
       }
       item.status = 'error';
-      item.error  = err.message.slice(0,80);
+      item.error  = err.message.slice(0,170);
       batchErrors++;
 
       // Una transcripción incompleta no es una falla de la API/key — no debe contar para la
@@ -5902,7 +6032,7 @@ function agregarResultadoBatch(item) {
         <div class="tags" style="flex-shrink:0">
           <span class="tag ${s>=80?'tg':s>=60?'ty':'tr'}">${niv}</span>
           <span class="tag ${r.sentimiento_cliente==='positivo'?'tg':r.sentimiento_cliente==='negativo'?'tr':'tb'}">Cliente ${r.sentimiento_cliente}</span>
-          <span class="tag ${r.logro_objetivo?'tg':'tr'}">${r.logro_objetivo?'✅ Cerró':'❌ Sin cierre'}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${r.es_online?'<span class="tag tc">🌐 Online</span>':''}${r.es_reagenda?'<span class="tag tp">🔁 Reagenda</span>':''}${r.transcripcion_incompleta?'<span class="tag ty">✂️ Transcripción incompleta</span>':''}
+          <span class="tag ${r.logro_objetivo?'tg':'tr'}">${r.logro_objetivo?'✅ Cerró':'❌ Sin cierre'}</span>${r.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${r.es_online?'<span class="tag tc">🌐 Online</span>':''}${r.es_reagenda?'<span class="tag tp">🔁 Reagenda</span>':''}${tagCondicionesBeca(r)}${tagsModelosIA(r)}${r.transcripcion_incompleta?'<span class="tag ty">✂️ Transcripción incompleta</span>':''}
           ${urgBadge}
         </div>
         <button class="btn-sm" onclick="verDetalle(${r.id})">Ver detalle</button>
@@ -8001,7 +8131,7 @@ function _renderSliders() {
           {key:'demo_ventaja',     num:'3.1', label:'Menciona ≥2 ventajas competitivas, 1 de empleabilidad'},
           {key:'demo_grado',       num:'3.2', label:'Menciona ≥2 características del grado académico'},
           {key:'demo_modalidad',   num:'3.3', label:'Beneficio de la modalidad de estudio'},
-          {key:'demo_promociones', num:'3.4', label:'Menciona ≥1 promoción vigente'},
+          {key:'demo_promociones', num:'3.4', label:'Menciona la beca académica del 20% (convenio 10% opcional)'},
           {key:'demo_precio',      num:'3.5', label:'Manejo de precio (pago inicial, parcialidades, desglose)'},
         ]},
         {etapa:'objeciones',    emoji:'🛡', label:'Manejo de Objeciones (10 pts)', items:[
@@ -8327,7 +8457,7 @@ function renderTopCalls() {
       <span style="font-size:22px">⭐</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;margin-bottom:4px">${h.agente} <span style="color:var(--muted);font-size:11px">· ${h.fecha}</span></div>
-        <div class="tags">${modeloTag}${prob}${dur}<span class="tag ${h.logro_objetivo?'tg':'tr'}">${h.logro_objetivo?'✅ Cerró':'Sin cierre'}</span>${h.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${h.es_online?'<span class="tag tc">🌐 Online</span>':''}${h.es_reagenda?'<span class="tag tp">🔁 Reagenda</span>':''}${h.transcripcion_incompleta?'<span class="tag ty">✂️ Transcripción incompleta</span>':''}</div>
+        <div class="tags">${modeloTag}${prob}${dur}<span class="tag ${h.logro_objetivo?'tg':'tr'}">${h.logro_objetivo?'✅ Cerró':'Sin cierre'}</span>${h.promo_condicionada?'<span class="tag ty">⚠️ Promo condicionada</span>':''}${h.es_online?'<span class="tag tc">🌐 Online</span>':''}${h.es_reagenda?'<span class="tag tp">🔁 Reagenda</span>':''}${tagCondicionesBeca(h)}${tagsModelosIA(h)}${h.transcripcion_incompleta?'<span class="tag ty">✂️ Transcripción incompleta</span>':''}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5">✓ ${(h.fortalezas||'').slice(0,80)}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
